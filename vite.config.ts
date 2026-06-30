@@ -1,18 +1,21 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
 import { execSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { bakeVoiceMiddleware } from './server/bake-voice-middleware';
 
-// 构建时抓 git 分支 + short commit，注入到 BuildBadge 显示。
-// 非 git 环境（容器、tarball 部署）退化成 'unknown'，不影响构建。
+// 鏋勫缓鏃舵姄 git 鍒嗘敮 + short commit锛屾敞鍏ュ埌 BuildBadge 鏄剧ず銆?
+// 闈?git 鐜锛堝鍣ㄣ€乼arball 閮ㄧ讲锛夐€€鍖栨垚 'unknown'锛屼笉褰卞搷鏋勫缓銆?
 //
-// 显示规则：
-//   - 默认在 main / master 上隐藏（视为正式发布），其他分支显示
-//   - CI detached HEAD 优先读 GITHUB_REF_NAME / VERCEL_GIT_COMMIT_REF / CF_PAGES_BRANCH / BRANCH(Netlify)
-//   - VITE_HIDE_BUILD_BADGE=1 强制隐藏（覆盖默认）
-//   - VITE_SHOW_BUILD_BADGE=1 强制显示（在 master 本地调试用）
+// 鏄剧ず瑙勫垯锛?
+//   - 榛樿鍦?main / master 涓婇殣钘忥紙瑙嗕负姝ｅ紡鍙戝竷锛夛紝鍏朵粬鍒嗘敮鏄剧ず
+//   - CI detached HEAD 浼樺厛璇?GITHUB_REF_NAME / VERCEL_GIT_COMMIT_REF / CF_PAGES_BRANCH / BRANCH(Netlify)
+//   - VITE_HIDE_BUILD_BADGE=1 寮哄埗闅愯棌锛堣鐩栭粯璁わ級
+//   - VITE_SHOW_BUILD_BADGE=1 寮哄埗鏄剧ず锛堝湪 master 鏈湴璋冭瘯鐢級
 const RELEASE_BRANCHES = new Set(['main', 'master']);
+const PROJECT_ROOT = dirname(fileURLToPath(import.meta.url));
 
 function readBranch(): string {
   if (process.env.GITHUB_REF_NAME) return process.env.GITHUB_REF_NAME;
@@ -43,7 +46,16 @@ let showBuildBadge = !isReleaseBranch;
 if (process.env.VITE_HIDE_BUILD_BADGE === '1') showBuildBadge = false;
 if (process.env.VITE_SHOW_BUILD_BADGE === '1') showBuildBadge = true;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const buildTarget = (process.env.MORO_BUILD_TARGET || process.env.VITE_MORO_TARGET || mode || 'native').trim().toLowerCase() === 'web' ? 'web' : 'native';
+  const outDir = resolve(PROJECT_ROOT, buildTarget === 'native' ? 'dist-native' : 'dist-web');
+  const platformRoot = resolve(PROJECT_ROOT, 'platforms', buildTarget);
+
+  return {
+  root: platformRoot,
+  publicDir: resolve(PROJECT_ROOT, 'public'),
+  envDir: PROJECT_ROOT,
+  cacheDir: resolve(PROJECT_ROOT, 'node_modules/.vite', buildTarget),
   plugins: [
     react(),
     legacy({
@@ -61,23 +73,27 @@ export default defineConfig({
     __BUILD_BRANCH__: JSON.stringify(gitInfo.branch),
     __BUILD_COMMIT__: JSON.stringify(gitInfo.commit),
     __BUILD_BADGE_VISIBLE__: JSON.stringify(showBuildBadge),
+    __BUILD_TARGET__: JSON.stringify(buildTarget),
   },
-  // GitHub Pages 发布时使用相对路径，避免仓库子路径导致资源 404
-  base: process.env.GITHUB_PAGES ? './' : '/',
+  // GitHub Pages 鍙戝竷鏃朵娇鐢ㄧ浉瀵硅矾寰勶紝閬垮厤浠撳簱瀛愯矾寰勫鑷磋祫婧?404
+  base: buildTarget === 'native' || process.env.GITHUB_PAGES ? './' : './',
   esbuild: {
-    // 只剥 debugger，保留 console.* —— 部署后按 F12 仍能看到运行时日志，方便排查。
+    // 鍙墺 debugger锛屼繚鐣?console.* 鈥斺€?閮ㄧ讲鍚庢寜 F12 浠嶈兘鐪嬪埌杩愯鏃舵棩蹇楋紝鏂逛究鎺掓煡銆?
     drop: ['debugger'],
   },
   server: {
+    fs: {
+      allow: [PROJECT_ROOT],
+    },
     proxy: {
       '/api/minimax/t2a': {
         target: 'https://api.minimaxi.com',
         changeOrigin: true,
         secure: true,
         rewrite: () => '/v1/t2a_v2',
-        // 注：Vite dev proxy（基于 node http-proxy）不支持 `router` 动态选 target，
-        // 之前这里写的 router 回调实际从未生效（被静默忽略）。开发期统一走国服；
-        // 海外区域路由在生产环境（Netlify / Cloudflare 函数）里按请求头处理。
+        // 娉細Vite dev proxy锛堝熀浜?node http-proxy锛変笉鏀寔 `router` 鍔ㄦ€侀€?target锛?
+        // 涔嬪墠杩欓噷鍐欑殑 router 鍥炶皟瀹為檯浠庢湭鐢熸晥锛堣闈欓粯蹇界暐锛夈€傚紑鍙戞湡缁熶竴璧板浗鏈嶏紱
+        // 娴峰鍖哄煙璺敱鍦ㄧ敓浜х幆澧冿紙Netlify / Cloudflare 鍑芥暟锛夐噷鎸夎姹傚ご澶勭悊銆?
       },
       '/api/minimax/get-voice': {
         target: 'https://api.minimaxi.com',
@@ -94,12 +110,13 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
+    outDir,
+    emptyOutDir: true,
     assetsDir: 'assets',
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
       onwarn(warning, defaultHandler) {
-        // 抑制动态导入与静态导入混合的无害警告
+        // 鎶戝埗鍔ㄦ€佸鍏ヤ笌闈欐€佸鍏ユ贩鍚堢殑鏃犲璀﹀憡
         if (warning.message?.includes('dynamic import will not move module into another chunk')) return;
         defaultHandler(warning);
       },
@@ -123,5 +140,7 @@ export default defineConfig({
         }
       }
     }
-  }
+  }
+  };
 });
+

@@ -1,13 +1,14 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+﻿import type { CapacitorConfig } from '@capacitor/cli';
 
 const liveUpdatesAppId = process.env.VITE_MORO_APPFLOW_APP_ID?.trim() || '';
 const liveUpdatesChannel = process.env.VITE_MORO_APPFLOW_CHANNEL?.trim() || 'Production';
 const liveUpdatesMaxVersions = Number(process.env.VITE_MORO_APPFLOW_MAX_VERSIONS || 2);
+const webDir = process.env.MORO_CAP_WEB_DIR?.trim() || 'dist-native';
 
 const config: CapacitorConfig = {
   appId: 'com.moro.app',
   appName: 'Moro',
-  webDir: 'dist',
+  webDir,
   server: {
     androidScheme: 'https',
     cleartext: false,
@@ -38,3 +39,4 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
