@@ -1,6 +1,44 @@
 apply plugin: 'com.android.application'
 
 def moroReleaseCertSha256 = (project.findProperty('MORO_RELEASE_CERT_SHA256') ?: System.getenv('MORO_RELEASE_CERT_SHA256') ?: '').toString().trim().toLowerCase()
+def moroAndroidSigningPropertiesPath = (project.findProperty('MORO_ANDROID_SIGNING_PROPERTIES') ?: System.getenv('MORO_ANDROID_SIGNING_PROPERTIES') ?: '').toString().trim()
+def moroAndroidSigningPropertiesFile = moroAndroidSigningPropertiesPath ? file(moroAndroidSigningPropertiesPath) : null
+def moroAndroidSigningProperties = [:]
+if (moroAndroidSigningPropertiesFile && moroAndroidSigningPropertiesFile.exists()) {
+    moroAndroidSigningPropertiesFile.eachLine('UTF-8') { rawLine ->
+        def line = rawLine.trim()
+        if (!line || line.startsWith('#')) return
+        def splitAt = line.indexOf('=')
+        if (splitAt <= 0) return
+        moroAndroidSigningProperties[line.substring(0, splitAt).trim()] = line.substring(splitAt + 1).trim()
+    }
+}
+
+def readSigningProperty = { String name ->
+    def direct = (project.findProperty(name) ?: System.getenv(name) ?: '').toString().trim()
+    if (direct) return direct
+
+    def legacyNames = [
+        'MORO_ANDROID_KEYSTORE_PATH': 'keystore',
+        'MORO_ANDROID_KEY_ALIAS': 'alias',
+        'MORO_ANDROID_KEYSTORE_PASSWORD': 'storePassword',
+        'MORO_ANDROID_KEY_PASSWORD': 'keyPassword',
+    ]
+    def value = moroAndroidSigningProperties[name] ?: moroAndroidSigningProperties[legacyNames[name] ?: '']
+    return value == null ? '' : value.toString().trim()
+}
+
+def moroAndroidKeystorePath = readSigningProperty('MORO_ANDROID_KEYSTORE_PATH')
+if (moroAndroidKeystorePath) {
+    def keystoreFile = new File(moroAndroidKeystorePath)
+    if (!keystoreFile.isAbsolute() && moroAndroidSigningPropertiesFile && moroAndroidSigningPropertiesFile.parentFile) {
+        moroAndroidKeystorePath = new File(moroAndroidSigningPropertiesFile.parentFile, moroAndroidKeystorePath).path
+    }
+}
+def moroAndroidKeyAlias = readSigningProperty('MORO_ANDROID_KEY_ALIAS')
+def moroAndroidKeystorePassword = readSigningProperty('MORO_ANDROID_KEYSTORE_PASSWORD')
+def moroAndroidKeyPassword = readSigningProperty('MORO_ANDROID_KEY_PASSWORD')
+def hasMoroReleaseSigning = moroAndroidKeystorePath && moroAndroidKeyAlias && moroAndroidKeystorePassword && moroAndroidKeyPassword
 
 android {
     namespace "com.moro.app"
@@ -12,8 +50,8 @@ android {
         applicationId "com.moro.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "1.0.3"
+        versionCode 5
+        versionName "1.0.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "MORO_RELEASE_CERT_SHA256", "\"${moroReleaseCertSha256.replace('"', '')}\""
         aaptOptions {
@@ -22,11 +60,29 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasMoroReleaseSigning) {
+                storeFile file(moroAndroidKeystorePath)
+                storePassword moroAndroidKeystorePassword
+                keyAlias moroAndroidKeyAlias
+                keyPassword moroAndroidKeyPassword
+                v1SigningEnabled true
+                v2SigningEnabled true
+            }
+        }
+    }
     buildTypes {
         release {
             debuggable false
+            jniDebuggable false
+            renderscriptDebuggable false
+            zipAlignEnabled true
             minifyEnabled true
             shrinkResources true
+            if (hasMoroReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

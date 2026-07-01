@@ -1,10 +1,10 @@
 # 应用更新（GitHub Releases + Appflow）
 
-Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、下载新版 APK、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
+Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、获取新版安装包、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
 
 ## APK 更新发布流程
 
-推荐把 Android APK 和 `moro-update.json` 一起放到 GitHub Releases。当前安装包默认检查 [SAWA-25/moro](https://github.com/SAWA-25/moro) 的 latest release，不需要在 App 里配置。
+推荐把 Android APK 和 `moro-update.json` 一起放到 GitHub Releases。当前安装包默认检查当前项目 [SAWA-25/moro-native](https://github.com/SAWA-25/moro-native) 的 latest release，不需要在 App 里配置。
 
 为了让清单里的下载地址长期稳定，发布 Release 时建议把 APK asset 命名为 `moro.apk`。如果你想带版本号命名也可以，把下面清单里的 `apkUrl` / `cnApkUrl` 改成对应文件名即可。
 
@@ -12,13 +12,13 @@ Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普�
 
 ```dotenv
 VITE_MORO_RELEASE_OWNER=SAWA-25
-VITE_MORO_RELEASE_REPO=moro
+VITE_MORO_RELEASE_REPO=moro-native
 ```
 
 也可以直接指定完整的 GitHub Latest Release API 地址，适合走自己的代理或镜像：
 
 ```dotenv
-VITE_MORO_RELEASE_API_URL=https://api.github.com/repos/SAWA-25/moro/releases/latest
+VITE_MORO_RELEASE_API_URL=https://api.github.com/repos/SAWA-25/moro-native/releases/latest
 ```
 
 如果不想走 GitHub Release API，也可以指定固定更新清单：
@@ -37,7 +37,7 @@ PowerShell 临时打包示例：
 
 ```powershell
 $env:VITE_MORO_RELEASE_OWNER="SAWA-25"
-$env:VITE_MORO_RELEASE_REPO="moro"
+$env:VITE_MORO_RELEASE_REPO="moro-native"
 pnpm build
 pnpm cap:sync
 ```
@@ -52,8 +52,8 @@ pnpm cap:sync
 {
   "versionCode": 2,
   "versionName": "1.0.1",
-  "apkUrl": "https://github.com/SAWA-25/moro/releases/latest/download/moro.apk",
-  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro%2Freleases%2Flatest%2Fdownload%2Fmoro.apk",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
+  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Flatest%2Fdownload%2Fmoro.apk",
   "sha256": "把 APK 的 SHA-256 写在这里，推荐填写",
   "sizeBytes": 123456789,
   "releaseNotes": "修复若干问题\n新增若干功能",

@@ -172,6 +172,14 @@ import {
   markManualUpdateNoticeSeen,
 } from '../utils/manualUpdateNotice';
 import type { ManualUpdateNotice } from '../apps/manual/manualData';
+import {
+  checkConfiguredAppUpdate,
+  getAppUpdatePackageLabel,
+  getAppUpdateUserErrorMessage,
+  openAppUpdatePackage,
+  type AppUpdateCheckResult,
+  type ApkDownloadProgress,
+} from '../utils/appUpdates';
 
 /*
 // Internal Error Boundary Component
@@ -281,6 +289,7 @@ class AppErrorBoundary extends Component<{ children: React.ReactNode, onCloseApp
 */
 
 const DISCLAIMER_KEY = 'moro_disclaimer_accepted';
+const DESKTOP_APP_UPDATE_SEEN_PREFIX = 'moro_desktop_app_update_seen_v1';
 
 type ImportRecoveryMarker = {
   startedAt?: number;
@@ -489,6 +498,127 @@ const ManualUpdateNoticePopup: React.FC<{
   );
 };
 
+const getDesktopAppUpdateSeenKey = (result: AppUpdateCheckResult): string =>
+  `${DESKTOP_APP_UPDATE_SEEN_PREFIX}:${result.latest.platform || result.current.platform || 'native'}:${result.latest.versionCode}`;
+
+const hasSeenDesktopAppUpdate = (result: AppUpdateCheckResult): boolean => {
+  try {
+    return localStorage.getItem(getDesktopAppUpdateSeenKey(result)) === '1';
+  } catch {
+    return false;
+  }
+};
+
+const markDesktopAppUpdateSeen = (result: AppUpdateCheckResult): void => {
+  try {
+    localStorage.setItem(getDesktopAppUpdateSeenKey(result), '1');
+  } catch { /* ignore */ }
+};
+
+const DesktopAppUpdatePopup: React.FC<{
+  result: AppUpdateCheckResult | null;
+  busy: boolean;
+  progress: ApkDownloadProgress | null;
+  status: string;
+  onClose: () => void;
+  onUpdate: (useDomesticLine?: boolean) => void;
+}> = ({ result, busy, progress, status, onClose, onUpdate }) => {
+  if (!result) return null;
+  const packageLabel = getAppUpdatePackageLabel(result.latest);
+  const hasDomesticLine = !!result.latest.domesticDownloadUrl;
+  const percent = progress?.status === 'downloading' ? Math.round(progress.progress * 100) : 0;
+  const notes = result.latest.releaseNotes
+    ? result.latest.releaseNotes.split('\n').map(line => line.trim()).filter(Boolean).slice(0, 4)
+    : [];
+
+  return (
+    <div className="fixed inset-0 z-[9997] flex items-center justify-center p-5 animate-fade-in">
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-md" onClick={busy ? undefined : onClose} />
+      <div className="relative w-full max-w-sm overflow-hidden rounded-[2rem] bg-[#fffdf8] border border-white/70 shadow-2xl animate-slide-up">
+        <button
+          onClick={onClose}
+          disabled={busy}
+          className="absolute right-4 top-4 z-10 h-8 w-8 rounded-full bg-white/80 border border-black/10 flex items-center justify-center text-[#5c5143] active:scale-95 transition-transform disabled:opacity-45"
+          aria-label="关闭版本更新"
+        >
+          <X size={15} weight="bold" />
+        </button>
+
+        <div className="px-6 pt-7 pb-5">
+          <div className="h-12 w-12 rounded-[18px] bg-[#23211d] text-[#fffdf8] flex items-center justify-center shadow-[0_14px_28px_-18px_rgba(35,33,29,0.8)]">
+            <BookOpenText size={23} weight="fill" />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full bg-[#23211d] text-[#fffdf8] text-[10px] font-black">
+              新版本
+            </span>
+            <span className="label-mono text-[9px] tracking-[0.16em] text-[#9a8c75]">
+              {packageLabel} · {result.latest.versionName}
+            </span>
+          </div>
+          <h2 className="mt-3 text-[20px] font-black leading-snug tracking-wide text-[#2f2a24]">
+            Moro 有新安装包
+          </h2>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-[#5c5143]">
+            当前 {result.current.versionName || '?'}（{result.current.versionCode || 0}），新版本 {result.latest.versionName}（{result.latest.versionCode}）。
+            这个提醒只会对本版本出现一次。
+          </p>
+
+          {notes.length > 0 && (
+            <div className="mt-4 max-h-[26vh] overflow-y-auto no-scrollbar space-y-2">
+              {notes.map((note, index) => (
+                <div key={`${result.latest.versionCode}-${index}`} className="rounded-[14px] bg-[#f7f1e6] border border-black/[0.06] px-3 py-2 text-[11.5px] leading-relaxed text-[#4d4439]">
+                  {note.replace(/^[-*]\s*/, '')}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {status && (
+            <div className="mt-4 rounded-[14px] border border-[#e7e1d6] bg-white/82 px-3 py-2.5 text-[11px] leading-relaxed text-[#69716d]">
+              {status}
+              {percent > 0 && (
+                <div className="mt-2 h-1.5 rounded-full bg-[#ece6dc] overflow-hidden">
+                  <div className="h-full rounded-full bg-[#23211d]" style={{ width: `${percent}%` }} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={`px-6 pb-6 grid gap-3 ${hasDomesticLine ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="py-3 bg-[#f1ede5] text-[#5c5143] font-black rounded-2xl active:scale-95 transition-transform text-sm disabled:opacity-45"
+          >
+            稍后
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onUpdate(false)}
+            className="py-3 bg-[#23211d] text-[#fffdf8] font-black rounded-2xl shadow-lg shadow-slate-300/50 active:scale-95 transition-transform text-sm disabled:opacity-45"
+          >
+            去更新
+          </button>
+          {hasDomesticLine && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onUpdate(true)}
+              className="py-3 bg-[#7fa8b3] text-white font-black rounded-2xl shadow-lg shadow-slate-300/50 active:scale-95 transition-transform text-sm disabled:opacity-45"
+            >
+              国内线
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // App 懒加载占位：关键是「延迟出现」。chunk 命中缓存/快速加载只需几十毫秒，这种时长用户
 // 本就无感——但 Suspense fallback 会立刻渲染，占位一闪反而把无感瞬切变成能被看见的打断
 // （loading spinner 闪烁反模式）。所以前 ~220ms 一律渲染空（无感），只有真的慢才柔和浮现。
@@ -545,6 +675,11 @@ const PhoneShell: React.FC = () => {
   const [mountedApps, setMountedApps] = useState<AppID[]>(() => [AppID.Launcher]);
   const [manualUpdateNotice, setManualUpdateNotice] = useState<ManualUpdateNotice | null>(null);
   const [manualUpdateNoticeArmed, setManualUpdateNoticeArmed] = useState(false);
+  const [desktopAppUpdate, setDesktopAppUpdate] = useState<AppUpdateCheckResult | null>(null);
+  const [desktopAppUpdateBusy, setDesktopAppUpdateBusy] = useState(false);
+  const [desktopAppUpdateProgress, setDesktopAppUpdateProgress] = useState<ApkDownloadProgress | null>(null);
+  const [desktopAppUpdateStatus, setDesktopAppUpdateStatus] = useState('');
+  const desktopAppUpdateCheckedRef = useRef(false);
 
   useEffect(() => {
     setMountedApps(prev => prev.includes(activeApp) ? prev : [...prev, activeApp]);
@@ -629,6 +764,38 @@ const PhoneShell: React.FC = () => {
   }, [showDisclaimer, showImportRecoveryPrompt, showLike520Popup, isDataLoaded]);
 
   useEffect(() => {
+    if (desktopAppUpdateCheckedRef.current) return;
+    if (!nativeRuntime || !isDataLoaded || isLocked || activeApp !== AppID.Launcher) return;
+    if (showDisclaimer || showImportRecoveryPrompt || showLike520Popup || showWorkerUpdateReminder) return;
+
+    let cancelled = false;
+    const check = async () => {
+      desktopAppUpdateCheckedRef.current = true;
+      try {
+        const result = await checkConfiguredAppUpdate();
+        if (cancelled || !result.updateAvailable || hasSeenDesktopAppUpdate(result)) return;
+        setDesktopAppUpdate(result);
+      } catch (error) {
+        console.warn('[PhoneShell] desktop app update check failed', error);
+      }
+    };
+    const timer = window.setTimeout(() => { void check(); }, 1200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    activeApp,
+    isDataLoaded,
+    isLocked,
+    nativeRuntime,
+    showDisclaimer,
+    showImportRecoveryPrompt,
+    showLike520Popup,
+    showWorkerUpdateReminder,
+  ]);
+
+  useEffect(() => {
     const wasLocked = previousLockedRef.current;
     previousLockedRef.current = isLocked;
     if (wasLocked && !isLocked) {
@@ -644,7 +811,8 @@ const PhoneShell: React.FC = () => {
       showDisclaimer ||
       showImportRecoveryPrompt ||
       showLike520Popup ||
-      showWorkerUpdateReminder
+      showWorkerUpdateReminder ||
+      desktopAppUpdate
     ) {
       return;
     }
@@ -663,6 +831,7 @@ const PhoneShell: React.FC = () => {
     showImportRecoveryPrompt,
     showLike520Popup,
     showWorkerUpdateReminder,
+    desktopAppUpdate,
   ]);
 
   const acknowledgeManualUpdateNotice = () => {
@@ -687,6 +856,47 @@ const PhoneShell: React.FC = () => {
       payload: { page: 'updates' },
     });
     openApp(AppID.Manual);
+  };
+
+  const closeDesktopAppUpdate = () => {
+    if (desktopAppUpdate) markDesktopAppUpdateSeen(desktopAppUpdate);
+    setDesktopAppUpdate(null);
+    setDesktopAppUpdateStatus('');
+    setDesktopAppUpdateProgress(null);
+    setManualUpdateNoticeArmed(true);
+  };
+
+  const installDesktopAppUpdate = async (useDomesticLine = false) => {
+    if (!desktopAppUpdate || desktopAppUpdateBusy) return;
+    setDesktopAppUpdateBusy(true);
+    setDesktopAppUpdateProgress(null);
+    setDesktopAppUpdateStatus(useDomesticLine ? '正在使用国内线路准备更新...' : '正在准备更新...');
+    try {
+      await openAppUpdatePackage(desktopAppUpdate.latest, {
+        useDomesticLine,
+        onProgress: progress => {
+          setDesktopAppUpdateProgress(progress);
+          if (progress.status === 'downloading') {
+            setDesktopAppUpdateStatus(`正在下载更新包：${Math.round(progress.progress * 100)}%`);
+          } else if (progress.status === 'verifying') {
+            setDesktopAppUpdateStatus('正在校验更新包...');
+          } else if (progress.status === 'installing') {
+            setDesktopAppUpdateStatus('正在打开系统安装器...');
+          }
+        },
+      });
+      markDesktopAppUpdateSeen(desktopAppUpdate);
+      setDesktopAppUpdateStatus(desktopAppUpdate.latest.platform === 'ios'
+        ? '更新页面已打开，请按页面提示安装。'
+        : '系统安装器已打开，请按提示确认安装。');
+      window.setTimeout(() => setDesktopAppUpdate(null), 900);
+    } catch (error: any) {
+      console.warn('[PhoneShell] desktop app update install failed', error);
+      const message = getAppUpdateUserErrorMessage('更新失败，请稍后到文具盒里重试。');
+      setDesktopAppUpdateStatus(message);
+    } finally {
+      setDesktopAppUpdateBusy(false);
+    }
   };
 
   // Capacitor Native Handling
@@ -1004,7 +1214,18 @@ const PhoneShell: React.FC = () => {
          />
        )}
 
-       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && manualUpdateNotice && (
+       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && desktopAppUpdate && (
+         <DesktopAppUpdatePopup
+           result={desktopAppUpdate}
+           busy={desktopAppUpdateBusy}
+           progress={desktopAppUpdateProgress}
+           status={desktopAppUpdateStatus}
+           onClose={closeDesktopAppUpdate}
+           onUpdate={installDesktopAppUpdate}
+         />
+       )}
+
+       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && !desktopAppUpdate && manualUpdateNotice && (
          <ManualUpdateNoticePopup
            notice={manualUpdateNotice}
            onClose={acknowledgeManualUpdateNotice}

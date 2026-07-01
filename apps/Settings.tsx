@@ -33,7 +33,9 @@ import {
 } from '../utils/contextBudget';
 import {
     checkConfiguredAppUpdate,
-    downloadAndInstallApk,
+    getAppUpdatePackageLabel,
+    getAppUpdateUserErrorMessage,
+    openAppUpdatePackage,
     getNativeAppInfo,
     openInstallerPermissionSettings,
     type AppUpdateCheckResult,
@@ -799,7 +801,7 @@ const Settings: React.FC = () => {
       } catch (e: any) {
           console.warn('[Settings] check app update failed', e);
           setApkUpdateCheck(null);
-          const message = e?.message || '检查更新失败';
+          const message = getAppUpdateUserErrorMessage('检查更新失败，请稍后再试。');
           setApkUpdateStatus(message);
           addToast(message, 'error');
       } finally {
@@ -822,23 +824,21 @@ const Settings: React.FC = () => {
               latest = result.latest;
           } catch (e: any) {
               console.warn('[Settings] load app update before download failed', e);
-              addToast(e?.message || '读取更新清单失败', 'error');
+              addToast(getAppUpdateUserErrorMessage('读取更新清单失败，请稍后再试。'), 'error');
               return;
           }
       }
-      if (useDomesticLine && !latest.domesticApkUrl) {
+      if (useDomesticLine && !(latest.domesticDownloadUrl || latest.domesticApkUrl || latest.domesticIpaUrl)) {
           addToast('国内线路暂不可用', 'error');
           return;
       }
 
       setApkUpdateBusy(true);
-      setApkUpdateStatus(useDomesticLine ? '正在通过国内线路下载更新包...' : '正在下载更新包...');
+      const packageLabel = getAppUpdatePackageLabel(latest);
+      setApkUpdateStatus(useDomesticLine ? `正在通过国内线路获取${packageLabel}...` : `正在获取${packageLabel}...`);
       setApkDownloadProgress(null);
       try {
-          const downloadTarget = useDomesticLine && latest.domesticApkUrl
-              ? { ...latest, apkUrl: latest.domesticApkUrl }
-              : latest;
-          await downloadAndInstallApk(downloadTarget, progress => {
+          await openAppUpdatePackage(latest, { useDomesticLine, onProgress: progress => {
               setApkDownloadProgress(progress);
               if (progress.status === 'downloading') {
                   setApkUpdateStatus(`正在下载更新包：${Math.round(progress.progress * 100)}%`);
@@ -847,11 +847,13 @@ const Settings: React.FC = () => {
               } else if (progress.status === 'installing') {
                   setApkUpdateStatus('正在打开系统安装器...');
               }
-          });
-          setApkUpdateStatus('系统安装器已打开，请按提示确认安装。');
+          } });
+          setApkUpdateStatus(latest.platform === 'ios'
+              ? '更新页面已打开，请按页面提示安装。'
+              : '系统安装器已打开，请按提示确认安装。');
       } catch (e: any) {
           console.warn('[Settings] download app update failed', e);
-          const message = e?.message || '下载或安装失败';
+          const message = getAppUpdateUserErrorMessage('下载或安装失败，请稍后再试。');
           setApkUpdateStatus(message);
           addToast(message, 'error');
       } finally {
@@ -1481,21 +1483,21 @@ const Settings: React.FC = () => {
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-black text-[#2f3437]">当前安装包</p>
                                     <p className="text-[10px] text-[#69716d] font-mono truncate">
-                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · code ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入 Android App'}
+                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · code ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入安装版'}
                                     </p>
                                 </div>
-                                {nativeAppInfo?.native && !nativeAppInfo.canRequestPackageInstalls && (
+                                {nativeAppInfo?.platform === 'android' && !nativeAppInfo.canRequestPackageInstalls && (
                                     <button type="button" onClick={handleOpenInstallPermission} className={`shrink-0 px-2.5 py-1.5 text-[10px] font-black ${STICKER}`}>
                                         安装权限
                                     </button>
                                 )}
                             </div>
                             <p className="text-[10px] text-[#69716d] mt-2 leading-relaxed">
-                                有新版本时会下载安装包并打开 Android 系统安装器，仍需你手动确认安装。
+                                Android 会下载 APK 并打开系统安装器；iOS 会打开 IPA 或安装页，仍需你手动确认。
                             </p>
                         </div>
 
-                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.domesticApkUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
+                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.domesticDownloadUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
                             <button
                                 type="button"
                                 disabled={apkUpdateBusy}
@@ -1510,9 +1512,9 @@ const Settings: React.FC = () => {
                                 onClick={() => handleDownloadApkUpdate(false)}
                                 className={`py-2.5 text-xs font-black disabled:opacity-40 ${apkUpdateCheck?.updateAvailable ? INK_BTN : STICKER}`}
                             >
-                                下载新版
+                                获取新版
                             </button>
-                            {apkUpdateCheck?.latest.domesticApkUrl && (
+                            {apkUpdateCheck?.latest.domesticDownloadUrl && (
                                 <button
                                     type="button"
                                     disabled={apkUpdateBusy || !apkUpdateCheck?.updateAvailable}

@@ -1,10 +1,14 @@
 import { Capacitor, CapacitorHttp, registerPlugin, type PluginListenerHandle } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { APP_VERSION } from './buildInfo';
 
 const GITHUB_RELEASE_MANIFEST_ASSET = 'moro-update.json';
 const DEFAULT_RELEASE_OWNER = 'SAWA-25';
-const DEFAULT_RELEASE_REPO = 'moro';
+const DEFAULT_RELEASE_REPO = 'moro-native';
 const DEFAULT_GITHUB_PROXY_URL = 'https://sullymeow.ccwu.cc/github?url=';
+
+export type AppUpdatePlatform = 'android' | 'ios';
+export type AppUpdatePackageKind = 'apk' | 'ipa' | 'url';
 
 export interface NativeAppInfo {
   native: boolean;
@@ -16,10 +20,16 @@ export interface NativeAppInfo {
 }
 
 export interface AppUpdateManifest {
+  platform?: AppUpdatePlatform;
+  packageKind?: AppUpdatePackageKind;
   versionCode: number;
   versionName: string;
+  downloadUrl?: string;
   apkUrl: string;
+  ipaUrl?: string;
   domesticApkUrl?: string;
+  domesticIpaUrl?: string;
+  domesticDownloadUrl?: string;
   sha256?: string;
   sizeBytes?: number;
   releaseNotes?: string;
@@ -55,6 +65,9 @@ const envReleaseRepo = () => (import.meta.env.VITE_MORO_RELEASE_REPO || DEFAULT_
 const envReleaseApiUrl = () => (import.meta.env.VITE_MORO_RELEASE_API_URL || '').trim();
 const envGithubProxyUrl = () => (import.meta.env.VITE_MORO_GITHUB_PROXY_URL || DEFAULT_GITHUB_PROXY_URL).trim();
 
+const getUpdatePlatform = (platform = Capacitor.getPlatform()): AppUpdatePlatform =>
+  platform === 'ios' ? 'ios' : 'android';
+
 export function hasConfiguredAppUpdateSource(): boolean {
   return !!envManifestUrl() || !!envReleaseApiUrl() || (!!envReleaseOwner() && !!envReleaseRepo());
 }
@@ -70,9 +83,27 @@ export async function getNativeAppInfo(): Promise<NativeAppInfo> {
     canRequestPackageInstalls: false,
   };
 
-  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('MoroUpdater')) return fallback;
+  if (!Capacitor.isNativePlatform()) return fallback;
+
+  if (Capacitor.isPluginAvailable('MoroUpdater')) {
+    try {
+      return await MoroUpdater.getInfo();
+    } catch {
+      // Fall through to Capacitor App info below.
+    }
+  }
+
   try {
-    return await MoroUpdater.getInfo();
+    const info = await CapApp.getInfo();
+    const buildNumber = Number(info.build);
+    return {
+      native: true,
+      platform,
+      packageName: info.id || '',
+      versionName: info.version || APP_VERSION,
+      versionCode: Number.isFinite(buildNumber) ? buildNumber : (info.build || 0),
+      canRequestPackageInstalls: platform !== 'android',
+    };
   } catch {
     return fallback;
   }
@@ -94,10 +125,20 @@ const pickNumber = (...values: unknown[]): number => {
 };
 
 const normalizeNotes = (value: unknown): string | undefined => {
-  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean).join('\n');
-  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    const notes = value.map(v => sanitizeAppUpdateDisplayText(String(v).trim())).filter(Boolean).join('\n');
+    return notes || undefined;
+  }
+  if (typeof value === 'string' && value.trim()) return sanitizeAppUpdateDisplayText(value.trim());
   return undefined;
 };
+
+export const sanitizeAppUpdateDisplayText = (value: string): string =>
+  value
+    .replace(/https?:\/\/[^\s<>"'，。！？、)）\]}]+/gi, '[链接已隐藏]')
+    .replace(/\b(?:www\.)?github\.com\/[^\s<>"'，。！？、)）\]}]+/gi, '[链接已隐藏]');
+
+export const getAppUpdateUserErrorMessage = (fallback = '更新失败，请稍后重试。'): string => fallback;
 
 const isGithubUrl = (url: string): boolean => {
   try {
@@ -119,11 +160,6 @@ const proxifyGithubUrl = (url: string): string | undefined => {
 const addCacheBust = (url: string): string => {
   const bust = url.includes('?') ? '&' : '?';
   return `${url}${bust}_=${Date.now()}`;
-};
-
-const isDefaultGithubProxyUrl = (url: string): boolean => {
-  const proxy = envGithubProxyUrl();
-  return proxy === DEFAULT_GITHUB_PROXY_URL && url.startsWith(DEFAULT_GITHUB_PROXY_URL);
 };
 
 const fetchJsonNoStore = async (url: string, headers: Record<string, string> = {}): Promise<any> => {
@@ -201,68 +237,164 @@ const isDifferentReleaseManifest = (manifest: AppUpdateManifest, release: GitHub
   return Number.isFinite(releaseVersionCode) && releaseVersionCode > 0 && manifest.versionCode !== releaseVersionCode;
 };
 
-const parseAppUpdateManifest = (data: any, baseUrl: string, fallbackApkUrl?: string): AppUpdateManifest => {
-  const android = data?.android || {};
-  const versionCode = pickNumber(data?.versionCode, data?.version_code, android.versionCode, android.version_code);
-  const versionName = pickString(data?.versionName, data?.version_name, android.versionName, android.version_name, `v${versionCode}`);
-  const rawApkUrl = pickString(
-    data?.apkUrl,
-    data?.apk_url,
-    data?.downloadUrl,
-    data?.download_url,
-    android.apkUrl,
-    android.apk_url,
-    android.downloadUrl,
-    fallbackApkUrl,
+const getPlatformData = (data: any, platform: AppUpdatePlatform): any => {
+  if (!data || typeof data !== 'object') return {};
+  if (platform === 'ios') return data.ios || data.iOS || data.apple || {};
+  return data.android || {};
+};
+
+const packageKindFromUrl = (platform: AppUpdatePlatform, url: string): AppUpdatePackageKind => {
+  if (platform === 'android') return 'apk';
+  try {
+    const path = new URL(url).pathname.toLowerCase();
+    return path.endsWith('.ipa') ? 'ipa' : 'url';
+  } catch {
+    return /\.ipa(?:$|\?)/i.test(url) ? 'ipa' : 'url';
+  }
+};
+
+const parseAppUpdateManifest = (
+  data: any,
+  baseUrl: string,
+  fallbackApkUrl?: string,
+  fallbackIpaUrl?: string,
+): AppUpdateManifest => {
+  const platform = getUpdatePlatform();
+  const scoped = getPlatformData(data, platform);
+  const versionCode = pickNumber(
+    scoped.versionCode,
+    scoped.version_code,
+    scoped.buildNumber,
+    scoped.build_number,
+    scoped.build,
+    data?.[`${platform}VersionCode`],
+    data?.[`${platform}_version_code`],
+    data?.versionCode,
+    data?.version_code,
   );
-  const rawDomesticApkUrl = pickString(
-    data?.domesticApkUrl,
-    data?.domestic_apk_url,
-    data?.cnApkUrl,
-    data?.cn_apk_url,
-    data?.apkUrlCn,
-    data?.apk_url_cn,
-    data?.mirrorApkUrl,
-    data?.mirror_apk_url,
-    android.domesticApkUrl,
-    android.domestic_apk_url,
-    android.cnApkUrl,
-    android.cn_apk_url,
-    android.apkUrlCn,
-    android.apk_url_cn,
-    android.mirrorApkUrl,
-    android.mirror_apk_url,
+  const versionName = pickString(
+    scoped.versionName,
+    scoped.version_name,
+    scoped.version,
+    data?.[`${platform}VersionName`],
+    data?.[`${platform}_version_name`],
+    data?.versionName,
+    data?.version_name,
+    `v${versionCode}`,
   );
+  const rawDownloadUrl = platform === 'ios'
+    ? pickString(
+      scoped.ipaUrl,
+      scoped.ipa_url,
+      scoped.downloadUrl,
+      scoped.download_url,
+      scoped.installUrl,
+      scoped.install_url,
+      scoped.appStoreUrl,
+      scoped.app_store_url,
+      data?.iosIpaUrl,
+      data?.ios_ipa_url,
+      data?.ipaUrl,
+      data?.ipa_url,
+      data?.iosDownloadUrl,
+      data?.ios_download_url,
+      data?.iosInstallUrl,
+      data?.ios_install_url,
+      data?.appStoreUrl,
+      data?.app_store_url,
+      fallbackIpaUrl,
+    )
+    : pickString(
+      scoped.apkUrl,
+      scoped.apk_url,
+      scoped.downloadUrl,
+      scoped.download_url,
+      data?.apkUrl,
+      data?.apk_url,
+      data?.downloadUrl,
+      data?.download_url,
+      fallbackApkUrl,
+    );
+  const rawDomesticDownloadUrl = platform === 'ios'
+    ? pickString(
+      scoped.domesticIpaUrl,
+      scoped.domestic_ipa_url,
+      scoped.cnIpaUrl,
+      scoped.cn_ipa_url,
+      scoped.ipaUrlCn,
+      scoped.ipa_url_cn,
+      scoped.mirrorIpaUrl,
+      scoped.mirror_ipa_url,
+      scoped.domesticDownloadUrl,
+      scoped.domestic_download_url,
+      data?.domesticIpaUrl,
+      data?.domestic_ipa_url,
+      data?.cnIpaUrl,
+      data?.cn_ipa_url,
+      data?.ipaUrlCn,
+      data?.ipa_url_cn,
+      data?.mirrorIpaUrl,
+      data?.mirror_ipa_url,
+      data?.domesticDownloadUrl,
+      data?.domestic_download_url,
+    )
+    : pickString(
+      scoped.domesticApkUrl,
+      scoped.domestic_apk_url,
+      scoped.cnApkUrl,
+      scoped.cn_apk_url,
+      scoped.apkUrlCn,
+      scoped.apk_url_cn,
+      scoped.mirrorApkUrl,
+      scoped.mirror_apk_url,
+      scoped.domesticDownloadUrl,
+      scoped.domestic_download_url,
+      data?.domesticApkUrl,
+      data?.domestic_apk_url,
+      data?.cnApkUrl,
+      data?.cn_apk_url,
+      data?.apkUrlCn,
+      data?.apk_url_cn,
+      data?.mirrorApkUrl,
+      data?.mirror_apk_url,
+      data?.domesticDownloadUrl,
+      data?.domestic_download_url,
+    );
 
   if (!Number.isFinite(versionCode) || versionCode <= 0) throw new Error('更新信息缺少有效版本号');
-  if (!rawApkUrl) throw new Error('更新包暂不可用');
+  if (!rawDownloadUrl) throw new Error(platform === 'ios' ? 'iOS 更新包暂不可用' : '更新包暂不可用');
 
-  const apkUrl = new URL(rawApkUrl, baseUrl).href;
-  const explicitDomesticApkUrl = rawDomesticApkUrl ? new URL(rawDomesticApkUrl, baseUrl).href : '';
-  const domesticApkUrl = explicitDomesticApkUrl && !isDefaultGithubProxyUrl(explicitDomesticApkUrl)
-    ? explicitDomesticApkUrl
-    : undefined;
-  const sizeBytes = pickNumber(data?.sizeBytes, data?.size_bytes, android.sizeBytes, android.size_bytes);
-  const sha256 = pickString(data?.sha256, data?.sha256sum, android.sha256, android.sha256sum).replace(/\s+/g, '').toLowerCase();
+  const downloadUrl = new URL(rawDownloadUrl, baseUrl).href;
+  const explicitDomesticDownloadUrl = rawDomesticDownloadUrl ? new URL(rawDomesticDownloadUrl, baseUrl).href : '';
+  const domesticDownloadUrl = explicitDomesticDownloadUrl || proxifyGithubUrl(downloadUrl);
+  const sizeBytes = pickNumber(scoped.sizeBytes, scoped.size_bytes, data?.sizeBytes, data?.size_bytes);
+  const sha256 = pickString(scoped.sha256, scoped.sha256sum, data?.sha256, data?.sha256sum).replace(/\s+/g, '').toLowerCase();
+  const packageKind = packageKindFromUrl(platform, downloadUrl);
 
   return {
+    platform,
+    packageKind,
     versionCode: Math.floor(versionCode),
     versionName,
-    apkUrl,
-    domesticApkUrl,
+    downloadUrl,
+    apkUrl: downloadUrl,
+    ipaUrl: platform === 'ios' ? downloadUrl : undefined,
+    domesticApkUrl: platform === 'android' ? domesticDownloadUrl : undefined,
+    domesticIpaUrl: platform === 'ios' ? domesticDownloadUrl : undefined,
+    domesticDownloadUrl,
     sha256: sha256 || undefined,
     sizeBytes: Number.isFinite(sizeBytes) && sizeBytes > 0 ? Math.floor(sizeBytes) : undefined,
-    releaseNotes: normalizeNotes(data?.releaseNotes ?? data?.release_notes ?? data?.notes ?? android.releaseNotes ?? android.notes),
-    mandatory: Boolean(data?.mandatory ?? android.mandatory),
-    publishedAt: pickString(data?.publishedAt, data?.published_at, android.publishedAt, android.published_at) || undefined,
+    releaseNotes: normalizeNotes(scoped.releaseNotes ?? scoped.release_notes ?? scoped.notes ?? data?.releaseNotes ?? data?.release_notes ?? data?.notes),
+    mandatory: Boolean(scoped.mandatory ?? data?.mandatory),
+    publishedAt: pickString(scoped.publishedAt, scoped.published_at, data?.publishedAt, data?.published_at) || undefined,
   };
 };
 
-export async function fetchAppUpdateManifest(manifestUrl: string, fallbackApkUrl?: string): Promise<AppUpdateManifest> {
+export async function fetchAppUpdateManifest(manifestUrl: string, fallbackApkUrl?: string, fallbackIpaUrl?: string): Promise<AppUpdateManifest> {
   const url = manifestUrl.trim();
   if (!url) throw new Error('更新通道暂未接入');
   const data = isGithubUrl(url) ? await fetchGithubJsonNoStore(url) : await fetchJsonNoStore(url);
-  return parseAppUpdateManifest(data, url, fallbackApkUrl);
+  return parseAppUpdateManifest(data, url, fallbackApkUrl, fallbackIpaUrl);
 }
 
 interface GitHubReleaseAsset {
@@ -278,6 +410,7 @@ interface GitHubRelease {
   name?: string;
   body?: string;
   published_at?: string;
+  html_url?: string;
   assets?: GitHubReleaseAsset[];
 }
 
@@ -295,6 +428,15 @@ const findApkAsset = (assets: GitHubReleaseAsset[], preferredName?: string): Git
   }
   return assets.find(asset => /\.apk$/i.test(asset.name || '') && /moro/i.test(asset.name || '') && !!asset.browser_download_url)
     || assets.find(asset => /\.apk$/i.test(asset.name || '') && !!asset.browser_download_url);
+};
+
+const findIpaAsset = (assets: GitHubReleaseAsset[], preferredName?: string): GitHubReleaseAsset | undefined => {
+  if (preferredName) {
+    const exact = assets.find(asset => asset.name === preferredName);
+    if (exact?.browser_download_url) return exact;
+  }
+  return assets.find(asset => /\.ipa$/i.test(asset.name || '') && /moro/i.test(asset.name || '') && !!asset.browser_download_url)
+    || assets.find(asset => /\.ipa$/i.test(asset.name || '') && !!asset.browser_download_url);
 };
 
 const parseVersionCodeFromText = (...values: unknown[]): number => {
@@ -331,13 +473,16 @@ async function fetchGithubReleaseUpdateManifest(): Promise<AppUpdateManifest> {
   const assets = Array.isArray(release.assets) ? release.assets : [];
   const manifestAsset = assets.find(asset => (asset.name || '').toLowerCase() === GITHUB_RELEASE_MANIFEST_ASSET && !!asset.browser_download_url);
   const apk = findApkAsset(assets);
+  const ipa = findIpaAsset(assets);
+  const platform = getUpdatePlatform();
+  const packageAsset = platform === 'ios' ? ipa : apk;
 
   if (manifestAsset?.browser_download_url) {
     try {
       const data = await fetchGithubJsonNoStore(manifestAsset.browser_download_url);
-      const manifest = parseAppUpdateManifest(data, manifestAsset.browser_download_url, apk?.browser_download_url);
+      const manifest = parseAppUpdateManifest(data, manifestAsset.browser_download_url, apk?.browser_download_url, ipa?.browser_download_url);
       if (!isDifferentReleaseManifest(manifest, release)) return manifest;
-      if (!apk?.browser_download_url) return manifest;
+      if (!packageAsset?.browser_download_url) return manifest;
       console.warn('[appUpdates] GitHub release manifest version did not match latest release; falling back to release metadata', {
         manifestVersionName: manifest.versionName,
         manifestVersionCode: manifest.versionCode,
@@ -345,24 +490,34 @@ async function fetchGithubReleaseUpdateManifest(): Promise<AppUpdateManifest> {
         releaseTag: release.tag_name,
       });
     } catch (manifestError) {
-      if (!apk?.browser_download_url) throw manifestError;
+      if (!packageAsset?.browser_download_url) throw manifestError;
       console.warn('[appUpdates] GitHub release manifest asset failed; falling back to release metadata', manifestError);
     }
   }
 
-  if (!apk?.browser_download_url) throw new Error('更新包暂不可用');
+  if (!packageAsset?.browser_download_url) throw new Error(platform === 'ios' ? 'iOS 更新包暂不可用' : '更新包暂不可用');
 
-  const versionCode = inferReleaseVersionCode(release, apk.name);
+  const versionCode = inferReleaseVersionCode(release, packageAsset.name);
   if (!Number.isFinite(versionCode) || versionCode <= 0) {
     throw new Error('更新信息暂不可用');
   }
+  const downloadUrl = packageAsset.browser_download_url;
+  const domesticDownloadUrl = proxifyGithubUrl(downloadUrl);
+  const packageKind = packageKindFromUrl(platform, downloadUrl);
 
   return {
+    platform,
+    packageKind,
     versionCode,
     versionName: versionFromReleaseTag(release.tag_name) || versionFromReleaseTag(release.name) || pickString(release.name, release.tag_name, `v${versionCode}`),
-    apkUrl: apk.browser_download_url,
-    sha256: parseSha256Digest(apk.digest),
-    sizeBytes: typeof apk.size === 'number' && apk.size > 0 ? apk.size : undefined,
+    downloadUrl,
+    apkUrl: downloadUrl,
+    ipaUrl: platform === 'ios' ? downloadUrl : undefined,
+    domesticApkUrl: platform === 'android' ? domesticDownloadUrl : undefined,
+    domesticIpaUrl: platform === 'ios' ? domesticDownloadUrl : undefined,
+    domesticDownloadUrl,
+    sha256: parseSha256Digest(packageAsset.digest),
+    sizeBytes: typeof packageAsset.size === 'number' && packageAsset.size > 0 ? packageAsset.size : undefined,
     releaseNotes: normalizeNotes(release.body),
     publishedAt: release.published_at,
   };
@@ -392,20 +547,52 @@ export async function openInstallerPermissionSettings(): Promise<void> {
   await MoroUpdater.openInstallSettings();
 }
 
+export function getAppUpdateDownloadUrl(manifest: AppUpdateManifest, useDomesticLine = false): string {
+  if (useDomesticLine) {
+    return manifest.domesticDownloadUrl || manifest.domesticApkUrl || manifest.domesticIpaUrl || manifest.downloadUrl || manifest.apkUrl || '';
+  }
+  return manifest.downloadUrl || manifest.apkUrl || manifest.ipaUrl || '';
+}
+
+export function getAppUpdatePackageLabel(manifest?: AppUpdateManifest | null): string {
+  if (manifest?.packageKind === 'url') return '安装页';
+  if (manifest?.packageKind === 'ipa' || manifest?.platform === 'ios') return 'IPA';
+  return 'APK';
+}
+
 export async function downloadAndInstallApk(
   manifest: AppUpdateManifest,
   onProgress?: (progress: ApkDownloadProgress) => void,
 ): Promise<void> {
+  const downloadUrl = getAppUpdateDownloadUrl(manifest);
+  if (!downloadUrl) throw new Error('更新包暂不可用');
+
   if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('MoroUpdater')) {
-    window.open(manifest.apkUrl, '_blank', 'noopener,noreferrer');
+    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
     return;
   }
 
   const fileName = `moro-${manifest.versionName.replace(/[^\w.-]+/g, '-')}-${manifest.versionCode}.apk`;
   const handle = onProgress ? await MoroUpdater.addListener('downloadProgress', onProgress) : null;
   try {
-    await MoroUpdater.downloadAndInstall({ url: manifest.apkUrl, fileName, sha256: manifest.sha256 });
+    await MoroUpdater.downloadAndInstall({ url: downloadUrl, fileName, sha256: manifest.sha256 });
   } finally {
     await handle?.remove();
   }
+}
+
+export async function openAppUpdatePackage(
+  manifest: AppUpdateManifest,
+  options: { useDomesticLine?: boolean; onProgress?: (progress: ApkDownloadProgress) => void } = {},
+): Promise<void> {
+  const downloadUrl = getAppUpdateDownloadUrl(manifest, options.useDomesticLine);
+  if (!downloadUrl) throw new Error('更新包暂不可用');
+  if (manifest.platform === 'android' || manifest.packageKind === 'apk') {
+    const downloadTarget = options.useDomesticLine
+      ? { ...manifest, downloadUrl, apkUrl: downloadUrl }
+      : manifest;
+    await downloadAndInstallApk(downloadTarget, options.onProgress);
+    return;
+  }
+  window.open(downloadUrl, '_blank', 'noopener,noreferrer');
 }
