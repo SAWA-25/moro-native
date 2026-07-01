@@ -3,6 +3,7 @@
 
 import {
     CharacterProfile, ChatTheme, Message, PrivateChatArchive, ChatAlarm, PeriodReminderSettings, PeriodCycleEvent, UserProfile,
+    HealthModuleSettings, HealthRecord, HealthReminder, HealthPlan, HealthSummary, HealthModuleId,
     Task, Anniversary, DiaryEntry, RoomTodo, RoomNote, DailySchedule,
     GalleryImage, FullBackupData, GroupProfile, SocialPost, StudyCourse, GameSession, Worldbook, NovelBook, Emoji, EmojiCategory,
     BankTransaction, BankFullState, DollhouseState, XhsStockImage, XhsActivityRecord, XhsFeedPost, SongSheet, QuizSession, GuidebookSession,
@@ -11,7 +12,8 @@ import {
     PhoneCallLog, ExchangeDiaryBook, InnerVoiceEntry, TavernPreset, Persona, CalendarMark, CharLedgerEntry, CharLifeEvent,
     XunjiMonitorSnapshot, XunjiReportItem, XunjiScreenlifeRun, XunjiSettings,
     RelationshipNetworkAutoSettings, RelationshipNetworkEdge, RelationshipNetworkMessage,
-    TalkSession, CollectionItem, TakeoutOrder, DivinationCard, WerewolfGame, TruthDareSession, TheaterQuizSession,
+    TalkSession, CollectionItem, TakeoutOrder, DivinationCard, WerewolfGame, TruthDareSession, TheaterQuizSession, TheaterFauxPiece,
+    TheaterReflectionSession,
     TwitterTweet, TwitterNotification, TwitterProfile, TwitterAccount, TwitterDMThread, TwitterSearchRecord,
     DesktopPetState
 } from '../types';
@@ -20,7 +22,7 @@ import { exportPostOfficeLocal, importPostOfficeLocal } from './vrWorld/postOffi
 
 // Legacy physical IndexedDB name retained so existing local-first user data stays available.
 const DB_NAME = 'AetherOS_Data';
-const DB_VERSION = 83; // Bumped: v83 period reminders
+const DB_VERSION = 86; // Bumped: v86 theater reflection sessions
 
 const STORE_CHARACTERS = 'characters';
 const STORE_MESSAGES = 'messages';
@@ -28,6 +30,11 @@ const STORE_PRIVATE_CHAT_ARCHIVES = 'private_chat_archives';
 const STORE_CHAT_ALARMS = 'chat_alarms';
 const STORE_PERIOD_REMINDER_SETTINGS = 'period_reminder_settings';
 const STORE_PERIOD_CYCLE_EVENTS = 'period_cycle_events';
+const STORE_HEALTH_MODULE_SETTINGS = 'health_module_settings';
+const STORE_HEALTH_RECORDS = 'health_records';
+const STORE_HEALTH_REMINDERS = 'health_reminders';
+const STORE_HEALTH_PLANS = 'health_plans';
+const STORE_HEALTH_SUMMARIES = 'health_summaries';
 const STORE_EMOJIS = 'emojis';
 const STORE_EMOJI_CATEGORIES = 'emoji_categories'; 
 const STORE_THEMES = 'themes';
@@ -79,7 +86,7 @@ const STORE_VR_PLAYS = 'vr_plays';                // 剧院·历史舞台剧（�
 const STORE_VR_PRESETS = 'vr_presets';            // 剧院·用户自定义写作风格预设（key 为主键）
 const STORE_VR_LETTERS = 'vr_letters';            // 邮局信件（本地存档 + 待寄出/待回复队列）
 const STORE_VR_SETTINGS = 'vr_settings';          // 页外设置单例：独立 API（id='api'）+ 调用记录（id='apilog'）
-const STORE_API_CALL_LOG = 'api_call_log';        // 全局 API 调用记录单例（id='log'，保留近 5 天）
+const STORE_API_CALL_LOG = 'api_call_log';        // 全局 API 后台流水单例（id='log'，保留近 5 天）
 const STORE_PHONE_CALL_LOGS = 'phone_call_logs';  // 电话 App 通话记录（拨出/接听/未接，轻量条目）
 const STORE_EXCHANGE_DIARY = 'exchange_diary_books'; // 日记社：多角色交换日记本（entries 内联在 book 里）
 const STORE_INNER_VOICES = 'inner_voices';        // 偷看心声历史（per-char，不进聊天上下文）
@@ -97,12 +104,14 @@ const STORE_TALK_SESSIONS = 'talk_sessions';      // 折子戏·谈心会话（u
 const STORE_WEREWOLF_GAMES = 'werewolf_games';    // 折子戏·狼人杀对局（一桌熟人开局的完整流程，可存档/续局/回看）
 const STORE_TRUTHDARE_SESSIONS = 'truthdare_sessions'; // 折子戏·真心话大冒险（一圈玩家 + 一串回合记录，可存档/回看/续玩）
 const STORE_THEATER_QUIZ_SESSIONS = 'theater_quiz_sessions'; // 折子戏·番外问卷会话（多角色答题 + 题内评论，可续做/回看）
+const STORE_THEATER_FAUX_PIECES = 'theater_faux_pieces'; // 折子戏·仿真图文历史（微信/微博/备忘录等截图结构化结果）
+const STORE_THEATER_REFLECTION_SESSIONS = 'theater_reflection_sessions'; // 折子戏·对影会话（两个时间里的 TA + 用户短会面）
 const STORE_COLLECTION_ITEMS = 'collection_items'; // 岁时记·典藏馆收录条目（引用谈心/创作社/自习室/折子戏内容）
 const STORE_TAKEOUT_ORDERS = 'takeout_orders';     // 外卖 App 订单（含与骑手/商家的对话、配送进度）
 const STORE_DIVINATION_CARDS = 'divination_cards'; // 折子戏·占卜牌库（塔罗 0~77 / 雷诺曼 1~36 的导入图）
 const STORE_DESKTOP_PET = 'desktop_pet';           // 桌宠 App 状态（角色养成、悬浮窗、提醒）
 
-// API 调用记录：保留近 5 天，超期丢弃；再加一个硬上限防止异常情况撑爆
+// API 后台流水：保留近 5 天，超期丢弃；再加一个硬上限防止异常情况撑爆
 // Message-store change event used by views that derive summaries from IndexedDB.
 type MessagesUpdatedDetail = {
   kind: 'created' | 'updated' | 'deleted' | 'cleared' | 'replaced';
@@ -139,146 +148,146 @@ const DEFAULT_EMOJI_PACK_FLAG = 'moro_default_emoji_pack_v1';
 // 默认内置表情包：落在「默认」分类（无可见性限制，角色可在聊天里通过
 // [[SEND_EMOJI: 名称]] 直接使用）。重名表情按 名称2 区分（IDB keyPath 是 name）。
 const DEFAULT_PRESET_EMOJIS = [
-    { name: '猫不想努力了', url: 'https://files.catbox.moe/b8x0n0.jpg', categoryId: 'default' },
-    { name: '偷笑', url: 'https://files.catbox.moe/2k1zvx.jpg', categoryId: 'default' },
-    { name: '色', url: 'https://files.catbox.moe/v54k1s.jpg', categoryId: 'default' },
-    { name: '大脑宕机', url: 'https://files.catbox.moe/vmh4yw.jpg', categoryId: 'default' },
-    { name: '咦～', url: 'https://files.catbox.moe/ozmelb.jpg', categoryId: 'default' },
-    { name: '喝茶', url: 'https://files.catbox.moe/z7ufzt.jpg', categoryId: 'default' },
-    { name: '嘿', url: 'https://files.catbox.moe/fydt6u.gif', categoryId: 'default' },
-    { name: '记录丢人过程', url: 'https://files.catbox.moe/atepoq.jpg', categoryId: 'default' },
-    { name: '点赞', url: 'https://files.catbox.moe/hk9old.jpg', categoryId: 'default' },
-    { name: '请吃', url: 'https://files.catbox.moe/q6ad48.jpg', categoryId: 'default' },
-    { name: '看涩涩', url: 'https://files.catbox.moe/dn2k68.jpg', categoryId: 'default' },
-    { name: '菜就多练', url: 'https://files.catbox.moe/pqvofg.jpg', categoryId: 'default' },
-    { name: '做爱', url: 'https://files.catbox.moe/x1ju9a.gif', categoryId: 'default' },
-    { name: '乖巧', url: 'https://files.catbox.moe/0lngqn.gif', categoryId: 'default' },
-    { name: '疑惑', url: 'https://files.catbox.moe/4092or.jpg', categoryId: 'default' },
-    { name: '叹气', url: 'https://files.catbox.moe/c171no.jpg', categoryId: 'default' },
-    { name: '吓哭', url: 'https://files.catbox.moe/umbsug.jpg', categoryId: 'default' },
-    { name: '无语', url: 'https://files.catbox.moe/6cgsf6.jpg', categoryId: 'default' },
-    { name: '我在报警', url: 'https://files.catbox.moe/koh78w.jpg', categoryId: 'default' },
-    { name: '愣', url: 'https://files.catbox.moe/pondzl.jpg', categoryId: 'default' },
-    { name: '贴贴', url: 'https://files.catbox.moe/0w84qh.jpg', categoryId: 'default' },
-    { name: '哈？2', url: 'https://files.catbox.moe/rskwgh.jpg', categoryId: 'default' },
-    { name: '信仰我', url: 'https://files.catbox.moe/4em425.jpg', categoryId: 'default' },
-    { name: '傻眼', url: 'https://files.catbox.moe/82as9i.jpg', categoryId: 'default' },
-    { name: '不甘心', url: 'https://files.catbox.moe/l3lhuh.jpg', categoryId: 'default' },
-    { name: '看你', url: 'https://files.catbox.moe/jukub7.jpg', categoryId: 'default' },
-    { name: '开心', url: 'https://files.catbox.moe/e88fga.gif', categoryId: 'default' },
-    { name: '请吩咐我', url: 'https://files.catbox.moe/6yahgr.jpg', categoryId: 'default' },
-    { name: '鄙视', url: 'https://files.catbox.moe/por44z.jpg', categoryId: 'default' },
-    { name: '欢快', url: 'https://files.catbox.moe/0hpamu.gif', categoryId: 'default' },
-    { name: '盯', url: 'https://files.catbox.moe/7m82a8.jpg', categoryId: 'default' },
-    { name: '惊吓', url: 'https://files.catbox.moe/j76g3y.jpg', categoryId: 'default' },
-    { name: '委屈', url: 'https://files.catbox.moe/ron9wb.jpg', categoryId: 'default' },
-    { name: '抱紧自己', url: 'https://files.catbox.moe/rre5yu.jpg', categoryId: 'default' },
-    { name: '对手指', url: 'https://files.catbox.moe/et7xde.jpg', categoryId: 'default' },
-    { name: '痛苦', url: 'https://files.catbox.moe/8h0n7a.jpg', categoryId: 'default' },
-    { name: '心虚', url: 'https://files.catbox.moe/1sd5xl.jpg', categoryId: 'default' },
-    { name: '软弱', url: 'https://files.catbox.moe/3ltk3y.jpg', categoryId: 'default' },
-    { name: '华丽登场', url: 'https://files.catbox.moe/pluu54.jpg', categoryId: 'default' },
-    { name: '瞳孔地震', url: 'https://files.catbox.moe/4zcpoi.jpg', categoryId: 'default' },
-    { name: '拒绝色色', url: 'https://files.catbox.moe/uqj1gl.jpg', categoryId: 'default' },
-    { name: '卖萌', url: 'https://files.catbox.moe/zrqk3p.jpg', categoryId: 'default' },
-    { name: '可爱', url: 'https://files.catbox.moe/d1figz.jpg', categoryId: 'default' },
-    { name: '期待', url: 'https://files.catbox.moe/9gwl79.jpg', categoryId: 'default' },
-    { name: '思考', url: 'https://files.catbox.moe/e0yklu.jpg', categoryId: 'default' },
-    { name: '要钱', url: 'https://files.catbox.moe/cwbpfc.jpg', categoryId: 'default' },
-    { name: '害羞', url: 'https://files.catbox.moe/vbjfay.gif', categoryId: 'default' },
-    { name: '蹭蹭', url: 'https://files.catbox.moe/nlgvkj.jpg', categoryId: 'default' },
-    { name: '被抓住', url: 'https://files.catbox.moe/deffix.jpg', categoryId: 'default' },
-    { name: '鼓励', url: 'https://files.catbox.moe/ccmicb.gif', categoryId: 'default' },
-    { name: '欣慰', url: 'https://files.catbox.moe/jh0d6v.jpg', categoryId: 'default' },
-    { name: '紧张', url: 'https://files.catbox.moe/zvudhp.jpg', categoryId: 'default' },
-    { name: '尖叫', url: 'https://files.catbox.moe/n533wr.jpg', categoryId: 'default' },
-    { name: '叼花', url: 'https://files.catbox.moe/t0wmq5.jpg', categoryId: 'default' },
-    { name: '笑对人生', url: 'https://files.catbox.moe/qkt6ve.jpg', categoryId: 'default' },
-    { name: '嗷呜', url: 'https://files.catbox.moe/n5nhbl.gif', categoryId: 'default' },
-    { name: '担心', url: 'https://files.catbox.moe/cqfi1d.gif', categoryId: 'default' },
-    { name: '唉？', url: 'https://files.catbox.moe/p9k2c6.jpg', categoryId: 'default' },
-    { name: '偷偷摸摸', url: 'https://files.catbox.moe/v4gw97.jpg', categoryId: 'default' },
-    { name: '哭', url: 'https://files.catbox.moe/cvw6j6.jpg', categoryId: 'default' },
-    { name: '抽象', url: 'https://files.catbox.moe/g2vyen.jpg', categoryId: 'default' },
-    { name: '抓', url: 'https://files.catbox.moe/kczgr2.gif', categoryId: 'default' },
-    { name: '看手机', url: 'https://files.catbox.moe/35k6jh.gif', categoryId: 'default' },
-    { name: '溜走', url: 'https://files.catbox.moe/futf9q.jpg', categoryId: 'default' },
-    { name: '我来了', url: 'https://files.catbox.moe/es7yt6.jpg', categoryId: 'default' },
-    { name: '皮', url: 'https://files.catbox.moe/24t708.gif', categoryId: 'default' },
-    { name: '喜欢', url: 'https://files.catbox.moe/mwx0wo.gif', categoryId: 'default' },
-    { name: '想吃', url: 'https://files.catbox.moe/4pl3tq.jpg', categoryId: 'default' },
-    { name: '严肃拒绝', url: 'https://files.catbox.moe/k96ol3.jpg', categoryId: 'default' },
-    { name: '色2', url: 'https://files.catbox.moe/0k570y.jpg', categoryId: 'default' },
-    { name: '亲晕', url: 'https://files.catbox.moe/wygvv6.gif', categoryId: 'default' },
-    { name: '坏笑', url: 'https://files.catbox.moe/g1quke.jpg', categoryId: 'default' },
-    { name: '恐惧', url: 'https://files.catbox.moe/dg6euv.jpg', categoryId: 'default' },
-    { name: '惊讶害羞', url: 'https://files.catbox.moe/73mdfn.jpg', categoryId: 'default' },
-    { name: '吃醋', url: 'https://files.catbox.moe/xutc6k.jpg', categoryId: 'default' },
-    { name: '无语流汗', url: 'https://files.catbox.moe/p28hvp.jpg', categoryId: 'default' },
-    { name: '期待2', url: 'https://files.catbox.moe/4309ou.jpg', categoryId: 'default' },
-    { name: '撇嘴', url: 'https://files.catbox.moe/qxacqq.jpg', categoryId: 'default' },
-    { name: '被喜欢害羞', url: 'https://files.catbox.moe/ow6lbe.jpg', categoryId: 'default' },
-    { name: '感动哭哭', url: 'https://files.catbox.moe/80e9ub.jpg', categoryId: 'default' },
-    { name: '帅气自信', url: 'https://files.catbox.moe/4mm8h5.jpg', categoryId: 'default' },
-    { name: '腹黑笑', url: 'https://files.catbox.moe/hltq2j.jpg', categoryId: 'default' },
-    { name: '满意笑', url: 'https://files.catbox.moe/ly5gfo.jpg', categoryId: 'default' },
-    { name: '黑脸生气', url: 'https://files.catbox.moe/nkl1e4.jpg', categoryId: 'default' },
-    { name: '默认同意', url: 'https://files.catbox.moe/en911n.jpg', categoryId: 'default' },
-    { name: '在意', url: 'https://files.catbox.moe/6ocnhe.jpg', categoryId: 'default' },
-    { name: '闭上眼仿佛可以看见天堂', url: 'https://files.catbox.moe/bij2mr.jpg', categoryId: 'default' },
-    { name: '希望人没事', url: 'https://files.catbox.moe/78q5ua.gif', categoryId: 'default' },
-    { name: '嘻嘻', url: 'https://files.catbox.moe/as9ufh.jpg', categoryId: 'default' },
-    { name: '呆住', url: 'https://files.catbox.moe/rg8g2k.jpg', categoryId: 'default' },
-    { name: '开心跳舞', url: 'https://files.catbox.moe/8qgmvq.gif', categoryId: 'default' },
-    { name: '吐魂', url: 'https://files.catbox.moe/ngg02l.png', categoryId: 'default' },
-    { name: '吃惊', url: 'https://files.catbox.moe/mg0dom.jpg', categoryId: 'default' },
-    { name: '小意思', url: 'https://files.catbox.moe/3s375k.jpg', categoryId: 'default' },
-    { name: '猫猫恼火', url: 'https://files.catbox.moe/chvpfv.jpg', categoryId: 'default' },
-    { name: '趴玻璃看你', url: 'https://files.catbox.moe/i2qvgu.jpg', categoryId: 'default' },
-    { name: '偷听', url: 'https://files.catbox.moe/khqq6i.jpg', categoryId: 'default' },
-    { name: '酒杯猫猫', url: 'https://files.catbox.moe/4ysrj1.jpg', categoryId: 'default' },
-    { name: '乖巧猫猫', url: 'https://files.catbox.moe/x1whj0.jpg', categoryId: 'default' },
-    { name: '猫猫心虚', url: 'https://files.catbox.moe/uj8dxy.jpg', categoryId: 'default' },
-    { name: '猫猫看你', url: 'https://files.catbox.moe/kiwzl8.jpg', categoryId: 'default' },
-    { name: '猫猫目移', url: 'https://files.catbox.moe/o04nsn.jpg', categoryId: 'default' },
-    { name: '猫猫闭眼睡', url: 'https://files.catbox.moe/kgbvis.jpg', categoryId: 'default' },
-    { name: '猫猫委屈瞪你', url: 'https://files.catbox.moe/yo3f2e.jpg', categoryId: 'default' },
-    { name: '猫猫满脸疑问', url: 'https://files.catbox.moe/vn698y.jpg', categoryId: 'default' },
-    { name: '猫猫星星眼', url: 'https://files.catbox.moe/eojsa0.jpg', categoryId: 'default' },
-    { name: '猫猫去世', url: 'https://files.catbox.moe/gmleas.jpg', categoryId: 'default' },
-    { name: '猫猫wink', url: 'https://files.catbox.moe/qkt2lt.jpg', categoryId: 'default' },
-    { name: '猫猫瞪你', url: 'https://files.catbox.moe/tkr91c.jpg', categoryId: 'default' },
-    { name: '猫猫无语', url: 'https://files.catbox.moe/u0sbmg.jpg', categoryId: 'default' },
-    { name: '猫猫生气', url: 'https://files.catbox.moe/nvpp5j.jpg', categoryId: 'default' },
-    { name: '看你的猫猫', url: 'https://files.catbox.moe/47nf28.jpg', categoryId: 'default' },
-    { name: '智慧的猫猫', url: 'https://files.catbox.moe/y1qr2z.jpg', categoryId: 'default' },
-    { name: '猫猫眼汪汪', url: 'https://files.catbox.moe/pg3cna.jpg', categoryId: 'default' },
-    { name: '猫猫委屈', url: 'https://files.catbox.moe/ll0c0e.jpg', categoryId: 'default' },
-    { name: '客服猫', url: 'https://files.catbox.moe/h75ll0.jpg', categoryId: 'default' },
-    { name: '捣乱猫猫', url: 'https://files.catbox.moe/tmj3ee.jpg', categoryId: 'default' },
-    { name: '天真威胁', url: 'https://files.catbox.moe/87xtyc.jpg', categoryId: 'default' },
-    { name: '吃瓜', url: 'https://files.catbox.moe/6nkub5.jpg', categoryId: 'default' },
-    { name: '面包猫', url: 'https://files.catbox.moe/q4jy0x.jpg', categoryId: 'default' },
-    { name: '叼着', url: 'https://files.catbox.moe/mj6fr0.jpg', categoryId: 'default' },
-    { name: '自恋', url: 'https://files.catbox.moe/940de7.jpg', categoryId: 'default' },
-    { name: '不愧是我', url: 'https://files.catbox.moe/rt0uqk.jpg', categoryId: 'default' },
-    { name: '被冷落', url: 'https://files.catbox.moe/xwv767.jpg', categoryId: 'default' },
-    { name: '被冷落生气', url: 'https://files.catbox.moe/sybgeg.jpg', categoryId: 'default' },
-    { name: '盯着', url: 'https://files.catbox.moe/3niw4u.jpg', categoryId: 'default' },
-    { name: '无奈', url: 'https://files.catbox.moe/76iezn.jpg', categoryId: 'default' },
-    { name: '瞧着', url: 'https://files.catbox.moe/wadhn2.jpg', categoryId: 'default' },
-    { name: '探出', url: 'https://files.catbox.moe/yosv6f.jpg', categoryId: 'default' },
-    { name: '十斤半价', url: 'https://files.catbox.moe/fn3l1l.jpg', categoryId: 'default' },
-    { name: '从上看你', url: 'https://files.catbox.moe/infdwv.jpg', categoryId: 'default' },
-    { name: '躺', url: 'https://files.catbox.moe/v57put.jpg', categoryId: 'default' },
-    { name: '泪眼婆娑', url: 'https://files.catbox.moe/eouoaq.jpg', categoryId: 'default' },
-    { name: '不度蝼蚁', url: 'https://files.catbox.moe/mrbj82.jpg', categoryId: 'default' },
-    { name: '叫我吗？哼', url: 'https://files.catbox.moe/k8a2r7.jpg', categoryId: 'default' },
-    { name: '叫我做什么', url: 'https://files.catbox.moe/xe1cc4.jpg', categoryId: 'default' },
-    { name: '嘴硬哭哭', url: 'https://files.catbox.moe/so4lw7.jpg', categoryId: 'default' },
-    { name: '我吗？', url: 'https://files.catbox.moe/hsm2wb.jpg', categoryId: 'default' },
-    { name: '告辞', url: 'https://files.catbox.moe/pc66m3.jpg', categoryId: 'default' },
-    { name: '卖萌猫猫群', url: 'https://files.catbox.moe/rqdqtl.gif', categoryId: 'default' },
+    { name: '猫不想努力了', url: '/stickers/default/001_猫不想努力了.jpg', categoryId: 'default' },
+    { name: '偷笑', url: '/stickers/default/002_偷笑.jpg', categoryId: 'default' },
+    { name: '色', url: '/stickers/default/003_色.jpg', categoryId: 'default' },
+    { name: '大脑宕机', url: '/stickers/default/004_大脑宕机.jpg', categoryId: 'default' },
+    { name: '咦～', url: '/stickers/default/005_咦.jpg', categoryId: 'default' },
+    { name: '喝茶', url: '/stickers/default/006_喝茶.jpg', categoryId: 'default' },
+    { name: '嘿', url: '/stickers/default/007_嘿.gif', categoryId: 'default' },
+    { name: '记录丢人过程', url: '/stickers/default/008_记录丢人过程.jpg', categoryId: 'default' },
+    { name: '点赞', url: '/stickers/default/009_点赞.jpg', categoryId: 'default' },
+    { name: '请吃', url: '/stickers/default/010_请吃.jpg', categoryId: 'default' },
+    { name: '看涩涩', url: '/stickers/default/011_看涩涩.jpg', categoryId: 'default' },
+    { name: '菜就多练', url: '/stickers/default/012_菜就多练.jpg', categoryId: 'default' },
+    { name: '做爱', url: '/stickers/default/013_做爱.gif', categoryId: 'default' },
+    { name: '乖巧', url: '/stickers/default/014_乖巧.gif', categoryId: 'default' },
+    { name: '疑惑', url: '/stickers/default/015_疑惑.jpg', categoryId: 'default' },
+    { name: '叹气', url: '/stickers/default/016_叹气.jpg', categoryId: 'default' },
+    { name: '吓哭', url: '/stickers/default/017_吓哭.jpg', categoryId: 'default' },
+    { name: '无语', url: '/stickers/default/018_无语.jpg', categoryId: 'default' },
+    { name: '我在报警', url: '/stickers/default/019_我在报警.jpg', categoryId: 'default' },
+    { name: '愣', url: '/stickers/default/020_愣.jpg', categoryId: 'default' },
+    { name: '贴贴', url: '/stickers/default/021_贴贴.jpg', categoryId: 'default' },
+    { name: '哈？2', url: '/stickers/default/022_哈2.jpg', categoryId: 'default' },
+    { name: '信仰我', url: '/stickers/default/023_信仰我.jpg', categoryId: 'default' },
+    { name: '傻眼', url: '/stickers/default/024_傻眼.jpg', categoryId: 'default' },
+    { name: '不甘心', url: '/stickers/default/025_不甘心.jpg', categoryId: 'default' },
+    { name: '看你', url: '/stickers/default/026_看你.jpg', categoryId: 'default' },
+    { name: '开心', url: '/stickers/default/027_开心.gif', categoryId: 'default' },
+    { name: '请吩咐我', url: '/stickers/default/028_请吩咐我.jpg', categoryId: 'default' },
+    { name: '鄙视', url: '/stickers/default/029_鄙视.jpg', categoryId: 'default' },
+    { name: '欢快', url: '/stickers/default/030_欢快.gif', categoryId: 'default' },
+    { name: '盯', url: '/stickers/default/031_盯.jpg', categoryId: 'default' },
+    { name: '惊吓', url: '/stickers/default/032_惊吓.jpg', categoryId: 'default' },
+    { name: '委屈', url: '/stickers/default/033_委屈.jpg', categoryId: 'default' },
+    { name: '抱紧自己', url: '/stickers/default/034_抱紧自己.jpg', categoryId: 'default' },
+    { name: '对手指', url: '/stickers/default/035_对手指.jpg', categoryId: 'default' },
+    { name: '痛苦', url: '/stickers/default/036_痛苦.jpg', categoryId: 'default' },
+    { name: '心虚', url: '/stickers/default/037_心虚.jpg', categoryId: 'default' },
+    { name: '软弱', url: '/stickers/default/038_软弱.jpg', categoryId: 'default' },
+    { name: '华丽登场', url: '/stickers/default/039_华丽登场.jpg', categoryId: 'default' },
+    { name: '瞳孔地震', url: '/stickers/default/040_瞳孔地震.jpg', categoryId: 'default' },
+    { name: '拒绝色色', url: '/stickers/default/041_拒绝色色.jpg', categoryId: 'default' },
+    { name: '卖萌', url: '/stickers/default/042_卖萌.jpg', categoryId: 'default' },
+    { name: '可爱', url: '/stickers/default/043_可爱.jpg', categoryId: 'default' },
+    { name: '期待', url: '/stickers/default/044_期待.jpg', categoryId: 'default' },
+    { name: '思考', url: '/stickers/default/045_思考.jpg', categoryId: 'default' },
+    { name: '要钱', url: '/stickers/default/046_要钱.jpg', categoryId: 'default' },
+    { name: '害羞', url: '/stickers/default/047_害羞.gif', categoryId: 'default' },
+    { name: '蹭蹭', url: '/stickers/default/048_蹭蹭.jpg', categoryId: 'default' },
+    { name: '被抓住', url: '/stickers/default/049_被抓住.jpg', categoryId: 'default' },
+    { name: '鼓励', url: '/stickers/default/050_鼓励.gif', categoryId: 'default' },
+    { name: '欣慰', url: '/stickers/default/051_欣慰.jpg', categoryId: 'default' },
+    { name: '紧张', url: '/stickers/default/052_紧张.jpg', categoryId: 'default' },
+    { name: '尖叫', url: '/stickers/default/053_尖叫.jpg', categoryId: 'default' },
+    { name: '叼花', url: '/stickers/default/054_叼花.jpg', categoryId: 'default' },
+    { name: '笑对人生', url: '/stickers/default/055_笑对人生.jpg', categoryId: 'default' },
+    { name: '嗷呜', url: '/stickers/default/056_嗷呜.gif', categoryId: 'default' },
+    { name: '担心', url: '/stickers/default/057_担心.gif', categoryId: 'default' },
+    { name: '唉？', url: '/stickers/default/058_唉.jpg', categoryId: 'default' },
+    { name: '偷偷摸摸', url: '/stickers/default/059_偷偷摸摸.jpg', categoryId: 'default' },
+    { name: '哭', url: '/stickers/default/060_哭.jpg', categoryId: 'default' },
+    { name: '抽象', url: '/stickers/default/061_抽象.jpg', categoryId: 'default' },
+    { name: '抓', url: '/stickers/default/062_抓.gif', categoryId: 'default' },
+    { name: '看手机', url: '/stickers/default/063_看手机.gif', categoryId: 'default' },
+    { name: '溜走', url: '/stickers/default/064_溜走.jpg', categoryId: 'default' },
+    { name: '我来了', url: '/stickers/default/065_我来了.jpg', categoryId: 'default' },
+    { name: '皮', url: '/stickers/default/066_皮.gif', categoryId: 'default' },
+    { name: '喜欢', url: '/stickers/default/067_喜欢.gif', categoryId: 'default' },
+    { name: '想吃', url: '/stickers/default/068_想吃.jpg', categoryId: 'default' },
+    { name: '严肃拒绝', url: '/stickers/default/069_严肃拒绝.jpg', categoryId: 'default' },
+    { name: '色2', url: '/stickers/default/070_色2.jpg', categoryId: 'default' },
+    { name: '亲晕', url: '/stickers/default/071_亲晕.gif', categoryId: 'default' },
+    { name: '坏笑', url: '/stickers/default/072_坏笑.jpg', categoryId: 'default' },
+    { name: '恐惧', url: '/stickers/default/073_恐惧.jpg', categoryId: 'default' },
+    { name: '惊讶害羞', url: '/stickers/default/074_惊讶害羞.jpg', categoryId: 'default' },
+    { name: '吃醋', url: '/stickers/default/075_吃醋.jpg', categoryId: 'default' },
+    { name: '无语流汗', url: '/stickers/default/076_无语流汗.jpg', categoryId: 'default' },
+    { name: '期待2', url: '/stickers/default/077_期待2.jpg', categoryId: 'default' },
+    { name: '撇嘴', url: '/stickers/default/078_撇嘴.jpg', categoryId: 'default' },
+    { name: '被喜欢害羞', url: '/stickers/default/079_被喜欢害羞.jpg', categoryId: 'default' },
+    { name: '感动哭哭', url: '/stickers/default/080_感动哭哭.jpg', categoryId: 'default' },
+    { name: '帅气自信', url: '/stickers/default/081_帅气自信.jpg', categoryId: 'default' },
+    { name: '腹黑笑', url: '/stickers/default/082_腹黑笑.jpg', categoryId: 'default' },
+    { name: '满意笑', url: '/stickers/default/083_满意笑.jpg', categoryId: 'default' },
+    { name: '黑脸生气', url: '/stickers/default/084_黑脸生气.jpg', categoryId: 'default' },
+    { name: '默认同意', url: '/stickers/default/085_默认同意.jpg', categoryId: 'default' },
+    { name: '在意', url: '/stickers/default/086_在意.jpg', categoryId: 'default' },
+    { name: '闭上眼仿佛可以看见天堂', url: '/stickers/default/087_闭上眼仿佛可以看见天堂.jpg', categoryId: 'default' },
+    { name: '希望人没事', url: '/stickers/default/088_希望人没事.gif', categoryId: 'default' },
+    { name: '嘻嘻', url: '/stickers/default/089_嘻嘻.jpg', categoryId: 'default' },
+    { name: '呆住', url: '/stickers/default/090_呆住.jpg', categoryId: 'default' },
+    { name: '开心跳舞', url: '/stickers/default/091_开心跳舞.gif', categoryId: 'default' },
+    { name: '吐魂', url: '/stickers/default/092_吐魂.png', categoryId: 'default' },
+    { name: '吃惊', url: '/stickers/default/093_吃惊.jpg', categoryId: 'default' },
+    { name: '小意思', url: '/stickers/default/094_小意思.jpg', categoryId: 'default' },
+    { name: '猫猫恼火', url: '/stickers/default/095_猫猫恼火.jpg', categoryId: 'default' },
+    { name: '趴玻璃看你', url: '/stickers/default/096_趴玻璃看你.jpg', categoryId: 'default' },
+    { name: '偷听', url: '/stickers/default/097_偷听.jpg', categoryId: 'default' },
+    { name: '酒杯猫猫', url: '/stickers/default/098_酒杯猫猫.jpg', categoryId: 'default' },
+    { name: '乖巧猫猫', url: '/stickers/default/099_乖巧猫猫.jpg', categoryId: 'default' },
+    { name: '猫猫心虚', url: '/stickers/default/100_猫猫心虚.jpg', categoryId: 'default' },
+    { name: '猫猫看你', url: '/stickers/default/101_猫猫看你.jpg', categoryId: 'default' },
+    { name: '猫猫目移', url: '/stickers/default/102_猫猫目移.jpg', categoryId: 'default' },
+    { name: '猫猫闭眼睡', url: '/stickers/default/103_猫猫闭眼睡.jpg', categoryId: 'default' },
+    { name: '猫猫委屈瞪你', url: '/stickers/default/104_猫猫委屈瞪你.jpg', categoryId: 'default' },
+    { name: '猫猫满脸疑问', url: '/stickers/default/105_猫猫满脸疑问.jpg', categoryId: 'default' },
+    { name: '猫猫星星眼', url: '/stickers/default/106_猫猫星星眼.jpg', categoryId: 'default' },
+    { name: '猫猫去世', url: '/stickers/default/107_猫猫去世.jpg', categoryId: 'default' },
+    { name: '猫猫wink', url: '/stickers/default/108_猫猫wink.jpg', categoryId: 'default' },
+    { name: '猫猫瞪你', url: '/stickers/default/109_猫猫瞪你.jpg', categoryId: 'default' },
+    { name: '猫猫无语', url: '/stickers/default/110_猫猫无语.jpg', categoryId: 'default' },
+    { name: '猫猫生气', url: '/stickers/default/111_猫猫生气.jpg', categoryId: 'default' },
+    { name: '看你的猫猫', url: '/stickers/default/112_看你的猫猫.jpg', categoryId: 'default' },
+    { name: '智慧的猫猫', url: '/stickers/default/113_智慧的猫猫.jpg', categoryId: 'default' },
+    { name: '猫猫眼汪汪', url: '/stickers/default/114_猫猫眼汪汪.jpg', categoryId: 'default' },
+    { name: '猫猫委屈', url: '/stickers/default/115_猫猫委屈.jpg', categoryId: 'default' },
+    { name: '客服猫', url: '/stickers/default/116_客服猫.jpg', categoryId: 'default' },
+    { name: '捣乱猫猫', url: '/stickers/default/117_捣乱猫猫.jpg', categoryId: 'default' },
+    { name: '天真威胁', url: '/stickers/default/118_天真威胁.jpg', categoryId: 'default' },
+    { name: '吃瓜', url: '/stickers/default/119_吃瓜.jpg', categoryId: 'default' },
+    { name: '面包猫', url: '/stickers/default/120_面包猫.jpg', categoryId: 'default' },
+    { name: '叼着', url: '/stickers/default/121_叼着.jpg', categoryId: 'default' },
+    { name: '自恋', url: '/stickers/default/122_自恋.jpg', categoryId: 'default' },
+    { name: '不愧是我', url: '/stickers/default/123_不愧是我.jpg', categoryId: 'default' },
+    { name: '被冷落', url: '/stickers/default/124_被冷落.jpg', categoryId: 'default' },
+    { name: '被冷落生气', url: '/stickers/default/125_被冷落生气.jpg', categoryId: 'default' },
+    { name: '盯着', url: '/stickers/default/126_盯着.jpg', categoryId: 'default' },
+    { name: '无奈', url: '/stickers/default/127_无奈.jpg', categoryId: 'default' },
+    { name: '瞧着', url: '/stickers/default/128_瞧着.jpg', categoryId: 'default' },
+    { name: '探出', url: '/stickers/default/129_探出.jpg', categoryId: 'default' },
+    { name: '十斤半价', url: '/stickers/default/130_十斤半价.jpg', categoryId: 'default' },
+    { name: '从上看你', url: '/stickers/default/131_从上看你.jpg', categoryId: 'default' },
+    { name: '躺', url: '/stickers/default/132_躺.jpg', categoryId: 'default' },
+    { name: '泪眼婆娑', url: '/stickers/default/133_泪眼婆娑.jpg', categoryId: 'default' },
+    { name: '不度蝼蚁', url: '/stickers/default/134_不度蝼蚁.jpg', categoryId: 'default' },
+    { name: '叫我吗？哼', url: '/stickers/default/135_叫我吗哼.jpg', categoryId: 'default' },
+    { name: '叫我做什么', url: '/stickers/default/136_叫我做什么.jpg', categoryId: 'default' },
+    { name: '嘴硬哭哭', url: '/stickers/default/137_嘴硬哭哭.jpg', categoryId: 'default' },
+    { name: '我吗？', url: '/stickers/default/138_我吗.jpg', categoryId: 'default' },
+    { name: '告辞', url: '/stickers/default/139_告辞.jpg', categoryId: 'default' },
+    { name: '卖萌猫猫群', url: '/stickers/default/140_卖萌猫猫群.gif', categoryId: 'default' },
 ];
 
 // 单例连接缓存。openDB 原本每次调用都新开一条 IDB 连接, 既不复用也不 close ——
@@ -461,6 +470,66 @@ export const openDB = (): Promise<IDBDatabase> => {
           }
           if (peStore && !peStore.indexNames.contains('kind')) {
               try { peStore.createIndex('kind', 'kind', { unique: false }); } catch { /* ignore */ }
+          }
+      }
+
+      if (!db.objectStoreNames.contains(STORE_HEALTH_MODULE_SETTINGS)) {
+          db.createObjectStore(STORE_HEALTH_MODULE_SETTINGS, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) {
+          const healthStore = db.createObjectStore(STORE_HEALTH_RECORDS, { keyPath: 'id' });
+          healthStore.createIndex('moduleId', 'moduleId', { unique: false });
+          healthStore.createIndex('date', 'date', { unique: false });
+          healthStore.createIndex('moduleId_date', ['moduleId', 'date'], { unique: false });
+      } else {
+          const healthStore = (event.target as IDBOpenDBRequest).transaction?.objectStore(STORE_HEALTH_RECORDS);
+          if (healthStore && !healthStore.indexNames.contains('moduleId')) {
+              try { healthStore.createIndex('moduleId', 'moduleId', { unique: false }); } catch { /* ignore */ }
+          }
+          if (healthStore && !healthStore.indexNames.contains('date')) {
+              try { healthStore.createIndex('date', 'date', { unique: false }); } catch { /* ignore */ }
+          }
+          if (healthStore && !healthStore.indexNames.contains('moduleId_date')) {
+              try { healthStore.createIndex('moduleId_date', ['moduleId', 'date'], { unique: false }); } catch { /* ignore */ }
+          }
+      }
+      if (!db.objectStoreNames.contains(STORE_HEALTH_REMINDERS)) {
+          const reminderStore = db.createObjectStore(STORE_HEALTH_REMINDERS, { keyPath: 'id' });
+          reminderStore.createIndex('moduleId', 'moduleId', { unique: false });
+          reminderStore.createIndex('nextAt', 'nextAt', { unique: false });
+          reminderStore.createIndex('enabled', 'enabled', { unique: false });
+      } else {
+          const reminderStore = (event.target as IDBOpenDBRequest).transaction?.objectStore(STORE_HEALTH_REMINDERS);
+          if (reminderStore && !reminderStore.indexNames.contains('moduleId')) {
+              try { reminderStore.createIndex('moduleId', 'moduleId', { unique: false }); } catch { /* ignore */ }
+          }
+          if (reminderStore && !reminderStore.indexNames.contains('nextAt')) {
+              try { reminderStore.createIndex('nextAt', 'nextAt', { unique: false }); } catch { /* ignore */ }
+          }
+          if (reminderStore && !reminderStore.indexNames.contains('enabled')) {
+              try { reminderStore.createIndex('enabled', 'enabled', { unique: false }); } catch { /* ignore */ }
+          }
+      }
+      if (!db.objectStoreNames.contains(STORE_HEALTH_PLANS)) {
+          const planStore = db.createObjectStore(STORE_HEALTH_PLANS, { keyPath: 'id' });
+          planStore.createIndex('moduleId', 'moduleId', { unique: false });
+      } else {
+          const planStore = (event.target as IDBOpenDBRequest).transaction?.objectStore(STORE_HEALTH_PLANS);
+          if (planStore && !planStore.indexNames.contains('moduleId')) {
+              try { planStore.createIndex('moduleId', 'moduleId', { unique: false }); } catch { /* ignore */ }
+          }
+      }
+      if (!db.objectStoreNames.contains(STORE_HEALTH_SUMMARIES)) {
+          const summaryStore = db.createObjectStore(STORE_HEALTH_SUMMARIES, { keyPath: 'id' });
+          summaryStore.createIndex('range', 'range', { unique: false });
+          summaryStore.createIndex('startDate', 'startDate', { unique: false });
+      } else {
+          const summaryStore = (event.target as IDBOpenDBRequest).transaction?.objectStore(STORE_HEALTH_SUMMARIES);
+          if (summaryStore && !summaryStore.indexNames.contains('range')) {
+              try { summaryStore.createIndex('range', 'range', { unique: false }); } catch { /* ignore */ }
+          }
+          if (summaryStore && !summaryStore.indexNames.contains('startDate')) {
+              try { summaryStore.createIndex('startDate', 'startDate', { unique: false }); } catch { /* ignore */ }
           }
       }
 
@@ -780,6 +849,19 @@ export const openDB = (): Promise<IDBDatabase> => {
           const tqStore = db.createObjectStore(STORE_THEATER_QUIZ_SESSIONS, { keyPath: 'id' });
           tqStore.createIndex('lastActiveAt', 'lastActiveAt', { unique: false });
           tqStore.createIndex('status', 'status', { unique: false });
+      }
+      // ─── v85: 折子戏·仿真图文历史 ───
+      if (!db.objectStoreNames.contains(STORE_THEATER_FAUX_PIECES)) {
+          const tfStore = db.createObjectStore(STORE_THEATER_FAUX_PIECES, { keyPath: 'id' });
+          tfStore.createIndex('charId', 'charId', { unique: false });
+          tfStore.createIndex('kind', 'kind', { unique: false });
+          tfStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+      // ─── v86: 折子戏·对影会话 ───
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) {
+          const trStore = db.createObjectStore(STORE_THEATER_REFLECTION_SESSIONS, { keyPath: 'id' });
+          trStore.createIndex('charId', 'charId', { unique: false });
+          trStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
       // ─── v70: 岁时记·典藏馆收录条目 ───
       if (!db.objectStoreNames.contains(STORE_COLLECTION_ITEMS)) {
@@ -2113,6 +2195,96 @@ export const DB = {
       });
   },
 
+  // ─── 折子戏·仿真图文历史 ───
+  getAllTheaterFauxPieces: async (): Promise<TheaterFauxPiece[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_FAUX_PIECES)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_THEATER_FAUX_PIECES, 'readonly');
+          const req = tx.objectStore(STORE_THEATER_FAUX_PIECES).getAll();
+          req.onsuccess = () => resolve(((req.result as TheaterFauxPiece[]) || []).sort((a, b) => b.createdAt - a.createdAt));
+          req.onerror = () => reject(req.error);
+      });
+  },
+  saveTheaterFauxPiece: async (piece: TheaterFauxPiece): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_FAUX_PIECES)) return;
+      const tx = db.transaction(STORE_THEATER_FAUX_PIECES, 'readwrite');
+      tx.objectStore(STORE_THEATER_FAUX_PIECES).put(piece);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+      });
+  },
+  deleteTheaterFauxPiece: async (id: string): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_FAUX_PIECES)) return;
+      const tx = db.transaction(STORE_THEATER_FAUX_PIECES, 'readwrite');
+      tx.objectStore(STORE_THEATER_FAUX_PIECES).delete(id);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+      });
+  },
+  deleteTheaterFauxPiecesByCharId: async (charId: string): Promise<number> => {
+      return DB.deleteByIndex(STORE_THEATER_FAUX_PIECES, 'charId', charId);
+  },
+
+  // ─── 折子戏·对影会话 ───
+  getAllTheaterReflectionSessions: async (): Promise<TheaterReflectionSession[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_THEATER_REFLECTION_SESSIONS, 'readonly');
+          const req = tx.objectStore(STORE_THEATER_REFLECTION_SESSIONS).getAll();
+          req.onsuccess = () => resolve(((req.result as TheaterReflectionSession[]) || []).sort((a, b) => b.updatedAt - a.updatedAt));
+          req.onerror = () => reject(req.error);
+      });
+  },
+  getTheaterReflectionSessionsByCharId: async (charId: string): Promise<TheaterReflectionSession[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_THEATER_REFLECTION_SESSIONS, 'readonly');
+          const req = tx.objectStore(STORE_THEATER_REFLECTION_SESSIONS).index('charId').getAll(charId);
+          req.onsuccess = () => resolve(((req.result as TheaterReflectionSession[]) || []).sort((a, b) => b.updatedAt - a.updatedAt));
+          req.onerror = () => reject(req.error);
+      });
+  },
+  getTheaterReflectionSession: async (id: string): Promise<TheaterReflectionSession | undefined> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) return undefined;
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_THEATER_REFLECTION_SESSIONS, 'readonly');
+          const req = tx.objectStore(STORE_THEATER_REFLECTION_SESSIONS).get(id);
+          req.onsuccess = () => resolve(req.result as TheaterReflectionSession | undefined);
+          req.onerror = () => reject(req.error);
+      });
+  },
+  saveTheaterReflectionSession: async (session: TheaterReflectionSession): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) return;
+      const tx = db.transaction(STORE_THEATER_REFLECTION_SESSIONS, 'readwrite');
+      tx.objectStore(STORE_THEATER_REFLECTION_SESSIONS).put(session);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+      });
+  },
+  deleteTheaterReflectionSession: async (id: string): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_THEATER_REFLECTION_SESSIONS)) return;
+      const tx = db.transaction(STORE_THEATER_REFLECTION_SESSIONS, 'readwrite');
+      tx.objectStore(STORE_THEATER_REFLECTION_SESSIONS).delete(id);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+      });
+  },
+  deleteTheaterReflectionSessionsByCharId: async (charId: string): Promise<number> => {
+      return DB.deleteByIndex(STORE_THEATER_REFLECTION_SESSIONS, 'charId', charId);
+  },
+
   // ─── 岁时记·典藏馆收录条目 ───
   getCollectionItems: async (): Promise<CollectionItem[]> => {
       const db = await openDB();
@@ -3013,6 +3185,229 @@ export const DB = {
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
           tx.onabort = () => reject(tx.error || new Error('deletePeriodCycleEvent aborted'));
+      });
+  },
+
+  // Health center
+  getAllHealthModuleSettings: async (): Promise<HealthModuleSettings[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_MODULE_SETTINGS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_MODULE_SETTINGS, 'readonly');
+          const req = tx.objectStore(STORE_HEALTH_MODULE_SETTINGS).getAll();
+          req.onsuccess = () => resolve((req.result || []) as HealthModuleSettings[]);
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  saveHealthModuleSettings: async (settings: HealthModuleSettings): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_MODULE_SETTINGS)) return;
+      const tx = db.transaction(STORE_HEALTH_MODULE_SETTINGS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_MODULE_SETTINGS).put(settings);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthModuleSettings aborted'));
+      });
+  },
+
+  saveHealthModuleSettingsMany: async (settings: HealthModuleSettings[]): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_MODULE_SETTINGS)) return;
+      const tx = db.transaction(STORE_HEALTH_MODULE_SETTINGS, 'readwrite');
+      const store = tx.objectStore(STORE_HEALTH_MODULE_SETTINGS);
+      settings.forEach(item => store.put(item));
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthModuleSettingsMany aborted'));
+      });
+  },
+
+  getAllHealthRecords: async (): Promise<HealthRecord[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_RECORDS, 'readonly');
+          const req = tx.objectStore(STORE_HEALTH_RECORDS).getAll();
+          req.onsuccess = () => resolve(((req.result || []) as HealthRecord[]).sort((a, b) => {
+              if (a.date === b.date) return (a.timeHHmm || '').localeCompare(b.timeHHmm || '');
+              return b.date.localeCompare(a.date);
+          }));
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  getHealthRecordsByDate: async (date: string): Promise<HealthRecord[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_RECORDS, 'readonly');
+          const store = tx.objectStore(STORE_HEALTH_RECORDS);
+          const req = store.indexNames.contains('date')
+              ? store.index('date').getAll(IDBKeyRange.only(date))
+              : store.getAll();
+          req.onsuccess = () => resolve(((req.result || []) as HealthRecord[])
+              .filter(record => record.date === date)
+              .sort((a, b) => (a.timeHHmm || '').localeCompare(b.timeHHmm || '')));
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  getHealthRecordsByModule: async (moduleId: HealthModuleId): Promise<HealthRecord[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_RECORDS, 'readonly');
+          const store = tx.objectStore(STORE_HEALTH_RECORDS);
+          const req = store.indexNames.contains('moduleId')
+              ? store.index('moduleId').getAll(IDBKeyRange.only(moduleId))
+              : store.getAll();
+          req.onsuccess = () => resolve(((req.result || []) as HealthRecord[])
+              .filter(record => record.moduleId === moduleId)
+              .sort((a, b) => b.date.localeCompare(a.date)));
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  getHealthRecordsByModuleDate: async (moduleId: HealthModuleId, date: string): Promise<HealthRecord[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_RECORDS, 'readonly');
+          const store = tx.objectStore(STORE_HEALTH_RECORDS);
+          const req = store.indexNames.contains('moduleId_date')
+              ? store.index('moduleId_date').getAll(IDBKeyRange.only([moduleId, date]))
+              : store.getAll();
+          req.onsuccess = () => resolve(((req.result || []) as HealthRecord[])
+              .filter(record => record.moduleId === moduleId && record.date === date)
+              .sort((a, b) => (a.timeHHmm || '').localeCompare(b.timeHHmm || '')));
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  saveHealthRecord: async (record: HealthRecord): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return;
+      const tx = db.transaction(STORE_HEALTH_RECORDS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_RECORDS).put(record);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthRecord aborted'));
+      });
+  },
+
+  deleteHealthRecord: async (id: string): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_RECORDS)) return;
+      const tx = db.transaction(STORE_HEALTH_RECORDS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_RECORDS).delete(id);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('deleteHealthRecord aborted'));
+      });
+  },
+
+  getAllHealthReminders: async (): Promise<HealthReminder[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_REMINDERS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_REMINDERS, 'readonly');
+          const req = tx.objectStore(STORE_HEALTH_REMINDERS).getAll();
+          req.onsuccess = () => resolve(((req.result || []) as HealthReminder[]).sort((a, b) => a.nextAt - b.nextAt));
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  getDueHealthReminders: async (now: number = Date.now()): Promise<HealthReminder[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_REMINDERS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_REMINDERS, 'readonly');
+          const store = tx.objectStore(STORE_HEALTH_REMINDERS);
+          const finish = (rows: HealthReminder[]) => resolve(rows.filter(r => r.enabled && r.nextAt > 0 && r.nextAt <= now).sort((a, b) => a.nextAt - b.nextAt));
+          if (store.indexNames.contains('nextAt')) {
+              const req = store.index('nextAt').getAll(IDBKeyRange.upperBound(now));
+              req.onsuccess = () => finish((req.result || []) as HealthReminder[]);
+              req.onerror = () => reject(req.error);
+              return;
+          }
+          const req = store.getAll();
+          req.onsuccess = () => finish((req.result || []) as HealthReminder[]);
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  saveHealthReminder: async (reminder: HealthReminder): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_REMINDERS)) return;
+      const tx = db.transaction(STORE_HEALTH_REMINDERS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_REMINDERS).put(reminder);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthReminder aborted'));
+      });
+  },
+
+  deleteHealthReminder: async (id: string): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_REMINDERS)) return;
+      const tx = db.transaction(STORE_HEALTH_REMINDERS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_REMINDERS).delete(id);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('deleteHealthReminder aborted'));
+      });
+  },
+
+  getAllHealthPlans: async (): Promise<HealthPlan[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_PLANS)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_PLANS, 'readonly');
+          const req = tx.objectStore(STORE_HEALTH_PLANS).getAll();
+          req.onsuccess = () => resolve((req.result || []) as HealthPlan[]);
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  saveHealthPlan: async (plan: HealthPlan): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_PLANS)) return;
+      const tx = db.transaction(STORE_HEALTH_PLANS, 'readwrite');
+      tx.objectStore(STORE_HEALTH_PLANS).put(plan);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthPlan aborted'));
+      });
+  },
+
+  getAllHealthSummaries: async (): Promise<HealthSummary[]> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_SUMMARIES)) return [];
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_HEALTH_SUMMARIES, 'readonly');
+          const req = tx.objectStore(STORE_HEALTH_SUMMARIES).getAll();
+          req.onsuccess = () => resolve((req.result || []) as HealthSummary[]);
+          req.onerror = () => reject(req.error);
+      });
+  },
+
+  saveHealthSummary: async (summary: HealthSummary): Promise<void> => {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(STORE_HEALTH_SUMMARIES)) return;
+      const tx = db.transaction(STORE_HEALTH_SUMMARIES, 'readwrite');
+      tx.objectStore(STORE_HEALTH_SUMMARIES).put(summary);
+      return new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error('saveHealthSummary aborted'));
       });
   },
 
@@ -4028,7 +4423,7 @@ export const DB = {
       tx.objectStore(STORE_VR_SETTINGS).put({ id: 'apilog', entries: [] });
   },
 
-  // --- 全局 API 调用记录（api_call_log 单例 store，id='log'）---
+  // --- 全局 API 后台流水（api_call_log 单例 store，id='log'）---
   // 只保留近 5 天的记录，超期在写入时丢弃。读出时再过滤一次兜底。
   getApiCallLog: async (): Promise<any[]> => {
       const db = await openDB();
@@ -4314,13 +4709,18 @@ export const DB = {
           });
       };
 
-      const [characters, messages, privateChatArchives, chatAlarms, periodReminderSettings, periodCycleEvents, themes, emojis, emojiCategories, assets, galleryImages, userProfiles, diaries, tasks, anniversaries, roomTodos, roomNotes, groups, journalStickers, socialPosts, courses, games, worldbooks, novels, bankTx, bankData, xhsActivities, xhsStockImages, twitterTweets, twitterNotifications, twitterProfileRecords, twitterAccounts, twitterDMThreads, twitterSearchRecords, songs, quizzes, guidebookSessions, theaterQuizSessions, scheduledMessages, lifeSimStates, handbooks, trackers, trackerEntries, hotNewsSnapshots, vrNovels, vrAnnotations, customCreatorParts, vrMusic, vrGuestbook, vrScripts, vrStagedPlays, vrPresets, vrLetters, vrSettings, phoneCallLogs, exchangeDiaryBooks, innerVoices, llmPresets, personas, desktopPetRecords] = await Promise.all([
+      const [characters, messages, privateChatArchives, chatAlarms, periodReminderSettings, periodCycleEvents, healthModuleSettings, healthRecords, healthReminders, healthPlans, healthSummaries, themes, emojis, emojiCategories, assets, galleryImages, userProfiles, diaries, tasks, anniversaries, roomTodos, roomNotes, groups, journalStickers, socialPosts, courses, games, worldbooks, novels, bankTx, bankData, xhsActivities, xhsStockImages, twitterTweets, twitterNotifications, twitterProfileRecords, twitterAccounts, twitterDMThreads, twitterSearchRecords, songs, quizzes, guidebookSessions, theaterQuizSessions, theaterFauxPieces, theaterReflectionSessions, collectionItems, scheduledMessages, lifeSimStates, handbooks, trackers, trackerEntries, hotNewsSnapshots, vrNovels, vrAnnotations, customCreatorParts, vrMusic, vrGuestbook, vrScripts, vrStagedPlays, vrPresets, vrLetters, vrSettings, phoneCallLogs, exchangeDiaryBooks, innerVoices, llmPresets, personas, desktopPetRecords] = await Promise.all([
           getAllFromStore(STORE_CHARACTERS),
           getAllFromStore(STORE_MESSAGES),
           getAllFromStore(STORE_PRIVATE_CHAT_ARCHIVES),
           getAllFromStore(STORE_CHAT_ALARMS),
           getAllFromStore(STORE_PERIOD_REMINDER_SETTINGS),
           getAllFromStore(STORE_PERIOD_CYCLE_EVENTS),
+          getAllFromStore(STORE_HEALTH_MODULE_SETTINGS),
+          getAllFromStore(STORE_HEALTH_RECORDS),
+          getAllFromStore(STORE_HEALTH_REMINDERS),
+          getAllFromStore(STORE_HEALTH_PLANS),
+          getAllFromStore(STORE_HEALTH_SUMMARIES),
           getAllFromStore(STORE_THEMES),
           getAllFromStore(STORE_EMOJIS),
           getAllFromStore(STORE_EMOJI_CATEGORIES),
@@ -4353,6 +4753,9 @@ export const DB = {
           getAllFromStore(STORE_QUIZZES),
           getAllFromStore(STORE_GUIDEBOOK),
           getAllFromStore(STORE_THEATER_QUIZ_SESSIONS),
+          getAllFromStore(STORE_THEATER_FAUX_PIECES),
+          getAllFromStore(STORE_THEATER_REFLECTION_SESSIONS),
+          getAllFromStore(STORE_COLLECTION_ITEMS),
           getAllFromStore(STORE_SCHEDULED),
           getAllFromStore(STORE_LIFE_SIM),
           getAllFromStore(STORE_HANDBOOK),
@@ -4393,7 +4796,7 @@ export const DB = {
       const dollhouseRecord = bankData.find((d: any) => d.id === 'dollhouse_state');
 
       return {
-          characters, messages, privateChatArchives, chatAlarms, periodReminderSettings, periodCycleEvents, customThemes: themes, savedEmojis: emojis, emojiCategories, assets, galleryImages, userProfile, diaries, tasks, anniversaries, roomTodos, roomNotes, groups, savedJournalStickers: journalStickers, socialPosts, courses, games, worldbooks, novels,
+          characters, messages, privateChatArchives, chatAlarms, periodReminderSettings, periodCycleEvents, healthModuleSettings, healthRecords, healthReminders, healthPlans, healthSummaries, customThemes: themes, savedEmojis: emojis, emojiCategories, assets, galleryImages, userProfile, diaries, tasks, anniversaries, roomTodos, roomNotes, groups, savedJournalStickers: journalStickers, socialPosts, courses, games, worldbooks, novels,
           bankState: mainState ? { ...mainState, id: undefined } : undefined,
           bankDollhouse: dollhouseRecord?.data || undefined,
           bankTransactions: bankTx,
@@ -4409,6 +4812,9 @@ export const DB = {
           quizSessions: quizzes,
           guidebookSessions,
           theaterQuizSessions,
+          theaterFauxPieces,
+          theaterReflectionSessions,
+          collectionItems,
           scheduledMessages,
           lifeSimState: lifeSimStates[0] || null,
           handbooks,
@@ -4457,6 +4863,7 @@ export const DB = {
       const availableStores = [
           STORE_CHARACTERS, STORE_MESSAGES, STORE_PRIVATE_CHAT_ARCHIVES, STORE_THEMES, STORE_EMOJIS, STORE_EMOJI_CATEGORIES,
           STORE_CHAT_ALARMS, STORE_PERIOD_REMINDER_SETTINGS, STORE_PERIOD_CYCLE_EVENTS,
+          STORE_HEALTH_MODULE_SETTINGS, STORE_HEALTH_RECORDS, STORE_HEALTH_REMINDERS, STORE_HEALTH_PLANS, STORE_HEALTH_SUMMARIES,
           STORE_ASSETS, STORE_GALLERY, STORE_USER, STORE_DIARIES,
           STORE_TASKS, STORE_ANNIVERSARIES, STORE_ROOM_TODOS, STORE_ROOM_NOTES,
           STORE_GROUPS, STORE_JOURNAL_STICKERS, STORE_SOCIAL_POSTS, STORE_COURSES, STORE_GAMES, STORE_WORLDBOOKS, STORE_NOVELS, STORE_SONGS,
@@ -4466,6 +4873,9 @@ export const DB = {
           STORE_QUIZZES,
           STORE_GUIDEBOOK,
           STORE_THEATER_QUIZ_SESSIONS,
+          STORE_THEATER_FAUX_PIECES,
+          STORE_THEATER_REFLECTION_SESSIONS,
+          STORE_COLLECTION_ITEMS,
           STORE_SCHEDULED,
           STORE_LIFE_SIM,
           STORE_DAILY_SCHEDULE,
@@ -4477,8 +4887,8 @@ export const DB = {
           'memory_nodes', 'memory_vectors', 'memory_links', 'topic_boxes', 'anticipations', 'event_boxes',
           'memory_batches', 'pixel_home_assets', 'pixel_home_layouts',
           STORE_PHONE_CALL_LOGS, STORE_EXCHANGE_DIARY, STORE_INNER_VOICES,
+          STORE_LLM_PRESETS, STORE_PERSONAS, STORE_DESKTOP_PET,
           STORE_RELATIONSHIP_NETWORK_EDGES, STORE_RELATIONSHIP_NETWORK_MESSAGES, STORE_RELATIONSHIP_NETWORK_SETTINGS,
-          STORE_DESKTOP_PET
       ].filter(name => db.objectStoreNames.contains(name));
 
       const hasStore = (storeName: string) => availableStores.includes(storeName);
@@ -4520,6 +4930,11 @@ export const DB = {
           data.chatAlarms !== undefined,
           data.periodReminderSettings !== undefined,
           data.periodCycleEvents !== undefined,
+          data.healthModuleSettings !== undefined,
+          data.healthRecords !== undefined,
+          data.healthReminders !== undefined,
+          data.healthPlans !== undefined,
+          data.healthSummaries !== undefined,
           data.customThemes !== undefined,
           data.savedEmojis !== undefined,
           data.emojiCategories !== undefined,
@@ -4543,6 +4958,9 @@ export const DB = {
           data.quizSessions !== undefined,
           data.guidebookSessions !== undefined,
           data.theaterQuizSessions !== undefined,
+          data.theaterFauxPieces !== undefined,
+          data.theaterReflectionSessions !== undefined,
+          data.collectionItems !== undefined,
           data.scheduledMessages !== undefined,
           data.lifeSimState !== undefined,
           data.bankTransactions !== undefined,
@@ -4774,6 +5192,31 @@ export const DB = {
           data.periodCycleEvents = undefined as any;
       }, data.periodCycleEvents?.length || 0);
 
+      await runSection('健康模块设置', data.healthModuleSettings !== undefined, async () => {
+          await clearAndAdd(STORE_HEALTH_MODULE_SETTINGS, data.healthModuleSettings || [], '健康模块设置', false);
+          data.healthModuleSettings = undefined as any;
+      }, data.healthModuleSettings?.length || 0);
+
+      await runSection('健康记录', data.healthRecords !== undefined, async () => {
+          await clearAndAdd(STORE_HEALTH_RECORDS, data.healthRecords || [], '健康记录', false);
+          data.healthRecords = undefined as any;
+      }, data.healthRecords?.length || 0);
+
+      await runSection('健康提醒', data.healthReminders !== undefined, async () => {
+          await clearAndAdd(STORE_HEALTH_REMINDERS, data.healthReminders || [], '健康提醒', false);
+          data.healthReminders = undefined as any;
+      }, data.healthReminders?.length || 0);
+
+      await runSection('健康目标', data.healthPlans !== undefined, async () => {
+          await clearAndAdd(STORE_HEALTH_PLANS, data.healthPlans || [], '健康目标', false);
+          data.healthPlans = undefined as any;
+      }, data.healthPlans?.length || 0);
+
+      await runSection('健康摘要', data.healthSummaries !== undefined, async () => {
+          await clearAndAdd(STORE_HEALTH_SUMMARIES, data.healthSummaries || [], '健康摘要', false);
+          data.healthSummaries = undefined as any;
+      }, data.healthSummaries?.length || 0);
+
       await runSection('聊天主题', data.customThemes !== undefined, async () => {
           await mergeStore(STORE_THEMES, data.customThemes, '聊天主题', true);
           data.customThemes = undefined as any;
@@ -4945,6 +5388,18 @@ export const DB = {
           await clearAndAdd(STORE_THEATER_QUIZ_SESSIONS, data.theaterQuizSessions, '番外问卷', false);
           data.theaterQuizSessions = undefined as any;
       }, data.theaterQuizSessions?.length || 0);
+      await runSection('仿真图文历史', data.theaterFauxPieces !== undefined, async () => {
+          await clearAndAdd(STORE_THEATER_FAUX_PIECES, data.theaterFauxPieces, '仿真图文历史', false);
+          data.theaterFauxPieces = undefined as any;
+      }, data.theaterFauxPieces?.length || 0);
+      await runSection('对影册', data.theaterReflectionSessions !== undefined, async () => {
+          await clearAndAdd(STORE_THEATER_REFLECTION_SESSIONS, data.theaterReflectionSessions, '对影册', false);
+          data.theaterReflectionSessions = undefined as any;
+      }, data.theaterReflectionSessions?.length || 0);
+      await runSection('典藏馆收录', data.collectionItems !== undefined, async () => {
+          await clearAndAdd(STORE_COLLECTION_ITEMS, data.collectionItems, '典藏馆收录', false);
+          data.collectionItems = undefined as any;
+      }, data.collectionItems?.length || 0);
       await runSection('定时消息', data.scheduledMessages !== undefined, async () => {
           await clearAndAdd(STORE_SCHEDULED, data.scheduledMessages || [], '定时消息', false);
           data.scheduledMessages = undefined as any;
