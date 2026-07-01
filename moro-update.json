@@ -2,8 +2,8 @@
   "versionCode": 5,
   "versionName": "1.0.4",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
-  "sha256": "f7eec05678ad780c5928a764a0bf2c95fdeb833f77469ecc2df8ea27decf341c",
-  "sizeBytes": 272831004,
+  "sha256": "6986a47fd4a2da8b54e146c5f95035d90b1a90baa74af19274c72f92f9414dc7",
+  "sizeBytes": 272831449,
   "releaseNotes": "正式版 1.0.4：\n- 安装版在 Android 平板和大屏设备上按手机竖屏运行，避免 OPPO 平板下载后出现横向拉伸、桌面卡片错位或下半屏空白的问题。\n- APK 继续使用 release 签名包，并保留 R8 混淆、资源压缩、禁调试、禁备份、禁明文流量和发布签名校验。\n- 安装包声明相机、麦克风和定位为可选能力，减少不同 Android 设备下载或安装时的兼容限制。\n- 本次只调整安装包外壳和发布校验，不改变已有功能、桌面效果、聊天样式或应用界面。",
   "mandatory": false,
   "publishedAt": "2026-07-01T16:30:00+08:00"
