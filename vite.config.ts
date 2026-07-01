@@ -32,12 +32,13 @@ function readCommit(): string {
 
 const gitInfo = { branch: readBranch(), commit: readCommit() };
 const isReleaseBranch = RELEASE_BRANCHES.has(gitInfo.branch);
-let showBuildBadge = !isReleaseBranch;
-if (process.env.VITE_HIDE_BUILD_BADGE === '1') showBuildBadge = false;
-if (process.env.VITE_SHOW_BUILD_BADGE === '1') showBuildBadge = true;
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const buildTarget = (process.env.MORO_BUILD_TARGET || process.env.VITE_MORO_TARGET || mode || 'native').trim().toLowerCase() === 'web' ? 'web' : 'native';
+  let showBuildBadge = !isReleaseBranch;
+  if (command === 'build' && buildTarget === 'native') showBuildBadge = false;
+  if (process.env.VITE_HIDE_BUILD_BADGE === '1') showBuildBadge = false;
+  if (process.env.VITE_SHOW_BUILD_BADGE === '1') showBuildBadge = true;
 
   return {
     plugins: [
