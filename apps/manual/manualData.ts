@@ -131,6 +131,18 @@ export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
     ],
   },
   {
+    id: '2026-07-01-ios-unsigned-release-package',
+    date: '2026-07-01',
+    title: '发布页会提供 iOS 无签名安装包',
+    kind: 'improvement',
+    summary: '需要自己重签的用户，可以在发布页下载无签名 IPA；它不会直接安装到 iPhone 或 iPad，需要使用自己的 Apple 账号、证书和描述文件重新签名。',
+    items: [
+      'iOS 发布包默认产出无签名 IPA，适合自行重签、测试或交给签名工具处理。',
+      '无签名 IPA 不包含他人的 Apple 证书，不会要求项目保存或暴露 iOS 签名资料。',
+      'Android APK 发布流程不受影响，仍然使用正式 release 签名包。',
+    ],
+  },
+  {
     id: '2026-07-01-moments-respects-social-circle-switches',
     date: '2026-07-01',
     title: '关闭社交圈后此刻不会再冒出 NPC',

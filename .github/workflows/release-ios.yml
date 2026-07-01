@@ -13,9 +13,9 @@ on:
         default: com.moro.app
         type: string
       export_method:
-        description: Xcode export method, such as release-testing, app-store-connect, enterprise, or debugging.
+        description: Xcode export method, such as unsigned, release-testing, app-store-connect, enterprise, or debugging.
         required: false
-        default: release-testing
+        default: unsigned
         type: string
       code_sign_identity:
         description: Code signing identity. Use Apple Distribution for release-testing/app-store-connect/enterprise, Apple Development for debugging.
@@ -54,6 +54,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Resolve release settings
+        id: release_settings
         shell: bash
         run: |
           set -euo pipefail
@@ -67,19 +68,28 @@ jobs:
           fi
 
           bundle_id="${INPUT_BUNDLE_ID:-com.moro.app}"
-          export_method="${INPUT_EXPORT_METHOD:-release-testing}"
+          export_method="${INPUT_EXPORT_METHOD:-unsigned}"
           code_sign_identity="${INPUT_CODE_SIGN_IDENTITY:-Apple Distribution}"
           safe_tag="$(printf '%s' "${tag_name}" | tr '/ ' '--')"
+          if [[ "${export_method}" == "unsigned" ]]; then
+            ipa_name="Moro-${safe_tag}-unsigned.ipa"
+          else
+            ipa_name="Moro-${safe_tag}.ipa"
+          fi
 
           {
             echo "TAG_NAME=${tag_name}"
             echo "BUNDLE_ID=${bundle_id}"
             echo "EXPORT_METHOD=${export_method}"
             echo "CODE_SIGN_IDENTITY=${code_sign_identity}"
-            echo "IPA_NAME=Moro-${safe_tag}.ipa"
+            echo "IPA_NAME=${ipa_name}"
           } >> "${GITHUB_ENV}"
+          {
+            echo "export_method=${export_method}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Check signing secrets
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -118,6 +128,7 @@ jobs:
         run: pod install
 
       - name: Install signing certificate and provisioning profile
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -162,7 +173,34 @@ jobs:
             echo "PROFILE_NAME=${profile_name}"
           } >> "${GITHUB_ENV}"
 
+      - name: Build unsigned iOS app
+        if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          derived_data="${RUNNER_TEMP}/DerivedData"
+
+          xcodebuild build \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "${derived_data}" \
+            PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+          app_path="$(find "${derived_data}/Build/Products/Release-iphoneos" -maxdepth 1 -type d -name '*.app' -print -quit)"
+          if [[ -z "${app_path}" ]]; then
+            echo "::error::No .app bundle was produced by xcodebuild."
+            exit 1
+          fi
+
+          echo "APP_PATH=${app_path}" >> "${GITHUB_ENV}"
+
       - name: Archive iOS app
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -183,6 +221,7 @@ jobs:
           echo "ARCHIVE_PATH=${archive_path}" >> "${GITHUB_ENV}"
 
       - name: Export IPA
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -229,6 +268,23 @@ jobs:
           mkdir -p release
           cp "${ipa_path}" "release/${IPA_NAME}"
 
+      - name: Package unsigned IPA
+        if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="${RUNNER_TEMP}/unsigned-ipa"
+          payload_dir="${package_root}/Payload"
+
+          rm -rf "${package_root}"
+          mkdir -p "${payload_dir}" release
+          cp -R "${APP_PATH}" "${payload_dir}/App.app"
+
+          (
+            cd "${package_root}"
+            zip -qry "${GITHUB_WORKSPACE}/release/${IPA_NAME}" Payload
+          )
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
@@ -240,6 +296,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "${EXPORT_METHOD}" == "unsigned" ]]; then
+            notes="Unsigned iOS IPA built by GitHub Actions run ${GITHUB_RUN_NUMBER}. This file will not install directly on iPhone or iPad until the user re-signs it with their own Apple account, certificate, and provisioning profile."
+          else
+            notes="Signed iOS IPA built by GitHub Actions run ${GITHUB_RUN_NUMBER}."
+          fi
 
           if gh release view "${TAG_NAME}" >/dev/null 2>&1; then
             gh release upload "${TAG_NAME}" "release/${IPA_NAME}" --clobber
@@ -247,5 +308,5 @@ jobs:
             gh release create "${TAG_NAME}" "release/${IPA_NAME}" \
               --target "${GITHUB_SHA}" \
               --title "Moro ${TAG_NAME}" \
-              --notes "Signed iOS IPA built by GitHub Actions run ${GITHUB_RUN_NUMBER}."
+              --notes "${notes}"
           fi
