@@ -1,25 +1,40 @@
-﻿# Moro Native
+# Moro Native
 
 这是 Moro 的原生专用仓库，默认面向 APK / IPA。
 
-## 方向
+## 怎么同步
 
-- `upstream` 指向原始 Moro 仓库。
-- 这里默认的 `dev` / `build` / `preview` 都走 native 线。
-- 网页端如果要看，单独用 `dev:web` / `build:web` / `preview:web`。
+日常先在网页主仓库 `C:\Users\Sss24\Desktop\moro\moro` 更新功能，然后在主仓库运行：
 
-## 更新方式
+```bash
+pnpm sync:native
+```
 
-1. 先从 upstream 同步 Moro 的最新内容。
-2. 再在这里做原生适配。
-3. 如果网页端和原生端都需要同改，先同步内容，再分别在两个仓库里做平台适配。
+这条命令会把共享业务代码、资源、文档和通用构建脚本同步到本仓库。
 
-## 目录约定
+## 什么会保留
 
-- 共享业务：`apps/`、`components/`、`context/`、`hooks/`、`utils/`
-- 原生入口：`platforms/native/`
-- 浏览器入口：`platforms/web/`
+同步不会覆盖这些原生专属内容：
 
-## 说明
+- `android/`
+- `ios/`
+- `.github/`
+- `capacitor.config.ts`
+- `vite.config.ts`
+- `package.json` 里的原生命令
+- `README.md`
 
-这个仓库的目标不是完全和网页端分叉成两套业务，而是把“原生发布”从网页主线里隔离出来，避免你改网页时顺手碰到 APK / IPA 的适配。
+所以网页端和 APK / IPA 的功能内容可以同步，但发布配置、构建方式、输出目录和原生壳继续分开。
+
+## 原生命令
+
+- `pnpm dev`：原生模式开发预览
+- `pnpm build`：构建原生 Web 包到 `dist-native`
+- `pnpm cap:sync`：构建并同步 Capacitor
+- `pnpm cap:android`：同步并打开 Android 工程
+- `pnpm cap:ios`：同步并打开 iOS 工程
+- `pnpm dev:web` / `pnpm build:web`：只用于临时检查网页模式
+
+## 规则
+
+以后更新时：先改主仓库，再跑 `pnpm sync:native`，然后只在本仓库处理 APK / IPA 适配。

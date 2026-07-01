@@ -19,6 +19,7 @@ import {
 } from '../types';
 import { ensureCharacterModelId } from './characterIdentity';
 import { exportPostOfficeLocal, importPostOfficeLocal } from './vrWorld/postOffice';
+import { localizeDefaultStickerSrc } from './stickerImage';
 
 // Legacy physical IndexedDB name retained so existing local-first user data stays available.
 const DB_NAME = 'AetherOS_Data';
@@ -144,6 +145,8 @@ export interface ScheduledMessage {
 const LEGACY_MORO_CATEGORY_ID = 'cat_moro_exclusive';
 /** 默认表情包一次性迁移标记（老用户启动时补种 + 清理旧专属包） */
 const DEFAULT_EMOJI_PACK_FLAG = 'moro_default_emoji_pack_v1';
+/** 默认表情包本地化迁移标记（旧 Catbox URL / 旧默认路径 → APK 内置 public/stickers）。 */
+const DEFAULT_EMOJI_LOCALIZATION_FLAG = 'moro_default_emoji_pack_localized_v2';
 
 // 默认内置表情包：落在「默认」分类（无可见性限制，角色可在聊天里通过
 // [[SEND_EMOJI: 名称]] 直接使用）。重名表情按 名称2 区分（IDB keyPath 是 name）。
@@ -289,6 +292,64 @@ const DEFAULT_PRESET_EMOJIS = [
     { name: '告辞', url: '/stickers/default/139_告辞.jpg', categoryId: 'default' },
     { name: '卖萌猫猫群', url: '/stickers/default/140_卖萌猫猫群.gif', categoryId: 'default' },
 ];
+
+const normalizeDefaultStickerEmoji = <T extends { url?: string }>(emoji: T): T => {
+    const localizedUrl = localizeDefaultStickerSrc(emoji.url);
+    return localizedUrl && localizedUrl !== emoji.url ? { ...emoji, url: localizedUrl } : emoji;
+};
+
+const normalizeDefaultStickerMessage = <T extends { type?: string; content?: string }>(msg: T): T => {
+    if (msg.type !== 'emoji' || typeof msg.content !== 'string') return msg;
+    const localizedContent = localizeDefaultStickerSrc(msg.content);
+    return localizedContent && localizedContent !== msg.content ? { ...msg, content: localizedContent } : msg;
+};
+
+const migrateDefaultStickerLocalization = async (force = false): Promise<void> => {
+    let alreadyDone = false;
+    try { alreadyDone = localStorage.getItem(DEFAULT_EMOJI_LOCALIZATION_FLAG) === '1'; } catch { /* ignore */ }
+    if (alreadyDone && !force) return;
+
+    const db = await openDB();
+    const stores = [STORE_EMOJIS, STORE_MESSAGES];
+    if (db.objectStoreNames.contains(STORE_PRIVATE_CHAT_ARCHIVES)) stores.push(STORE_PRIVATE_CHAT_ARCHIVES);
+
+    await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(stores, 'readwrite');
+
+        const migrateCursor = <T>(storeName: string, normalize: (value: T) => T) => {
+            const req = tx.objectStore(storeName).openCursor();
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (!cursor) return;
+                const current = cursor.value as T;
+                const next = normalize(current);
+                if (next !== current) cursor.update(next);
+                cursor.continue();
+            };
+            req.onerror = () => reject(req.error);
+        };
+
+        migrateCursor<Emoji>(STORE_EMOJIS, normalizeDefaultStickerEmoji);
+        migrateCursor<Message>(STORE_MESSAGES, normalizeDefaultStickerMessage);
+        if (stores.includes(STORE_PRIVATE_CHAT_ARCHIVES)) {
+            migrateCursor<PrivateChatArchive>(STORE_PRIVATE_CHAT_ARCHIVES, archive => {
+                let changed = false;
+                const messages = (archive.messages || []).map(msg => {
+                    const next = normalizeDefaultStickerMessage(msg);
+                    if (next !== msg) changed = true;
+                    return next;
+                });
+                return changed ? { ...archive, messages } : archive;
+            });
+        }
+
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('default sticker localization aborted'));
+    });
+
+    try { localStorage.setItem(DEFAULT_EMOJI_LOCALIZATION_FLAG, '1'); } catch { /* ignore */ }
+};
 
 // 单例连接缓存。openDB 原本每次调用都新开一条 IDB 连接, 既不复用也不 close ——
 // 在记忆管线 (hybridSearch / touchAccess 等) 并发读写下会瞬间堆出几十条主库连接
@@ -1206,7 +1267,7 @@ export const DB = {
         const store = transaction.objectStore(STORE_MESSAGES);
         const timestamp = typeof msg.timestamp === 'number' ? msg.timestamp : Date.now();
         const { timestamp: _ignored, ...payload } = msg;
-        const request = store.add({ ...payload, timestamp });
+        const request = store.add(normalizeDefaultStickerMessage({ ...payload, timestamp } as Message));
         let newId = 0;
         request.onsuccess = () => { newId = request.result as number; };
         request.onerror = () => reject(request.error);
@@ -1443,9 +1504,13 @@ export const DB = {
   savePrivateChatArchive: async (archive: PrivateChatArchive): Promise<void> => {
     const db = await openDB();
     if (!db.objectStoreNames.contains(STORE_PRIVATE_CHAT_ARCHIVES)) return;
+    const normalizedArchive: PrivateChatArchive = {
+      ...archive,
+      messages: (archive.messages || []).map(normalizeDefaultStickerMessage),
+    };
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(STORE_PRIVATE_CHAT_ARCHIVES, 'readwrite');
-      transaction.objectStore(STORE_PRIVATE_CHAT_ARCHIVES).put(archive);
+      transaction.objectStore(STORE_PRIVATE_CHAT_ARCHIVES).put(normalizedArchive);
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
       transaction.onabort = () => reject(transaction.error || new Error('savePrivateChatArchive aborted'));
@@ -1535,7 +1600,8 @@ export const DB = {
               } else {
                   for (const msg of messages) {
                       const { id: _id, ...payload } = msg;
-                      store.add({ ...payload, groupId, timestamp: typeof msg.timestamp === 'number' ? msg.timestamp : Date.now() });
+                      const timestamp = typeof msg.timestamp === 'number' ? msg.timestamp : Date.now();
+                      store.add(normalizeDefaultStickerMessage({ ...payload, groupId, timestamp } as Message));
                   }
               }
           };
@@ -1649,7 +1715,7 @@ export const DB = {
       const transaction = db.transaction(STORE_EMOJIS, 'readonly');
       const store = transaction.objectStore(STORE_EMOJIS);
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
+      request.onsuccess = () => resolve(((request.result || []) as Emoji[]).map(normalizeDefaultStickerEmoji));
       request.onerror = () => reject(request.error);
     });
   },
@@ -1657,7 +1723,7 @@ export const DB = {
   saveEmoji: async (name: string, url: string, categoryId?: string, description?: string): Promise<void> => {
     const db = await openDB();
     const transaction = db.transaction(STORE_EMOJIS, 'readwrite');
-    transaction.objectStore(STORE_EMOJIS).put({ name, url, categoryId, ...(description ? { description } : {}) });
+    transaction.objectStore(STORE_EMOJIS).put(normalizeDefaultStickerEmoji({ name, url, categoryId, ...(description ? { description } : {}) }));
   },
 
   deleteEmoji: async (name: string): Promise<void> => {
@@ -1720,13 +1786,17 @@ export const DB = {
           DEFAULT_PRESET_EMOJIS.forEach(emoji => store.put(emoji));
           await new Promise(resolve => { tx.oncomplete = resolve; });
           try { localStorage.setItem(DEFAULT_EMOJI_PACK_FLAG, '1'); } catch { /* ignore */ }
+          await migrateDefaultStickerLocalization(true);
           return;
       }
       // 老用户一次性迁移：下线旧「Moro 专属」包（连同其下表情），补种新默认表情包。
       // 用 localStorage 标记保证只跑一次——之后用户删掉默认表情不会复活。
       let migrated = false;
       try { migrated = localStorage.getItem(DEFAULT_EMOJI_PACK_FLAG) === '1'; } catch { /* ignore */ }
-      if (migrated) return;
+      if (migrated) {
+          await migrateDefaultStickerLocalization();
+          return;
+      }
       try {
           if (cats.some(c => c.id === LEGACY_MORO_CATEGORY_ID)) {
               await DB.deleteEmojiCategory(LEGACY_MORO_CATEGORY_ID);
@@ -1742,6 +1812,7 @@ export const DB = {
       } catch (e) {
           console.warn('[EmojiMigration] 默认表情包迁移失败，下次启动重试:', e);
       }
+      await migrateDefaultStickerLocalization();
   },
 
   // ─── 来往·角色离线自主生活事件（autonomous life）─────────────────

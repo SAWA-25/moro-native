@@ -16,6 +16,7 @@ import { regex_placement } from './regex/engine';
 import { timeGapHint } from './laiwangPrompts';
 import { buildRecentLifeContextBlock } from './autonomousLife';
 import { formatCharacterWithId } from './characterIdentity';
+import { localizeDefaultStickerSrc } from './stickerImage';
 
 // 群活动注入专用：把一条群消息压成"适合塞进别人私聊背景"的短文本。
 // 关键：image 消息的 content 是 base64（群里发图走 processImage 压成 JPEG，单张几十 KB），
@@ -1007,7 +1008,8 @@ ${xhsEnabled ? `${[notionEnabled, feishuEnabled, notionNotesEnabled].filter(Bool
                     }
                 }
                 else if (m.type === 'emoji') {
-                     const stickerName = emojis.find(e => e.url === m.content)?.name || '未知表情';
+                     const messageStickerUrl = localizeDefaultStickerSrc(m.content);
+                     const stickerName = emojis.find(e => localizeDefaultStickerSrc(e.url) === messageStickerUrl)?.name || '未知表情';
                      content = `${timeStr} [${m.role === 'user' ? '用户' : '你'} 发送了表情包: ${stickerName}]`;
                 }
                 else if ((m.type as string) === 'chat_forward') {
