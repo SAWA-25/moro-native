@@ -69,6 +69,18 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-02-native-install-105-release',
+    date: '2026-07-02',
+    title: '安装版 1.0.5 已同步最新内容',
+    kind: 'improvement',
+    summary: '新版安装包合入了这次上游更新，并继续按正式版发布规则隐藏开发角标、使用 Android release 签名和更新校验。',
+    items: [
+      'Android 安装包版本升到 1.0.5，保留 release 签名、R8 混淆、资源压缩、禁调试、禁备份和下载校验，方便从 1.0.4 直接升级。',
+      '正式 native 构建默认不会挂载右下角开发分支角标，不会影响桌面、聊天、音乐或其他现有效果。',
+      '发布页会继续提供 Android APK 和 iOS 无签名 IPA；iOS 包仍需要用自己的 Apple 账号、证书和描述文件重签后安装。',
+    ],
+  },
+  {
     id: '2026-07-01-chat-video-call-request-flow',
     date: '2026-07-01',
     title: '视频聊天会先等 TA 接通了',
