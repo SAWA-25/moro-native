@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
 import { execSync } from 'node:child_process';
 import { bakeVoiceMiddleware } from './server/bake-voice-middleware';
+import worker from './worker/index.js';
 
 const RELEASE_BRANCHES = new Set(['main', 'master']);
 
@@ -51,6 +52,34 @@ export default defineConfig(({ command, mode }) => {
         name: 'bake-voice-middleware',
         configureServer(server) {
           server.middlewares.use('/api/minimax/bake-voice', bakeVoiceMiddleware);
+        },
+      },
+      {
+        name: 'moro-worker-dev-routes',
+        configureServer(server) {
+          server.middlewares.use('/qqmusic', async (req, res) => {
+            try {
+              const chunks: Buffer[] = [];
+              for await (const chunk of req) {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+              }
+              const body = Buffer.concat(chunks);
+              const origin = `http://${req.headers.host || '127.0.0.1'}`;
+              const request = new Request(`${origin}/qqmusic${req.url || ''}`, {
+                method: req.method || 'GET',
+                headers: new Headers(req.headers as Record<string, string>),
+                body: body.length ? body : undefined,
+              });
+              const response = await worker.fetch(request, {}, {});
+              res.statusCode = response.status;
+              response.headers.forEach((value, key) => res.setHeader(key, value));
+              res.end(Buffer.from(await response.arrayBuffer()));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.end(JSON.stringify({ status: 'error', message: e?.message || String(e) }));
+            }
+          });
         },
       },
     ],
