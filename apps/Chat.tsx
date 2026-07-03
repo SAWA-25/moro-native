@@ -3956,6 +3956,53 @@ ${privateCallDecisionPromptBody({
         if (!char) return;
         if (isTyping) { addToast('等 TA 这句说完再窥屏吧', 'info'); return; }
         setShowPanel('none');
+        addToast('正在生成 TA 此刻的手机屏幕…', 'info');
+        try {
+            const now = Date.now();
+            const displayName = char.convoSettings?.remarkName?.trim() || char.name;
+            const run = await generateXunjiScreenlifeRun({
+                char,
+                api: resolveAuxApi(auxApiConfig, apiConfig),
+                rangeStart: now - 30 * 60 * 1000,
+                rangeEnd: now,
+                density: 'light',
+                writeBack: false,
+                seed: `${char.id}_${now}_screen_peek`,
+            });
+            await DB.saveXunjiRun(run);
+            const screen = buildScreenPeekPhoneScreen(run, char, userProfile, now);
+            const card: ScreenPeekCard = {
+                id: `screen-peek-${run.id}`,
+                charId: char.id,
+                charName: displayName,
+                generatedAt: now,
+                title: run.title || `${displayName} 的手机屏幕`,
+                narrative: run.narrative,
+                screen,
+                chats: run.chats || [],
+                browsed: run.browsed || [],
+                notes: run.notes || [],
+                moments: run.moments,
+                sourceRunId: run.id,
+            };
+            await DB.saveMessage({
+                charId: char.id,
+                role: 'assistant',
+                type: 'screen_peek_card',
+                content: JSON.stringify(card),
+                metadata: { screenPeek: card, excludeFromContext: true },
+            } as any);
+            await reloadMessages(visibleCountRef.current);
+            addToast('窥屏截图已生成', 'success');
+        } catch (err: any) {
+            showError('窥屏生成失败', err?.message || String(err));
+        }
+    };
+
+    const handleUserPhoneScreenPeek = async () => {
+        if (!char) return;
+        if (isTyping) { addToast('等 TA 这句说完再看你的手机吧', 'info'); return; }
+        setShowPanel('none');
         addToast('正在让 TA 贴到你的真实手机旁…', 'info');
         try {
             const now = Date.now();
@@ -4010,7 +4057,7 @@ ${privateCallDecisionPromptBody({
             startScreenPeekCommentSession({ messageId, card, charAvatar: char.avatar, trigger: 'session_start' });
             addToast(deviceSnapshot.source === 'android_screen_capture' ? 'TA 已经开始看你的真实手机' : '悬浮窗已打开，先处理录屏授权', 'success');
         } catch (err: any) {
-            showError('窥屏生成失败', err?.message || String(err));
+            showError('真实手机窥屏失败', err?.message || String(err));
         }
     };
 
@@ -4050,6 +4097,7 @@ ${privateCallDecisionPromptBody({
             }
             case 'check-phone': setShowPanel('none'); setShowCheckPhone(true); break;
             case 'screen-peek': void handleScreenPeek(); break;
+            case 'user-phone-peek': void handleUserPhoneScreenPeek(); break;
             case 'user-screen-watch': setShowPanel('none'); setShowUserScreenWatchPanel(true); break;
             case 'phone-lock':
                 setShowPanel('none');

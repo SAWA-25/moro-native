@@ -796,8 +796,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                 <Detective className="w-5 h-5" weight="bold" />
                             </ActionStrip>
 
-                            <ActionStrip label="窥屏" hint="看 TA 的虚拟手机 / 让 TA 看你的真实手机" dark={isDiscordStyle} onClick={() => onPanelAction('screen-peek')}>
+                            <ActionStrip label="窥屏" hint="看 TA 的虚拟手机屏幕" dark={isDiscordStyle} onClick={() => onPanelAction('screen-peek')}>
                                 <ImageSquare className="w-5 h-5" weight="duotone" />
+                            </ActionStrip>
+
+                            <ActionStrip label="TA 窥屏" hint="让 TA 看你的真实手机" dark={isDiscordStyle} onClick={() => onPanelAction('user-phone-peek')}>
+                                <ImageSquare className="w-5 h-5" weight="bold" />
                             </ActionStrip>
 
                             <ActionStrip label="观屏评论" hint="让 TA 看我的屏幕并短评" dark={isDiscordStyle} onClick={() => onPanelAction('user-screen-watch')}>
