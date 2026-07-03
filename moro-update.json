@@ -2,9 +2,9 @@
   "versionCode": 7,
   "versionName": "1.0.6",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
-  "sha256": "72d260e66fd4495c488cbb0a344d38117ecfc5b5cb10ad0d34c5e751d5732406",
+  "sha256": "36ce1dd49351b45680b2c90dc05bbf900d1b19f2609dfa84bdaa683079bb35fe",
   "sizeBytes": 273148538,
-  "releaseNotes": "正式版 1.0.6：\n- 合入 2026 年 7 月 3 日上游更新内容，并补齐音乐、絮语总览、情侣空间、外观工作台等此前遗漏的新版入口。\n- Android 安装包升级为 versionCode 7 / versionName 1.0.6，可从 1.0.5 直接覆盖升级。\n- native 正式构建默认隐藏右下角开发角标。\n- APK 使用 release 证书签名，并通过 R8 混淆、资源压缩、禁调试、禁备份和明文流量限制等基础防护。\n- 单聊回形针里的“窥屏”恢复为看 TA 的虚拟手机；安装版新增“TA 窥屏”入口，真实手机录屏需要用户主动授权。",
+  "releaseNotes": "正式版 1.0.6：\n- 7 月 3 日的新内容已经装进安装版，音乐、絮语总览、情侣空间、外观工作台等入口都在啦。\n- Android 可以从 1.0.5 直接覆盖升级，右下角的小开发标记在正式版里会乖乖藏好。\n- 回形针里的“窥屏”继续看 TA 的虚拟手机；新增“TA 窥屏”，只有你主动授权录屏后，TA 才能看你的真实手机画面。\n- 安装包已经用正式签名和基础防护重新打好；iOS 包仍需要用自己的 Apple 证书重签后安装。",
   "mandatory": false,
-  "publishedAt": "2026-07-03T15:48:16+08:00"
+  "publishedAt": "2026-07-03T16:10:33+08:00"
 }
