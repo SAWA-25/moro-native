@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moro 1.0.6 安装</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+        background: #f6f3ee;
+        color: #26211c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      main {
+        width: min(100%, 420px);
+        background: #fffaf2;
+        border: 1px solid #e2d8ca;
+        border-radius: 8px;
+        padding: 28px;
+        box-shadow: 0 14px 36px rgba(78, 57, 31, 0.12);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 27px;
+        line-height: 1.18;
+        font-weight: 750;
+      }
+
+      p {
+        margin: 0;
+        color: #62594f;
+        font-size: 15px;
+        line-height: 1.72;
+      }
+
+      .install {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 52px;
+        margin: 24px 0 18px;
+        border-radius: 8px;
+        background: #24201c;
+        color: #fffaf2;
+        text-decoration: none;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .note {
+        border-top: 1px solid #e8ded1;
+        padding-top: 16px;
+        font-size: 14px;
+      }
+
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .links a {
+        color: #5b3f23;
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Moro 1.0.6</h1>
+      <p>请用 iPhone 的 Safari 打开这个页面，然后点下面的按钮。系统弹出安装提示后，选“安装”就好。</p>
+      <a
+        class="install"
+        href="itms-services://?action=download-manifest&amp;url=https%3A%2F%2Fsawa-25.github.io%2Fmoro-native%2Fmoro-ios-install.plist%3Fv%3D20260703-2218"
+      >
+        点这里安装 Moro
+      </a>
+      <p class="note">
+        如果还是转到一半停住，请把 iPhone 接到电脑，用爱思助手或 iMazing 安装 IPA，这样能看到更准确的失败原因。
+      </p>
+      <div class="links">
+        <a href="https://github.com/SAWA-25/moro-native/releases/tag/v1.0.6">打开发布页</a>
+        <a href="https://github.com/SAWA-25/moro-native/releases/download/v1.0.6/Moro-v1.0.6.ipa">下载 IPA</a>
+      </div>
+    </main>
+  </body>
+</html>
