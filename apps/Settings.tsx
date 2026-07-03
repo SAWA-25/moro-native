@@ -32,19 +32,16 @@ import {
 } from '../utils/contextBudget';
 import {
     checkConfiguredAppUpdate,
-    getAppUpdatePackageLabel,
-    getAppUpdateUserErrorMessage,
-    openAppUpdatePackage,
+    downloadAndInstallApk,
     getNativeAppInfo,
     openInstallerPermissionSettings,
     type AppUpdateCheckResult,
     type ApkDownloadProgress,
     type NativeAppInfo,
 } from '../utils/appUpdates';
-import { queueManualDeepLink, scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
+import { scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { fetchModelList, testChatConnection } from '../utils/llmClient';
-import type { ApiErrorHelp } from '../utils/apiErrorHelp';
 
 // hot_news（orz.ai）可选热榜平台。key 必须与 API 的 ?platform= 完全一致。
 const HOTNEWS_PLATFORM_OPTIONS: { key: string; label: string }[] = [
@@ -784,7 +781,7 @@ const Settings: React.FC = () => {
       } catch (e: any) {
           console.warn('[Settings] check app update failed', e);
           setApkUpdateCheck(null);
-          const message = getAppUpdateUserErrorMessage('检查更新失败，请稍后再试。');
+          const message = e?.message || '检查更新失败';
           setApkUpdateStatus(message);
           addToast(message, 'error');
       } finally {
@@ -807,21 +804,23 @@ const Settings: React.FC = () => {
               latest = result.latest;
           } catch (e: any) {
               console.warn('[Settings] load app update before download failed', e);
-              addToast(getAppUpdateUserErrorMessage('读取更新清单失败，请稍后再试。'), 'error');
+              addToast(e?.message || '读取更新清单失败', 'error');
               return;
           }
       }
-      if (useDomesticLine && !(latest.domesticDownloadUrl || latest.domesticApkUrl || latest.domesticIpaUrl)) {
+      if (useDomesticLine && !latest.domesticApkUrl) {
           addToast('国内线路暂不可用', 'error');
           return;
       }
 
       setApkUpdateBusy(true);
-      const packageLabel = getAppUpdatePackageLabel(latest);
-      setApkUpdateStatus(useDomesticLine ? `正在通过国内线路获取${packageLabel}...` : `正在获取${packageLabel}...`);
+      setApkUpdateStatus(useDomesticLine ? '正在通过国内线路下载更新包...' : '正在下载更新包...');
       setApkDownloadProgress(null);
       try {
-          await openAppUpdatePackage(latest, { useDomesticLine, onProgress: progress => {
+          const downloadTarget = useDomesticLine && latest.domesticApkUrl
+              ? { ...latest, apkUrl: latest.domesticApkUrl }
+              : latest;
+          await downloadAndInstallApk(downloadTarget, progress => {
               setApkDownloadProgress(progress);
               if (progress.status === 'downloading') {
                   setApkUpdateStatus(`正在下载更新包：${Math.round(progress.progress * 100)}%`);
@@ -830,13 +829,11 @@ const Settings: React.FC = () => {
               } else if (progress.status === 'installing') {
                   setApkUpdateStatus('正在打开系统安装器...');
               }
-          } });
-          setApkUpdateStatus(latest.platform === 'ios'
-              ? '更新页面已打开，请按页面提示安装。'
-              : '系统安装器已打开，请按提示确认安装。');
+          });
+          setApkUpdateStatus('系统安装器已打开，请按提示确认安装。');
       } catch (e: any) {
           console.warn('[Settings] download app update failed', e);
-          const message = getAppUpdateUserErrorMessage('下载或安装失败，请稍后再试。');
+          const message = e?.message || '下载或安装失败';
           setApkUpdateStatus(message);
           addToast(message, 'error');
       } finally {
@@ -1387,17 +1384,6 @@ const Settings: React.FC = () => {
       }, 180);
   }, []), { enabled: activeApp === AppID.Settings });
 
-  const openApiErrorManualHelp = useCallback((help: ApiErrorHelp) => {
-      setShowApiCallLog(false);
-      queueManualDeepLink({
-          appId: AppID.Manual,
-          route: 'guide',
-          anchorId: help.manualAnchorId,
-          payload: { app: '文具盒', view: 'detail', settingId: help.manualSettingId },
-      });
-      openApp(AppID.Manual);
-  }, [openApp]);
-
   return (
     <div ref={settingsRootRef} className="settings-polaroid h-full w-full bg-[#f6f6f2] flex flex-col relative text-[#2f3437]" style={{ ...DOT_BG, paddingTop: 'var(--safe-top)' }}>
       <style>{POLAROID_SCOPE_CSS}</style>
@@ -1487,21 +1473,21 @@ const Settings: React.FC = () => {
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-black text-[#2f3437]">当前安装包</p>
                                     <p className="text-[10px] text-[#69716d] font-mono truncate">
-                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · code ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入安装版'}
+                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · code ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入 Android App'}
                                     </p>
                                 </div>
-                                {nativeAppInfo?.platform === 'android' && !nativeAppInfo.canRequestPackageInstalls && (
+                                {nativeAppInfo?.native && !nativeAppInfo.canRequestPackageInstalls && (
                                     <button type="button" onClick={handleOpenInstallPermission} className={`shrink-0 px-2.5 py-1.5 text-[10px] font-black ${STICKER}`}>
                                         安装权限
                                     </button>
                                 )}
                             </div>
                             <p className="text-[10px] text-[#69716d] mt-2 leading-relaxed">
-                                Android 会下载 APK 并打开系统安装器；iOS 会打开 IPA 或安装页，仍需你手动确认。
+                                有新版本时会下载安装包并打开 Android 系统安装器，仍需你手动确认安装。
                             </p>
                         </div>
 
-                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.domesticDownloadUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
+                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.domesticApkUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
                             <button
                                 type="button"
                                 disabled={apkUpdateBusy}
@@ -1516,9 +1502,9 @@ const Settings: React.FC = () => {
                                 onClick={() => handleDownloadApkUpdate(false)}
                                 className={`py-2.5 text-xs font-black disabled:opacity-40 ${apkUpdateCheck?.updateAvailable ? INK_BTN : STICKER}`}
                             >
-                                获取新版
+                                下载新版
                             </button>
-                            {apkUpdateCheck?.latest.domesticDownloadUrl && (
+                            {apkUpdateCheck?.latest.domesticApkUrl && (
                                 <button
                                     type="button"
                                     disabled={apkUpdateBusy || !apkUpdateCheck?.updateAvailable}
@@ -2839,11 +2825,7 @@ const Settings: React.FC = () => {
       </PaperSheet>
 
       {/* API 后台流水页面 */}
-      <ApiCallLogModal
-          isOpen={showApiCallLog}
-          onClose={() => setShowApiCallLog(false)}
-          onOpenManualHelp={openApiErrorManualHelp}
-      />
+      <ApiCallLogModal isOpen={showApiCallLog} onClose={() => setShowApiCallLog(false)} />
 
       {/* API 预设命名 */}
       <PaperSheet open={showPresetModal} tag="API PRESET" title="保存 API 预设" onClose={() => setShowPresetModal(false)} footer={<button onClick={handleSavePreset} className={`w-full py-3 font-black ${INK_BTN}`}>保存预设</button>}>

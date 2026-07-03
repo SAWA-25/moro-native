@@ -19,7 +19,7 @@ export const localizeDefaultStickerSrc = (src: string | undefined | null): strin
         const url = new URL(src);
         if ((url.protocol === 'http:' || url.protocol === 'https:') && url.hostname === CATBOX_HOST) {
             const fileName = getFileNameFromPath(url.pathname);
-            if (fileName && DEFAULT_STICKER_RENAMES[fileName]) return resolveDefaultStickerPath(fileName);
+            if (fileName) return resolveDefaultStickerPath(fileName);
         }
     } catch {
         // Not a full URL, fall through to local-path handling.

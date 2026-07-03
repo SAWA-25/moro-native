@@ -10,7 +10,7 @@ import {
     LifeSimState, HandbookEntry, Tracker, TrackerEntry, HotNewsSnapshot,
     VRWorldNovel, VRNovelAnnotation, CustomCreatorPart, VRMusicRoomState, VRGuestbookState, VRScript, VRStagedPlay, VRLetter,
     PhoneCallLog, ExchangeDiaryBook, InnerVoiceEntry, TavernPreset, Persona, CalendarMark, CharLedgerEntry, CharLifeEvent,
-    XunjiMonitorSnapshot, XunjiReportItem, XunjiScreenlifeRun, XunjiSettings, PhoneCheckSession, UserScreenWatchSession,
+    XunjiMonitorSnapshot, XunjiReportItem, XunjiScreenlifeRun, XunjiSettings, PhoneCheckSession, UserScreenWatchSession, ScreenPeekCard,
     RelationshipNetworkAutoSettings, RelationshipNetworkEdge, RelationshipNetworkMessage,
     TalkSession, CollectionItem, TakeoutOrder, DivinationCard, WerewolfGame, TruthDareSession, TheaterQuizSession, TheaterFauxPiece,
     TheaterReflectionSession,
@@ -1597,6 +1597,55 @@ export const DB = {
   },
 
   /** 批量写消息回执状态（metadata.msgStatus），ids 为空时直接返回。 */
+  updateScreenPeekCard: async (id: number, updater: (prev: ScreenPeekCard) => ScreenPeekCard): Promise<ScreenPeekCard> => {
+    const db = await openDB();
+    const transaction = db.transaction(STORE_MESSAGES, 'readwrite');
+    const store = transaction.objectStore(STORE_MESSAGES);
+
+    return new Promise((resolve, reject) => {
+        let updatedMessage: Message | undefined;
+        let updatedCard: ScreenPeekCard | undefined;
+        const req = store.get(id);
+        req.onsuccess = () => {
+            const data = req.result as Message | undefined;
+            if (!data) {
+                reject(new Error('Message not found'));
+                return;
+            }
+            let current: ScreenPeekCard | null = null;
+            if ((data.metadata as any)?.screenPeek) current = (data.metadata as any).screenPeek as ScreenPeekCard;
+            if (!current) {
+                try { current = JSON.parse(data.content) as ScreenPeekCard; } catch { current = null; }
+            }
+            if (!current) {
+                reject(new Error('Screen peek card not found'));
+                return;
+            }
+            updatedCard = updater(current);
+            data.content = JSON.stringify(updatedCard);
+            data.metadata = { ...((data.metadata as any) || {}), screenPeek: updatedCard };
+            updatedMessage = data;
+            store.put(data);
+        };
+        req.onerror = () => reject(req.error);
+        transaction.oncomplete = () => {
+            if (updatedMessage) {
+                dispatchMessagesUpdated({
+                    kind: 'updated',
+                    charId: updatedMessage.charId,
+                    groupId: updatedMessage.groupId,
+                    messageId: id,
+                    timestamp: updatedMessage.timestamp,
+                });
+            }
+            if (updatedCard) resolve(updatedCard);
+            else reject(new Error('Screen peek card update did not complete'));
+        };
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error || new Error('updateScreenPeekCard aborted'));
+    });
+  },
+
   setMessagesStatus: async (ids: number[], status: string): Promise<void> => {
     if (!ids.length) return;
     const db = await openDB();

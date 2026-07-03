@@ -16,9 +16,6 @@ import { regex_placement } from './regex/engine';
 import { timeGapHint } from './laiwangPrompts';
 import { buildRecentLifeContextBlock } from './autonomousLife';
 import { formatCharacterWithId } from './characterIdentity';
-import { localizeDefaultStickerSrc } from './stickerImage';
-import { buildChatHubV2ContextBlock } from './chatHubDigest';
-import { buildMomentsChatContextBlock } from './momentsContext';
 
 // 群活动注入专用：把一条群消息压成"适合塞进别人私聊背景"的短文本。
 // 关键：image 消息的 content 是 base64（群里发图走 processImage 压成 JPEG，单张几十 KB），
@@ -299,32 +296,7 @@ export const ChatPrompts = {
         const lifeContextPromise: Promise<string> = buildRecentLifeContextBlock(char, userProfile.name)
             .catch(() => '');
 
-        const chatHubV2ContextPromise: Promise<string> = (async () => {
-            try {
-                const [followups, digest] = await Promise.all([
-                    DB.getAllChatFollowups(),
-                    DB.getChatHubDigestByDate(today),
-                ]);
-                const scopedFollowups = followups.filter(item => (
-                    item.status === 'open'
-                    && (item.targetKind === 'hub' || item.targetId === char.id)
-                ));
-                const relationshipHints = (char.relationship?.history || [])
-                    .slice(0, 2)
-                    .map(item => `${item.label || item.stage}${item.reason ? `：${item.reason}` : ''}`);
-                return buildChatHubV2ContextBlock({
-                    followups: scopedFollowups,
-                    digest,
-                    relationshipHints,
-                    maxLines: 6,
-                });
-            } catch {
-                return '';
-            }
-        })();
-        const momentsContextPromise: Promise<string> = buildMomentsChatContextBlock(char).catch(() => '');
-
-        const [realtimeText, schedule, groupContextText, notionDiaryText, feishuDiaryText, notionNotesText, recentLifeText, chatHubV2Text, momentsContextText] =
+        const [realtimeText, schedule, groupContextText, notionDiaryText, feishuDiaryText, notionNotesText, recentLifeText] =
             await Promise.all([
                 timed('realtime', realtimePromise),
                 timed('schedule', schedulePromise),
@@ -333,8 +305,6 @@ export const ChatPrompts = {
                 timed('feishuDiary', feishuDiaryPromise),
                 timed('notionNotes', notionNotesPromise),
                 timed('recentLife', lifeContextPromise),
-                timed('chatHubV2', chatHubV2ContextPromise),
-                timed('momentsCtx', momentsContextPromise),
             ]);
 
         // ── 按原顺序拼接 ──
@@ -406,8 +376,6 @@ export const ChatPrompts = {
         baseSystemPrompt += feishuDiaryText;
         baseSystemPrompt += notionNotesText;
         baseSystemPrompt += recentLifeText;   // 线下自主生活 → 线上聊天上下文（关联线上/线下）
-        baseSystemPrompt += momentsContextText; // 此刻互动 → 私聊上下文（只注入真实相关线索）
-        if (chatHubV2Text) baseSystemPrompt += `\n${chatHubV2Text}\n`;
 
         // 页外常驻设定：仅对启用了「页外」的角色注入。让角色在聊天里始终知道页外是什么，
         // 不再依赖累积的 vr_card 动态 / 记忆总结（那些会被压缩、丢掉"页外=VR游戏"的框定，
@@ -1040,8 +1008,7 @@ ${xhsEnabled ? `${[notionEnabled, feishuEnabled, notionNotesEnabled].filter(Bool
                     }
                 }
                 else if (m.type === 'emoji') {
-                     const messageStickerUrl = localizeDefaultStickerSrc(m.content);
-                     const stickerName = emojis.find(e => localizeDefaultStickerSrc(e.url) === messageStickerUrl)?.name || '未知表情';
+                     const stickerName = emojis.find(e => e.url === m.content)?.name || '未知表情';
                      content = `${timeStr} [${m.role === 'user' ? '用户' : '你'} 发送了表情包: ${stickerName}]`;
                 }
                 else if ((m.type as string) === 'chat_forward') {

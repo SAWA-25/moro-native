@@ -1,18 +1,10 @@
 {
-  "versionCode": 6,
-  "versionName": "1.0.5",
+  "versionCode": 7,
+  "versionName": "1.0.6",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
-  "sha256": "9f552617ee8c5f10edf9a58a28bd62ea297ed86b8328483a487b527050d25875",
-  "sizeBytes": 272857680,
-  "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/Moro-v1.0.5-unsigned.ipa",
-  "ios": {
-    "versionCode": 6,
-    "versionName": "1.0.5",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/Moro-v1.0.5-unsigned.ipa",
-    "sha256": "c835b963a47754b802ae4bd1cd30ad6147901420c4e49f0eb732f1c703d00b5f",
-    "sizeBytes": 241525122
-  },
-  "releaseNotes": "正式版 1.0.5：\n- 已合入上游最新内容，包含音乐 App QQ 音乐扫码连接、聊天 / 视频通话 / 黑名单观察、音乐头像与个人页等体验修复。\n- Android APK 升级到 versionCode 6，可从 1.0.4 直接升级；继续使用 release 签名包、R8 混淆、资源压缩、zipAlign、禁调试、禁备份、禁明文流量和下载校验。\n- 正式 native 构建默认隐藏右下角开发分支角标，不改变现有桌面、聊天、音乐或其他 App 的界面效果。\n- Android 安装包兼容 Android 5.1 及以上，声明大小屏支持，并把摄像头、麦克风、定位等保持为可选能力，减少不同设备的安装限制。\n- 发布页同时提供 Android APK 和 iOS 无签名 IPA；iOS 包需要使用自己的 Apple 账号、证书和描述文件重签后安装。\n- 本次只同步新内容和安装包外壳 / 发布校验，不改变已有功能效果、桌面效果、聊天样式或应用界面。",
+  "sha256": "e66d087abe958225ec39b24bceb3031aa7665abd398247c546f000e66c3d0ca2",
+  "sizeBytes": 273083193,
+  "releaseNotes": "正式版 1.0.6：\n- 合入 2026 年 7 月 3 日上游更新内容。\n- Android 安装包升级为 versionCode 7 / versionName 1.0.6，可从 1.0.5 直接覆盖升级。\n- native 正式构建默认隐藏右下角开发角标。\n- APK 使用 release 证书签名，并通过 R8 混淆、资源压缩、禁调试、禁备份和明文流量限制等基础防护。\n- 单聊回形针里的“窥屏”入口保留看 TA 的虚拟手机和让 TA 看你的真实手机两种用法；真实手机录屏需要用户主动授权。",
   "mandatory": false,
-  "publishedAt": "2026-07-02T15:14:25+08:00"
+  "publishedAt": "2026-07-03T13:58:00+08:00"
 }

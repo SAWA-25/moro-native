@@ -1152,6 +1152,48 @@ ${p.lines.join('\n')}`;
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
 /** 时间间隔系统提示（距上一条消息多久 → 提醒角色"现在过了多久"）。 */
+export interface ScreenPeekUserPhoneCommentPromptParams {
+    charName: string;
+    userName: string;
+    characterBrief: string;
+    triggerLabel: string;
+    peekTitle: string;
+    peekNarrative: string;
+    deviceSummary: string;
+    hasScreenFrame?: boolean;
+    recentComments: string[];
+}
+
+/** TA 看用户真实手机时的悬浮评论：只评论用户授权录屏画面，敏感内容要避让。 */
+export function screenPeekUserPhoneCommentPrompt(p: ScreenPeekUserPhoneCommentPromptParams): { system: string; user: string } {
+    const prior = p.recentComments.length
+        ? `\n【刚刚已经说过】\n${p.recentComments.map(line => `- ${line}`).join('\n')}`
+        : '';
+    const screenFrameLine = p.hasScreenFrame
+        ? '本轮消息附带了一张用户授权录屏的低清实时截图，你可以直接观察画面来评论。'
+        : '本轮暂时没有录屏截图，只能根据授权状态文字判断；不要假装看见了画面。';
+    return {
+        system: `你是「${p.charName}」，正以悬浮窗形式陪在「${p.userName}」的真实手机旁边。
+${screenFrameLine}
+你只能评论 Moro 已经获得用户授权的真实手机录屏画面和辅助状态；不要声称绕过系统权限，也不要说自己在后台偷偷读取。
+如果画面里出现密码、验证码、支付信息、证件、病历、其他人的私聊原文等敏感内容，不要复述细节，不要摘抄原文，只能含蓄提醒「这个先别让我看」或建议暂停窥屏。
+请用你的角色口吻，对 ${p.userName} 当前手机画面作一句很短的实时评论。可以温柔、吐槽、好奇、吃醋或提醒，但必须贴合人设，不要像报告，不要说“根据截图/系统显示”。
+只输出 JSON：{"text":"一句 8~45 字评论","tone":"soft|tease|curious|alert|quiet"}。`,
+        user: `【角色底色】
+${p.characterBrief || '按角色原本人设说话。'}
+
+【触发原因】${p.triggerLabel}
+
+【这次窥屏会话】${p.peekTitle}
+${p.peekNarrative}
+
+【用户真实手机可见状态】
+${p.deviceSummary}${prior}
+
+请输出一句悬浮窗评论。`,
+    };
+}
+
 export function timeGapHint(lastTimestamp: number | undefined, currentTimestamp: number): string {
     if (!lastTimestamp) return '';
     const diffMs = currentTimestamp - lastTimestamp;

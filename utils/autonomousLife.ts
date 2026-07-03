@@ -15,21 +15,15 @@
  * prompt 短、max_tokens 小。失败全吞 —— 自主生活只是锦上添花，绝不能影响主聊天。
  */
 
-import { CharacterProfile, CharLifeEvent, AuxApiConfig, DailySchedule, ScheduleSlot } from '../types';
+import { CharacterProfile, CharLifeEvent, AuxApiConfig } from '../types';
 import { DB } from './db';
 import { isAuxApiOn } from './auxApi';
 import { AUTONOMOUS_SINGLE_SYSTEM, AUTONOMOUS_BATCH_SYSTEM, autonomousProactiveHint, recentLifeContextIntro } from './laiwangPrompts';
-import { callChatCompletion } from './llmClient';
-import { makeApiUsageMeta } from './apiUsageCatalog';
-import { extractContent } from './safeApi';
 
 export interface LifeApi {
   baseUrl: string;
   apiKey?: string;
   model: string;
-  apiRole?: 'main' | 'aux' | 'custom';
-  apiBinding?: string;
-  fallbackFromAux?: boolean;
 }
 
 /** 喂给 agent 的最近事件条数（保证一天有连续性、有起伏，又不撑爆 prompt）。 */
@@ -184,11 +178,9 @@ export function isAutonomousLifeEnabled(char: CharacterProfile): boolean {
  */
 export function resolveLifeApi(char: CharacterProfile, aux: AuxApiConfig | null | undefined, mainApi: LifeApi): LifeApi {
   const cfg = char.proactiveConfig;
-  if (cfg?.useSecondaryApi && cfg.secondaryApi?.baseUrl) {
-    return { ...cfg.secondaryApi, apiRole: 'custom', apiBinding: '角色主动消息副 API' };
-  }
-  if (isAuxApiOn(aux)) return { baseUrl: aux!.baseUrl, apiKey: aux!.apiKey || '', model: aux!.model, apiRole: 'aux', apiBinding: '文具盒副 API' };
-  return { ...mainApi, apiRole: 'main', apiBinding: '副 API 未配置，回退主 API', fallbackFromAux: true };
+  if (cfg?.useSecondaryApi && cfg.secondaryApi?.baseUrl) return cfg.secondaryApi;
+  if (isAuxApiOn(aux)) return { baseUrl: aux!.baseUrl, apiKey: aux!.apiKey || '', model: aux!.model };
+  return mainApi;
 }
 
 // ── 时间 / 人设 上下文 ───────────────────────────────────────────
@@ -210,132 +202,6 @@ function describeTime(d: Date): string {
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   return `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS[d.getDay()]} ${hh}:${mm}（${dayPart(d.getHours())}）`;
-}
-
-function localDateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function isoDateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function isScheduleFeatureLikelyOn(char: CharacterProfile): boolean {
-  if (char.scheduleFeatureEnabled === true) return true;
-  if (char.scheduleFeatureEnabled === false) return false;
-  return !!char.scheduleStyle;
-}
-
-async function loadScheduleForLife(char: CharacterProfile, timestamp: number): Promise<DailySchedule | null> {
-  if (!getMaterialSources(char).includes('schedule')) return null;
-  if (!isScheduleFeatureLikelyOn(char)) return null;
-  const d = new Date(timestamp);
-  const keys = Array.from(new Set([isoDateKey(d), localDateKey(d)]));
-  for (const key of keys) {
-    const schedule = await DB.getDailySchedule(char.id, key).catch(() => null);
-    if (schedule?.slots?.length) return schedule;
-  }
-  return null;
-}
-
-async function loadSchedulesForLife(char: CharacterProfile, timestamps: number[]): Promise<Array<DailySchedule | null>> {
-  const cache = new Map<string, DailySchedule | null>();
-  const out: Array<DailySchedule | null> = [];
-  for (const ts of timestamps) {
-    const d = new Date(ts);
-    const cacheKey = Array.from(new Set([isoDateKey(d), localDateKey(d)])).join('|');
-    if (!cache.has(cacheKey)) {
-      cache.set(cacheKey, await loadScheduleForLife(char, ts));
-    }
-    out.push(cache.get(cacheKey) || null);
-  }
-  return out;
-}
-
-function slotStartMinutes(slot: ScheduleSlot): number {
-  return parseHHmm(slot.startTime, 0);
-}
-
-function findScheduleSlotAt(schedule: DailySchedule | null | undefined, timestamp: number): {
-  current: ScheduleSlot | null;
-  previous: ScheduleSlot | null;
-  next: ScheduleSlot | null;
-} {
-  if (!schedule?.slots?.length) return { current: null, previous: null, next: null };
-  const sorted = [...schedule.slots].sort((a, b) => slotStartMinutes(a) - slotStartMinutes(b));
-  const d = new Date(timestamp);
-  const minutes = d.getHours() * 60 + d.getMinutes();
-  let idx = -1;
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    if (minutes >= slotStartMinutes(sorted[i])) {
-      idx = i;
-      break;
-    }
-  }
-  if (idx < 0) return { current: null, previous: null, next: sorted[0] || null };
-  return {
-    current: sorted[idx] || null,
-    previous: idx > 0 ? sorted[idx - 1] : null,
-    next: idx < sorted.length - 1 ? sorted[idx + 1] : null,
-  };
-}
-
-function formatScheduleSlot(slot: ScheduleSlot | null | undefined): string {
-  if (!slot) return '（无）';
-  const time = slot.endTime ? `${slot.startTime}-${slot.endTime}` : slot.startTime;
-  const where = slot.location ? `（${slot.location}）` : '';
-  const desc = slot.description ? `：${slot.description}` : '';
-  const anchor = slot.anchored || slot.source === 'chat' ? ' [聊天约定/锚点]' : '';
-  return `${time} ${slot.activity}${where}${desc}${anchor}`;
-}
-
-function buildScheduleLifeContext(schedule: DailySchedule | null, timestamp: number): {
-  block: string;
-  slot: ScheduleSlot | null;
-} {
-  if (!schedule?.slots?.length) return { block: '', slot: null };
-  const { current, previous, next } = findScheduleSlotAt(schedule, timestamp);
-  const anchors = schedule.slots
-    .filter(s => s.anchored || s.source === 'chat')
-    .map(formatScheduleSlot)
-    .join('\n');
-  const lines = [
-    '今日作息对齐（必须遵守）：',
-    `- 预估发生时间：${describeTime(new Date(timestamp))}`,
-    `- 当前/最接近时段：${formatScheduleSlot(current)}`,
-    previous ? `- 上一时段：${formatScheduleSlot(previous)}` : '',
-    next ? `- 下一时段：${formatScheduleSlot(next)}` : '',
-    anchors ? `- 今天已定下的聊天锚点：\n${anchors}` : '',
-    '生成生活小事时要和当前/最接近时段相容；不要让 TA 在同一时间出现在两个地点，或一边做日程里互斥的事一边做另一件事。若写临时小插曲，请写成发生在该时段的路上、间隙或被日程影响后的自然变化。',
-  ].filter(Boolean);
-  return { block: lines.join('\n'), slot: current };
-}
-
-function buildCatchupScheduleContext(schedules: Array<DailySchedule | null>, timestamps: number[]): string {
-  if (timestamps.length === 0 || !schedules.some(s => s?.slots?.length)) return '';
-  const lines = timestamps.map((ts, idx) => {
-    const schedule = schedules[idx] || null;
-    const { current, next } = findScheduleSlotAt(schedule, ts);
-    const d = new Date(ts);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    return `${idx + 1}. ${hh}:${mm} → 当前/最接近：${formatScheduleSlot(current)}${next ? `；之后：${formatScheduleSlot(next)}` : ''}`;
-  });
-  return [
-    '这段离线补齐要和今日作息同步。下面每一行对应你将按顺序生成的一件小事，后续会按这些时间落库：',
-    ...lines,
-    '每件小事都必须贴合对应时段；不要和聊天锚点、地点、正在做的事撞车。若发生偏离，请写出是“临时变化/间隙/路上”的合理过渡。',
-  ].join('\n');
-}
-
-function scheduleEventPatch(schedule: DailySchedule | null, timestamp: number): Pick<CharLifeEvent, 'scheduleDate' | 'scheduleSlotStartTime' | 'scheduleSlotActivity'> {
-  const { current } = findScheduleSlotAt(schedule, timestamp);
-  if (!schedule || !current) return {};
-  return {
-    scheduleDate: schedule.date,
-    scheduleSlotStartTime: current.startTime,
-    scheduleSlotActivity: current.activity,
-  };
 }
 
 /** 把角色核心设定压成一小段喂给 agent —— 只取 name + systemPrompt + worldview，截断防超长。 */
@@ -366,22 +232,29 @@ function recentEventsBrief(events: CharLifeEvent[]): string {
 // ── LLM 调用 ────────────────────────────────────────────────────
 
 async function callLLM(api: LifeApi, messages: any[], maxTokens: number, signal?: AbortSignal): Promise<string> {
-  if (!api.baseUrl || !api.model) return '';
-  const data = await callChatCompletion(api, {
-    model: api.model,
-    messages,
-    temperature: 0.92,
-    max_tokens: maxTokens,
-    stream: false,
-  }, {
-    signal,
-    meta: makeApiUsageMeta('chat.autonomousLife', {
-      apiRole: api.apiRole || 'aux',
-      apiBinding: api.apiBinding,
-      isBackgroundTask: true,
+  const baseUrl = (api.baseUrl || '').replace(/\/+$/, '');
+  if (!baseUrl || !api.model) return '';
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${api.apiKey || 'sk-none'}`,
+    },
+    body: JSON.stringify({
+      model: api.model,
+      messages,
+      temperature: 0.92,
+      max_tokens: maxTokens,
+      stream: false,
     }),
+    signal,
   });
-  return extractContent(data) || '';
+  if (!res.ok) {
+    console.warn('[AutonomousLife] LLM call failed', res.status);
+    return '';
+  }
+  const data: any = await res.json();
+  return data?.choices?.[0]?.message?.content || '';
 }
 
 /** 去掉代码围栏：成对的 ```json…``` 优先，否则剥掉未闭合的开头/结尾围栏。 */
@@ -566,7 +439,6 @@ function draftToEvent(
   timestamp: number,
   source: CharLifeEvent['source'],
   triggerSource?: CharLifeEvent['triggerSource'],
-  extra?: Partial<CharLifeEvent>,
 ): CharLifeEvent | null {
   const activity = cleanField(draft.activity) || cleanField(draft.summary) || '';
   if (!activity) return null;
@@ -590,7 +462,6 @@ function draftToEvent(
     thread: cleanField(draft.thread),
     proactiveAngle,
     triggerSource,
-    ...extra,
   };
 }
 
@@ -617,8 +488,6 @@ export async function advanceLife(
   try {
     const now = opts?.now ?? Date.now();
     const recent = await DB.getLifeEvents(char.id, RECENT_EVENTS_FOR_CONTEXT);
-    const schedule = await loadScheduleForLife(char, now);
-    const scheduleContext = buildScheduleLifeContext(schedule, now);
     // 线上→线下：把最近聊了什么也给一眼，让 TA「此刻的生活」能自然呼应这段关系/对话
     // （只是参考，不是在回复对方，也不强行扯上）。
     const chatNote = (opts?.recentChat || '').trim();
@@ -630,7 +499,6 @@ export async function advanceLife(
       `允许取材：${formatMaterialSources(char)}。`,
       '',
       ...(chatNote ? ['你和对方最近的对话（仅作参考，让你此刻的生活或心情能自然呼应，但你不是在回复对方、也不必强行扯上）：', chatNote, ''] : []),
-      ...(scheduleContext.block ? [scheduleContext.block, ''] : []),
       'TA 最近的生活：',
       recentEventsBrief(recent),
       '',
@@ -650,14 +518,7 @@ export async function advanceLife(
       draft = cleaned ? { activity: cleaned.slice(0, 120) } : null;
     }
     if (!draft) return null;
-    const event = draftToEvent(
-      draft,
-      char.id,
-      now,
-      opts?.source ?? 'proactive',
-      opts?.triggerSource ?? opts?.source ?? 'proactive',
-      scheduleEventPatch(schedule, now),
-    );
+    const event = draftToEvent(draft, char.id, now, opts?.source ?? 'proactive', opts?.triggerSource ?? opts?.source ?? 'proactive');
     if (!event) return null;
 
     await DB.saveLifeEvent(event);
@@ -703,10 +564,6 @@ export async function catchUpOfflineLife(
     if (n <= 0) return [];
     const recent = all.slice(-RECENT_EVENTS_FOR_CONTEXT);
     const hours = Math.round(gapMs / (60 * 60 * 1000));
-    const step = gapMs / (n + 1);
-    const plannedTimestamps = Array.from({ length: n }, (_, i) => Math.round(gapStart + step * (i + 1)));
-    const schedules = await loadSchedulesForLife(char, plannedTimestamps);
-    const scheduleContext = buildCatchupScheduleContext(schedules, plannedTimestamps);
     const userMsg = [
       personaBrief(char),
       '',
@@ -714,7 +571,6 @@ export async function catchUpOfflineLife(
       '',
       `生活密度：${density}；主动强度：${getProactiveIntensity(char)}；允许取材：${formatMaterialSources(char)}。`,
       '',
-      ...(scheduleContext ? [scheduleContext, ''] : []),
       '在此之前 TA 的生活：',
       recentEventsBrief(recent),
       '',
@@ -735,10 +591,13 @@ export async function catchUpOfflineLife(
     if (!Array.isArray(drafts) || drafts.length === 0) return [];
 
     const picked = drafts.slice(0, n);
+    // 时间戳均匀铺在 gap 内（留点边距，别正好压在边界上）。
+    const span = gapMs;
+    const step = span / (picked.length + 1);
     const events: CharLifeEvent[] = [];
     for (let i = 0; i < picked.length; i++) {
-      const ts = plannedTimestamps[i] ?? Math.round(gapStart + (gapMs / (picked.length + 1)) * (i + 1));
-      const ev = draftToEvent(picked[i], char.id, ts, 'catchup', 'catchup', scheduleEventPatch(schedules[i] || null, ts));
+      const ts = Math.round(gapStart + step * (i + 1));
+      const ev = draftToEvent(picked[i], char.id, ts, 'catchup', 'catchup');
       if (ev) events.push(ev);
     }
     for (const ev of events) await DB.saveLifeEvent(ev);

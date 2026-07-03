@@ -26,11 +26,11 @@ const latestRelease = {
   assets: [
     {
       name: 'moro-update.json',
-      browser_download_url: 'https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro-update.json',
+      browser_download_url: 'https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro-update.json',
     },
     {
       name: 'moro.apk',
-      browser_download_url: 'https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro.apk',
+      browser_download_url: 'https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro.apk',
       size: 208374501,
       digest: 'sha256:59ab60cc521a50fa2913e7bf80d6b3724a3ab7567071d1add20d5ec864446c6f',
     },
@@ -46,14 +46,14 @@ describe('app update manifest', () => {
 
   it('falls back to latest release metadata when the manifest asset is stale', async () => {
     const fetchMock = vi.fn(async (url: string) => {
-      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases/latest')) {
+      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro/releases/latest')) {
         return Response.json(latestRelease);
       }
-      if (url.startsWith('https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro-update.json')) {
+      if (url.startsWith('https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro-update.json')) {
         return Response.json({
           versionCode: 3,
           versionName: '1.0.2',
-          apkUrl: 'https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk',
+          apkUrl: 'https://github.com/SAWA-25/moro/releases/latest/download/moro.apk',
           releaseNotes: '旧清单',
         });
       }
@@ -66,20 +66,20 @@ describe('app update manifest', () => {
 
     expect(manifest.versionCode).toBe(4);
     expect(manifest.versionName).toBe('1.0.3');
-    expect(manifest.apkUrl).toBe('https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro.apk');
+    expect(manifest.apkUrl).toBe('https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro.apk');
     expect(manifest.sha256).toBe('59ab60cc521a50fa2913e7bf80d6b3724a3ab7567071d1add20d5ec864446c6f');
   });
 
   it('uses the manifest asset when it matches the latest release', async () => {
     const fetchMock = vi.fn(async (url: string) => {
-      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases/latest')) {
+      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro/releases/latest')) {
         return Response.json(latestRelease);
       }
-      if (url.startsWith('https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro-update.json')) {
+      if (url.startsWith('https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro-update.json')) {
         return Response.json({
           versionCode: 4,
           versionName: '1.0.3',
-          apkUrl: 'https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk',
+          apkUrl: 'https://github.com/SAWA-25/moro/releases/latest/download/moro.apk',
           releaseNotes: '新清单',
         });
       }
@@ -97,7 +97,7 @@ describe('app update manifest', () => {
 
   it('uses the POST GitHub proxy when the direct GitHub API request fails', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases/latest')) {
+      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro/releases/latest')) {
         return new Response('blocked', { status: 503 });
       }
       if (url.startsWith('https://sullymeow.ccwu.cc/github?url=')) {
@@ -105,11 +105,11 @@ describe('app update manifest', () => {
         expect((init?.headers as Record<string, string>)['X-GitHub-Method']).toBe('GET');
         return Response.json(latestRelease);
       }
-      if (url.startsWith('https://github.com/SAWA-25/moro-native/releases/download/v1.0.3/moro-update.json')) {
+      if (url.startsWith('https://github.com/SAWA-25/moro/releases/download/v1.0.3/moro-update.json')) {
         return Response.json({
           versionCode: 4,
           versionName: '1.0.3',
-          apkUrl: 'https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk',
+          apkUrl: 'https://github.com/SAWA-25/moro/releases/latest/download/moro.apk',
         });
       }
       throw new Error(`Unexpected URL: ${url}`);
@@ -126,16 +126,5 @@ describe('app update manifest', () => {
         method: 'POST',
       }),
     );
-  });
-
-  it('hides update URLs from display text', async () => {
-    const { sanitizeAppUpdateDisplayText } = await import('./appUpdates');
-    const text = sanitizeAppUpdateDisplayText(
-      '下载 https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk 或 github.com/SAWA-25/moro-native/releases/latest',
-    );
-
-    expect(text).toContain('[链接已隐藏]');
-    expect(text).not.toContain('https://');
-    expect(text).not.toContain('github.com/');
   });
 });

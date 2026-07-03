@@ -5,11 +5,10 @@ import { MusicProvider } from './context/MusicContext';
 import { DesktopPetProvider } from './context/DesktopPetContext';
 import { UserScreenWatchProvider } from './context/UserScreenWatchContext';
 import PhoneShell from './components/PhoneShell';
+import BuildBadge from './components/BuildBadge';
 import DevDebugPanel from './components/DevDebugPanel';
 import VRBroadcast from './components/VRBroadcast';
 import { isIOSStandaloneWebApp } from './utils/iosStandalone';
-
-const BuildBadge = __BUILD_BADGE_VISIBLE__ ? React.lazy(() => import('./components/BuildBadge')) : null;
 
 const App: React.FC = () => {
   const useAbsoluteShell = typeof window !== 'undefined' && isIOSStandaloneWebApp();
@@ -41,11 +40,7 @@ const App: React.FC = () => {
           </OSProvider>
         </div>
       </div>
-      {BuildBadge && (
-        <React.Suspense fallback={null}>
-          <BuildBadge />
-        </React.Suspense>
-      )}
+      <BuildBadge />
       <DevDebugPanel />
       <VRBroadcast />
     </>

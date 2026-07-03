@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ChatCircleText } from '@phosphor-icons/react';
 import { Message, ScreenPeekCard } from '../../types';
+import { useOS } from '../../context/OSContext';
 
 type Screen = NonNullable<ScreenPeekCard['screen']>;
 type Row = NonNullable<Screen['rows']>[number];
@@ -28,6 +30,7 @@ const ScreenPeekCardView: React.FC<{
   commonLayout: (content: React.ReactNode) => JSX.Element;
 }> = ({ m, commonLayout }) => {
   const [expanded, setExpanded] = useState(false);
+  const { startScreenPeekCommentSession } = useOS();
 
   useEffect(() => {
     if (!expanded || typeof document === 'undefined') return;
@@ -89,6 +92,60 @@ const ScreenPeekCardView: React.FC<{
     screen.appKind === 'music' ? 'bg-[#111827]' :
     screen.appKind === 'calendar' ? 'bg-white' :
     'bg-white';
+  const isUserPhonePeek = card.viewTarget === 'user_phone';
+  const comments = card.liveComments || [];
+  const visibleComments = comments.slice(-4);
+
+  const wakeCommentOverlay = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    startScreenPeekCommentSession({
+      messageId: m.id,
+      card,
+      charAvatar: screen.avatar,
+      trigger: 'resume',
+    });
+  };
+
+  const renderCommentHistory = (large = false) => (
+    <div
+      className={`${large ? 'mx-4 rounded-[18px] border border-white/14 bg-white/8 px-3 py-3 text-white' : 'w-[258px] rounded-[18px] border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm'} space-y-2`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className={`${large ? 'text-[12px] text-white/85' : 'text-[11px] text-slate-500'} font-bold truncate`}>
+            {isUserPhonePeek ? '真实手机悬浮评论' : '悬浮评论'} · {comments.length} 条
+          </div>
+          <div className={`${large ? 'text-[10px] text-white/40' : 'text-[10px] text-slate-400'} truncate`}>
+            {isUserPhonePeek ? '回看授权录屏评论；不额外刷成聊天消息' : '旧窥屏卡评论回看'}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={wakeCommentOverlay}
+          className={`${large ? 'bg-white text-slate-950' : 'bg-slate-950 text-white'} h-8 px-3 rounded-full text-[11px] font-black flex items-center gap-1.5 active:scale-95 shrink-0`}
+        >
+          <ChatCircleText size={14} weight="bold" />唤起
+        </button>
+      </div>
+      {visibleComments.length ? (
+        <div className="space-y-1.5">
+          {visibleComments.map(comment => (
+            <div key={comment.id} className={`${large ? 'bg-white/8 text-white/82' : 'bg-slate-50 text-slate-600'} rounded-[12px] px-2.5 py-2 text-[11px] leading-relaxed`}>
+              <div className={`${large ? 'text-white/38' : 'text-slate-400'} mb-0.5 text-[9px]`}>
+                {comment.observedAppName || '真实手机'} · {fmtTime(comment.createdAt)}
+              </div>
+              <div className="whitespace-pre-wrap break-words">{comment.text}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={`${large ? 'text-white/45' : 'text-slate-400'} text-[11px] leading-relaxed`}>
+          还没有 AI 评论。唤起悬浮窗后，TA 会先检查真实手机授权状态。
+        </div>
+      )}
+    </div>
+  );
 
   const renderChat = () => (
     <div className="px-4 py-4 space-y-2.5">
@@ -305,6 +362,11 @@ const ScreenPeekCardView: React.FC<{
     <div className="min-h-full bg-white text-slate-950 px-4 py-4">
       <div className="text-[18px] font-black">{screen.title || screen.appName}</div>
       <div className="mt-1 text-[11px] text-slate-400">{screen.action || card.narrative}</div>
+      {screen.hero?.imageUrl && (
+        <div className="mt-4 rounded-[18px] overflow-hidden bg-slate-100 border border-slate-100">
+          <img src={screen.hero.imageUrl} alt="" className="w-full max-h-64 object-contain bg-black" />
+        </div>
+      )}
       <div className="mt-5 space-y-3">
         {rows.slice(0, 6).map((row, index) => (
           <div key={row.id || index} className="rounded-[18px] border border-slate-100 bg-slate-50 px-3 py-3">
@@ -383,6 +445,7 @@ const ScreenPeekCardView: React.FC<{
           <div className="text-[10px] text-white/45 truncate">{card.charName} · {new Date(card.generatedAt).toLocaleString()}</div>
         </div>
         <div className="flex-1 min-h-0 overflow-hidden px-4 pt-3 flex items-center justify-center" onClick={(event) => event.stopPropagation()}>{renderPhone(true)}</div>
+        <div className="shrink-0 px-3 pt-3" onClick={(event) => event.stopPropagation()}>{renderCommentHistory(true)}</div>
         <div className="shrink-0 pt-3 text-center text-[10px] text-white/35 pointer-events-none">点空白处或按 Esc 退出</div>
       </div>,
       document.body,
@@ -391,7 +454,12 @@ const ScreenPeekCardView: React.FC<{
 
   return (
     <>
-      {commonLayout(<button type="button" onClick={(event) => { event.stopPropagation(); setExpanded(true); }} className="block text-left rounded-[30px] active:scale-[0.98] transition-transform">{renderPhone(false)}</button>)}
+      {commonLayout(
+        <div className="space-y-2">
+          <button type="button" onClick={(event) => { event.stopPropagation(); setExpanded(true); }} className="block text-left rounded-[30px] active:scale-[0.98] transition-transform">{renderPhone(false)}</button>
+          {isUserPhonePeek && renderCommentHistory(false)}
+        </div>,
+      )}
       {overlay}
     </>
   );

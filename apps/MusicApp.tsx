@@ -31,11 +31,6 @@ import NeteaseProfilePage from './music/NeteaseProfilePage';
 import CharVisitPage from './music/CharVisitPage';
 import SongCommentsPage from './music/SongCommentsPage';
 import { ChatCircleText } from '@phosphor-icons/react';
-import MusicDiscoveryPage from './music/MusicDiscoveryPage';
-import MusicLibraryPage from './music/MusicLibraryPage';
-import { Books, Compass, MagnifyingGlass, UserCircle } from '@phosphor-icons/react';
-import { addSongToMusicPlaylist, createMusicPlaylist, saveMusicSearch } from '../utils/musicLibrary';
-import type { MusicLibraryPlaylist } from '../types';
 
 // ------------------------- 工具 -------------------------
 const fmtTime = (s: number) => {
@@ -45,7 +40,7 @@ const fmtTime = (s: number) => {
   return `${m}:${ss.toString().padStart(2, '0')}`;
 };
 
-type View = 'discover' | 'library' | 'search' | 'settings' | 'player' | 'profile' | 'visit_char' | 'listen_together' | 'comments';
+type View = 'search' | 'settings' | 'player' | 'profile' | 'visit_char' | 'listen_together' | 'comments';
 
 // ========================= 主组件 =========================
 const MusicApp: React.FC = () => {
@@ -54,17 +49,14 @@ const MusicApp: React.FC = () => {
   const auxApi = useMemo(() => ({ ...apiConfig, ...resolveAuxApi(auxApiConfig, apiConfig) }), [apiConfig, auxApiConfig]);
   const {
     cfg, setCfg,
-    queue, idx,
     current, playing, progress, duration, loadingSong,
     lyric, tlyric, activeLyricIdx,
     profile, playSong, togglePlay, nextSong, prevSong, seek,
-    removeQueueItem, moveQueueItem, clearQueue,
     liked, toggleLike, setToastHandler,
     listeningTogetherWith, addListeningPartner, removeListeningPartner,
     addLocalSong, removeLocalSong, localAlbumSongs,
     playMode, setPlayMode,
     regeneratingId, regeneratingStatus,
-    refreshLibrary,
   } = useMusic();
   const isCurrentRegenerating = !!current && current.id === regeneratingId;
   // 把对轴入口和单曲循环按钮移到 SubActions 里，避免散乱
@@ -138,7 +130,7 @@ const MusicApp: React.FC = () => {
   // 把 OS toast 注入到 Music Context（这样全局播放报错也能弹 toast）
   useEffect(() => { setToastHandler(addToast); }, [addToast, setToastHandler]);
 
-  const [view, setView] = useState<View>('discover');
+  const [view, setView] = useState<View>('profile');
   // ── 手动对轴 modal state ──
   const [showLyricSync, setShowLyricSync] = useState(false);
   const [syncDraft, setSyncDraft] = useState<number[]>([]);
@@ -146,75 +138,7 @@ const MusicApp: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [results, setResults] = useState<Song[]>([]);
   const [searching, setSearching] = useState(false);
-  const [showQueue, setShowQueue] = useState(false);
-  const [dragQueueIdx, setDragQueueIdx] = useState<number | null>(null);
-  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
-  const [libraryPlaylists, setLibraryPlaylists] = useState<MusicLibraryPlaylist[]>([]);
   const lyricBoxRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!showAddToPlaylist) return;
-    DB.getAllMusicPlaylists()
-      .then(list => setLibraryPlaylists(list.filter(pl => pl.kind === 'user').sort((a, b) => b.updatedAt - a.updatedAt)))
-      .catch(() => setLibraryPlaylists([]));
-  }, [showAddToPlaylist]);
-
-  const addCurrentToPlaylist = useCallback(async (playlistId: string) => {
-    if (!current) return;
-    const playlist = libraryPlaylists.find(pl => pl.id === playlistId);
-    await addSongToMusicPlaylist(playlistId, current);
-    setShowAddToPlaylist(false);
-    addToast(`已加入「${playlist?.title || '歌单'}」`, 'success');
-    refreshLibrary();
-  }, [addToast, current, libraryPlaylists, refreshLibrary]);
-
-  const createPlaylistAndAddCurrent = useCallback(async () => {
-    if (!current) return;
-    const title = typeof window !== 'undefined' ? window.prompt('歌单名', '我的歌单') : '我的歌单';
-    if (!title?.trim()) return;
-    const playlist = await createMusicPlaylist({ title });
-    await addSongToMusicPlaylist(playlist.id, current);
-    setLibraryPlaylists(prev => [playlist, ...prev]);
-    setShowAddToPlaylist(false);
-    addToast(`已新建「${playlist.title}」并加入当前歌曲`, 'success');
-    refreshLibrary();
-  }, [addToast, current, refreshLibrary]);
-
-  const openSearchView = useCallback((kw?: string) => {
-    if (kw) setKeyword(kw);
-    setView('search');
-  }, []);
-
-  const renderTabBar = useCallback(() => {
-    const tabs: Array<{ id: View; label: string; icon: React.ReactNode }> = [
-      { id: 'discover', label: '发现', icon: <Compass size={16} weight="fill" /> },
-      { id: 'library', label: '资料库', icon: <Books size={16} weight="fill" /> },
-      { id: 'search', label: '搜索', icon: <MagnifyingGlass size={16} weight="bold" /> },
-      { id: 'profile', label: '我的', icon: <UserCircle size={16} weight="fill" /> },
-    ];
-    return (
-      <div className="absolute left-4 right-4 bottom-[78px] z-40 flex items-center gap-1 rounded-2xl p-1 shizuku-glass-strong"
-        style={{ boxShadow: `0 4px 20px ${C.glow}20` }}>
-        {tabs.map(tab => {
-          const active = view === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setView(tab.id)}
-              className="flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 text-[10px] transition-all"
-              style={{
-                color: active ? 'white' : C.muted,
-                background: active ? `linear-gradient(135deg, ${C.primary}, ${C.accent})` : 'transparent',
-              }}
-            >
-              {tab.icon}
-              <span className="truncate">{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }, [view]);
 
   // ── 一起听（分享给角色后进入的对话界面）state ──
   // listenCharId：当前和谁一起听；listenMsgs：会话内临时讨论（不落库、不进主聊天）。
@@ -531,7 +455,6 @@ const MusicApp: React.FC = () => {
         fee: s.fee ?? 0,
       }));
       setResults(songs);
-      void saveMusicSearch(kw, songs.length).then(() => refreshLibrary()).catch(() => {});
       if (!songs.length) {
         const hint = r?.msg || r?.message || (r?.code != null ? `code=${r.code}` : '') || '无数据';
         addToast(`没找到: ${hint}`, 'info');
@@ -541,7 +464,7 @@ const MusicApp: React.FC = () => {
     } finally {
       setSearching(false);
     }
-  }, [keyword, cfg, addToast, refreshLibrary]);
+  }, [keyword, cfg, addToast]);
 
   // ════════════════ 搜索页 ════════════════
   const renderSearch = () => (
@@ -624,13 +547,12 @@ const MusicApp: React.FC = () => {
             duration={fmtTime(s.duration)}
             isVip={s.fee === 1}
             isActive={current?.id === s.id}
-            onClick={() => playSong(s, { replaceQueue: results, startIdx: results.findIndex(x => x.id === s.id), playSource: 'search' })}
+            onClick={() => playSong(s)}
             onShare={() => openChatShare(s)}
           />
         ))}
       </div>
 
-      {renderTabBar()}
       {current && (
         <MiniPlayer
           name={current.name}
@@ -853,7 +775,6 @@ const MusicApp: React.FC = () => {
               onDownload={downloadCurrentLocal}
               playMode={playMode}
               onCyclePlayMode={cyclePlayMode}
-              onAdd={() => setShowAddToPlaylist(true)}
             />
           </div>
 
@@ -878,14 +799,6 @@ const MusicApp: React.FC = () => {
 
           {/* 评论区 · 一起听 入口 */}
           <div className="shrink-0 mt-3 mb-1 w-full flex justify-center items-center gap-2">
-            <button
-              onClick={() => setShowQueue(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] tracking-wider transition-all active:scale-95 shizuku-glass-strong"
-              style={{ color: C.primary, boxShadow: `0 3px 16px ${C.glow}25` }}
-            >
-              <SkipForward size={15} weight="fill" color={C.primary} />
-              <span>队列 {queue.length}</span>
-            </button>
             <button
               onClick={() => setView('comments')}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] tracking-wider transition-all active:scale-95 shizuku-glass-strong"
@@ -1170,46 +1083,20 @@ const MusicApp: React.FC = () => {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {view === 'discover' && (
-        <MusicDiscoveryPage
-          onClose={closeApp}
-          onOpenSearch={openSearchView}
-          onOpenLibrary={() => setView('library')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPlayer={() => setView('player')}
-          onVisitChar={id => { setVisitCharId(id); setView('visit_char'); }}
-          onShareSong={openChatShare}
-          tabBar={renderTabBar()}
-        />
-      )}
-      {view === 'library' && (
-        <MusicLibraryPage
-          onClose={closeApp}
-          onOpenDiscover={() => setView('discover')}
-          onOpenProfile={() => setView('profile')}
-          onOpenPlayer={() => setView('player')}
-          onVisitChar={id => { setVisitCharId(id); setView('visit_char'); }}
-          onShareSong={openChatShare}
-          tabBar={renderTabBar()}
-        />
-      )}
       {view === 'search' && renderSearch()}
       {view === 'player' && renderPlayer()}
       {view === 'listen_together' && renderListenTogether()}
       {view === 'comments' && <SongCommentsPage onBack={() => setView('player')} />}
       {view === 'settings' && renderSettings()}
       {view === 'profile' && (
-        <>
-          <NeteaseProfilePage
-            onBack={closeApp}
-            onOpenPlayer={() => setView('player')}
-            onOpenSearch={() => setView('search')}
-            onOpenSettings={() => setView('settings')}
-            onVisitChar={id => { setVisitCharId(id); setView('visit_char'); }}
-            onShareSong={openChatShare}
-          />
-          {renderTabBar()}
-        </>
+        <NeteaseProfilePage
+          onBack={closeApp}
+          onOpenPlayer={() => setView('player')}
+          onOpenSearch={() => setView('search')}
+          onOpenSettings={() => setView('settings')}
+          onVisitChar={id => { setVisitCharId(id); setView('visit_char'); }}
+          onShareSong={openChatShare}
+        />
       )}
       {/* 手动对轴 modal — 全屏覆盖，不开新 view */}
       {showLyricSync && current && current.local && (() => {
@@ -1381,102 +1268,6 @@ const MusicApp: React.FC = () => {
           onOpenPlayer={() => setView('player')}
           onShareSong={openChatShare}
         />
-      )}
-
-      {showQueue && (
-        <div className="absolute inset-0 z-[58] flex items-end" onClick={() => setShowQueue(false)}>
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <div className="relative w-full rounded-t-3xl p-5 pb-7"
-            style={{ maxHeight: '78%', background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(24px)', boxShadow: `0 -8px 40px ${C.glow}30` }}
-            onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: `${C.faint}80` }} />
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-sm font-medium" style={{ color: C.text }}>播放队列</div>
-                <div className="text-[10px]" style={{ color: C.muted }}>{queue.length} 首 · 可拖动排序</div>
-              </div>
-              <button
-                onClick={() => { clearQueue(); setShowQueue(false); }}
-                className="px-3 py-1.5 rounded-full text-[10px] shizuku-glass"
-                style={{ color: C.danger }}
-              >
-                清空
-              </button>
-            </div>
-            <div className="overflow-y-auto shizuku-scrollbar pr-1" style={{ maxHeight: '54vh' }}>
-              {queue.length === 0 ? (
-                <div className="text-center text-[11px] py-10" style={{ color: C.faint }}>队列里还没有歌曲</div>
-              ) : queue.map((song, i) => (
-                <div
-                  key={`${song.source || 'netease'}-${song.id}-${i}`}
-                  draggable
-                  onDragStart={() => setDragQueueIdx(i)}
-                  onDragOver={e => e.preventDefault()}
-                  onDrop={() => {
-                    if (dragQueueIdx != null) moveQueueItem(dragQueueIdx, i);
-                    setDragQueueIdx(null);
-                  }}
-                  className="flex items-center gap-2 p-2 rounded-2xl mb-1.5"
-                  style={{ background: i === idx ? `${C.glow}35` : 'rgba(255,255,255,0.45)', border: `1px solid ${i === idx ? C.primary + '20' : C.faint + '25'}` }}
-                >
-                  <button
-                    onClick={() => { playSong(song, { replaceQueue: queue, startIdx: i, playSource: 'queue' }); setShowQueue(false); }}
-                    className="flex-1 min-w-0 flex items-center gap-2 text-left"
-                  >
-                    <span className="text-[10px] w-5 text-center shrink-0" style={{ color: C.faint }}>{i + 1}</span>
-                    <img src={song.albumPic} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs truncate" style={{ color: C.text }}>{song.name}</div>
-                      <div className="text-[9px] truncate" style={{ color: C.muted }}>{song.artists} · {fmtTime(song.duration)}</div>
-                    </div>
-                  </button>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button disabled={i === 0} onClick={() => moveQueueItem(i, i - 1)} className="text-[10px] px-1.5 py-1 rounded disabled:opacity-30" style={{ color: C.muted }}>↑</button>
-                    <button disabled={i === queue.length - 1} onClick={() => moveQueueItem(i, i + 1)} className="text-[10px] px-1.5 py-1 rounded disabled:opacity-30" style={{ color: C.muted }}>↓</button>
-                    <button onClick={() => removeQueueItem(i)} className="text-[10px] px-1.5 py-1 rounded" style={{ color: C.danger }}>×</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showAddToPlaylist && current && (
-        <div className="absolute inset-0 z-[59] flex items-end" onClick={() => setShowAddToPlaylist(false)}>
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <div className="relative w-full rounded-t-3xl p-5 pb-7"
-            style={{ maxHeight: '70%', background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(24px)', boxShadow: `0 -8px 40px ${C.glow}30` }}
-            onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: `${C.faint}80` }} />
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-sm font-medium" style={{ color: C.text }}>加入歌单</div>
-                <div className="text-[10px] truncate max-w-[220px]" style={{ color: C.muted }}>《{current.name}》</div>
-              </div>
-              <button onClick={createPlaylistAndAddCurrent} className="px-3 py-1.5 rounded-full text-[10px] shizuku-glass" style={{ color: C.primary }}>新建</button>
-            </div>
-            <div className="space-y-2 overflow-y-auto shizuku-scrollbar" style={{ maxHeight: '45vh' }}>
-              {libraryPlaylists.length === 0 ? (
-                <div className="text-center text-[11px] py-8" style={{ color: C.faint }}>还没有自建歌单，点右上角新建一个。</div>
-              ) : libraryPlaylists.map(pl => (
-                <button
-                  key={pl.id}
-                  onClick={() => addCurrentToPlaylist(pl.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl text-left shizuku-glass active:scale-[0.99]"
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: `linear-gradient(135deg, ${C.primary}, ${C.accent})` }}>
-                    ♪
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate" style={{ color: C.text }}>{pl.title}</div>
-                    <div className="text-[10px] truncate" style={{ color: C.muted }}>{pl.trackCount || 0} 首 · {pl.description || '本地歌单'}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* 分享给角色 · 一起听 选择器 — 底部弹出 */}

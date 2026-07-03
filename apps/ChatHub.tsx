@@ -3,11 +3,10 @@ import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallba
 import { useOS } from '../context/OSContext';
 import { DB } from '../utils/db';
 import { APIConfig, AppID, Message, GroupProfile, GroupChatRecord, GroupApiConfig, GroupConvoSettings, CharacterProfile, MessageType, ChatTheme, MemoryFragment, EmojiCategory, Emoji, OSTheme, AmbientSocialEntry, AmbientSocialContact, PresetScopeKey, LiveChatOverride, InnerVoiceEntry } from '../types';
-import { extractContent } from '../utils/safeApi';
+import { extractContent, safeResponseJson } from '../utils/safeApi';
 import { callChatCompletion, fetchModelList } from '../utils/llmClient';
 import Modal, { ScrapBtn, ScrapInput, ScrapTextarea, ScrapLabel, ScrapNote, ScrapDivider, ScrapPickTile, ScrapChip, ScrapRowBtn, ScrapStamp, INK, INK_SOFT } from '../components/chat/ScrapModal';
 import { ContextBuilder } from '../utils/context';
-import { WorldbookRuntime } from '../utils/worldbookRuntime';
 import { injectMemoryPalace } from '../utils/memoryPalace/pipeline';
 import { processGroupNewMessages, deleteGroupMemoriesByGroupId } from '../utils/memoryPalace/groupPipeline';
 import { processImage } from '../utils/file';
@@ -16,11 +15,10 @@ import { ChatParser } from '../utils/chatParser';
 import { useVoiceRecorder } from '../components/chat/useVoiceRecorder';
 import { DEFAULT_ARCHIVE_PROMPTS } from '../components/chat/ChatConstants';
 import { exportGroupChatArchive, parseGroupChatArchive, buildGroupChatFilename, serializeGroupChatJsonl } from '../utils/groupChatArchive';
-import { UsersThree, ChatsTeardrop, AddressBook, Planet, HandPointing, SpeakerSlash, Crown, GearSix, Sticker, Paperclip, Coins, ImageSquare, IdentificationCard, CassetteTape, MapTrifold, PaintBrush, HandTap, PhoneOutgoing, PhoneSlash, SpeakerHigh, UserPlus, HandHeart, Detective, EnvelopeOpen, Scroll, Wind, CalendarCheck, Lightbulb, Hamburger, BookBookmark, Eraser, StopCircle, Trash, Microphone, MicrophoneSlash, Wallet, Heart, Megaphone, MagnifyingGlass, XCircle, ChartBar, ListNumbers, ShareNetwork, Copy, ClockCounterClockwise, PencilSimpleLine, MapPin, BellRinging, PushPin, FloppyDisk, NotePencil } from '@phosphor-icons/react';
+import { UsersThree, ChatsTeardrop, AddressBook, Planet, HandPointing, SpeakerSlash, Crown, GearSix, Sticker, Paperclip, Coins, ImageSquare, IdentificationCard, CassetteTape, MapTrifold, PaintBrush, HandTap, PhoneOutgoing, PhoneSlash, SpeakerHigh, UserPlus, HandHeart, Detective, EnvelopeOpen, Scroll, Wind, CalendarCheck, Lightbulb, Hamburger, BookBookmark, Eraser, StopCircle, Trash, Microphone, MicrophoneSlash, Wallet, Heart, Megaphone, MagnifyingGlass, XCircle, ChartBar, ListNumbers, ShareNetwork, Copy, ClockCounterClockwise, PencilSimpleLine, MapPin, BellRinging, PushPin, FloppyDisk } from '@phosphor-icons/react';
 import MomentsFeed from '../components/moments/MomentsFeed';
 import CoupleSpace from '../components/couple/CoupleSpace';
 import RelationshipNetwork from '../components/chat/RelationshipNetwork';
-import ChatHubDashboard from '../components/chat/ChatHubDashboard';
 import FriendVerifyModal from '../components/chat/FriendVerifyModal';
 import UnblockAppealModal from '../components/chat/UnblockAppealModal';
 import GroupOfflineModeModal from '../components/chat/GroupOfflineModeModal';
@@ -29,7 +27,6 @@ import { hasOfflineSession } from '../utils/offlineMode';
 import { hasGroupOfflineSession } from '../utils/groupOfflineMode';
 import { isAutonomousLifeEnabled, sanitizeLifeText } from '../utils/autonomousLife';
 import { resolveUnblockAppealDecision, type UnblockAppealDecision } from '../utils/unblockAppealActions';
-import { unblockCharacterByUser, unblockCharactersByUser } from '../utils/blockActions';
 import { splitRedPacket, bestLuckIndex, shuffle, yuanToCents, centsToYuan, buildGroupRedPacketMetadata, isPasswordRedPacketPhraseAccepted } from '../utils/redPacket';
 import { resolveAuxApi } from '../utils/auxApi';
 import { toggleReaction, REACTION_EMOJIS } from '../utils/messageReactions';
@@ -184,7 +181,31 @@ const sanitizeGroupApi = (api?: Partial<GroupApiConfig> | null): GroupApiConfig 
     return { baseUrl, apiKey, model };
 };
 const isCompleteGroupApi = (api?: Partial<GroupApiConfig> | null): api is GroupApiConfig =>
-    !!api && !!String(api.baseUrl || '').trim() && !!String(api.model || '').trim();
+    !!api && !!String(api.baseUrl || '').trim() && !!String(api.apiKey || '').trim() && !!String(api.model || '').trim();
+const normalizeApiModelList = (data: any): string[] => {
+    const list =
+        Array.isArray(data) ? data :
+        Array.isArray(data?.data) ? data.data :
+        Array.isArray(data?.models) ? data.models :
+        Array.isArray(data?.model_list) ? data.model_list :
+        [];
+    return Array.from(new Set(
+        list
+            .map((m: any) => typeof m === 'string' ? m : (m?.id ?? m?.name ?? m?.model))
+            .filter((m: any): m is string => typeof m === 'string' && !!m.trim())
+            .map((m: string) => m.trim())
+    ));
+};
+const extractApiErrorMessage = (data: any, fallback: string): string => {
+    const candidates = [
+        data?.error?.message,
+        typeof data?.error === 'string' ? data.error : undefined,
+        data?.message,
+        data?.detail,
+        data?.details,
+    ];
+    return candidates.find((v): v is string => typeof v === 'string' && !!v.trim()) || fallback;
+};
 const pruneGroupMemberApis = (
     apis: Record<string, GroupApiDraft> | undefined,
     memberIds: string[],
@@ -1370,34 +1391,10 @@ const ChatHub: React.FC = () => {
         } catch { /* ignore */ }
         return 'chats';
     });
-    const [momentsUnreadCount, setMomentsUnreadCount] = useState(0);
     const [activeGroup, setActiveGroup] = useState<GroupProfile | null>(null);
     const [quickConvoId, setQuickConvoId] = useState<string | null>(null);
     // 朋友圈内层页面（发布页等）的返回拦截：返回键先关内层页面，而不是退出 App 回桌面
     const momentsBackRef = useRef<(() => boolean) | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        const refreshUnread = async () => {
-            try {
-                const unread = await DB.getUnreadSocialPosts();
-                if (!cancelled) setMomentsUnreadCount(unread.length);
-            } catch {
-                if (!cancelled) setMomentsUnreadCount(0);
-            }
-        };
-        void refreshUnread();
-        const onMoment = () => { void refreshUnread(); };
-        window.addEventListener('character-moment-posted', onMoment);
-        window.addEventListener('moments-seen', onMoment);
-        return () => {
-            cancelled = true;
-            window.removeEventListener('character-moment-posted', onMoment);
-            window.removeEventListener('moments-seen', onMoment);
-        };
-    }, []);
-    useEffect(() => {
-        if (hubTab === 'moments') setMomentsUnreadCount(0);
-    }, [hubTab]);
     // 聊天列表：单聊 + 群聊混排（按最后一条消息时间倒序）
     const [convos, setConvos] = useState<ConvoListItem[]>([]);
     const [convoRefreshTick, setConvoRefreshTick] = useState(0);
@@ -1493,7 +1490,6 @@ const ChatHub: React.FC = () => {
     const [groupCallDraft, setGroupCallDraft] = useState('');
     const [groupCallState, setGroupCallState] = useState<GroupCallState>('ended');
     const [groupCallError, setGroupCallError] = useState('');
-    const [showDashboard, setShowDashboard] = useState(false);
     const [modalType, setModalType] = useState<'none' | 'create' | 'add-friend' | 'settings' | 'transfer' | 'member_select' | 'message-options' | 'edit-message' | 'member-profile' | 'set-title' | 'set-member-nickname' | 'mute-member' | 'add-member' | 'group-announcement' | 'mention-picker' | 'collect' | 'poll' | 'relay' | 'forward-pick'>('none');
     // 右上角 + 号弹出菜单（添加好友 / 创建群聊）
     const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -1504,7 +1500,6 @@ const ChatHub: React.FC = () => {
     const [unblockAppealTarget, setUnblockAppealTarget] = useState<PendingUnblockAppeal | null>(null);
     const [unblockAppealReply, setUnblockAppealReply] = useState('');
     const [unblockAppealBusy, setUnblockAppealBusy] = useState<'accept' | 'reject' | null>(null);
-    const [bulkUnblockBusy, setBulkUnblockBusy] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [editContent, setEditContent] = useState('');
     const [preserveContext, setPreserveContext] = useState(true);
@@ -1615,13 +1610,8 @@ const ChatHub: React.FC = () => {
         return map;
     }, [pendingUnblockAppeals]);
     const newFriendCharacters = useMemo(() => (
-        visibleCharacters.filter(c => !!c.charBlock?.active || pendingUnblockAppealByCharId.has(c.id) || (!!c.blacklisted && !!c.unblockAppeal?.awaiting))
+        visibleCharacters.filter(c => !!c.charBlock?.active || !!c.blacklisted || pendingUnblockAppealByCharId.has(c.id))
     ), [visibleCharacters, pendingUnblockAppealByCharId]);
-    const blacklistedCharacters = useMemo(() => (
-        visibleCharacters
-            .filter(c => !!c.blacklisted)
-            .sort((a, b) => (b.blacklistedAt || 0) - (a.blacklistedAt || 0))
-    ), [visibleCharacters]);
 
     useEffect(() => {
         let cancelled = false;
@@ -1744,9 +1734,6 @@ const ChatHub: React.FC = () => {
         if (target.route === 'relationship-network') {
             setHubTab('contacts');
             setShowRelNet(true);
-        }
-        if (target.route === 'dashboard') {
-            setShowDashboard(true);
         }
         if (target.route === 'group-settings') {
             const group = activeGroup || visibleGroups[0] || null;
@@ -2502,17 +2489,24 @@ const ChatHub: React.FC = () => {
         const loadingKey = groupApiModelTargetKey(target);
         setGroupApiModelLoadingKey(loadingKey);
         try {
-            const models = await fetchModelList({
-                baseUrl: draft.baseUrl.trim(),
-                apiKey: draft.apiKey.trim(),
-            }, {
-                meta: makeApiUsageMeta('chat.groupReply', {
+            const baseUrl = draft.baseUrl.trim().replace(/\/+$/, '');
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (draft.apiKey.trim()) headers.Authorization = `Bearer ${draft.apiKey.trim()}`;
+            const response = await fetch(`${baseUrl}/models`, {
+                method: 'GET',
+                headers,
+                __moroMeta: makeApiUsageMeta('chat.groupReply', {
                     apiRole: 'custom',
-                    apiBinding: target.kind === 'group' ? 'Group default API' : 'Member dedicated API',
+                    apiBinding: target.kind === 'group' ? '群聊默认 API' : '成员专属 API',
                 }),
-            });
+            } as RequestInit & { __moroMeta?: unknown });
+            const data = await safeResponseJson(response);
+            if (!response.ok) {
+                throw new Error(extractApiErrorMessage(data, `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`));
+            }
+            const models = normalizeApiModelList(data);
             if (!models.length) {
-                addToast('????????????????', 'info');
+                addToast('模型列表格式不兼容，可先手动填写模型名', 'info');
                 return;
             }
             setAvailableModels(models);
@@ -2520,7 +2514,7 @@ const ChatHub: React.FC = () => {
             if (!models.includes(draft.model.trim())) patchGroupApiModelForTarget(target, models[0]);
             setGroupApiModelTarget(target);
             setGroupApiModelFilter('');
-            addToast(`??? ${models.length} ???`, 'success');
+            addToast(`已拉取 ${models.length} 个模型`, 'success');
         } catch (error: any) {
             addToast(`拉取模型失败：${error?.message || '请检查地址和密钥'}`, 'error');
         } finally {
@@ -2577,7 +2571,7 @@ const ChatHub: React.FC = () => {
     };
 
     /** 进入与某角色的私聊 */
-    const openPrivateChat = (charId: string, messageId?: number) => {
+    const openPrivateChat = (charId: string) => {
         // 打开过私聊即让该角色固定进入「往来」会话列表（兼容历史角色：老数据首次打开后
         // 也会在往来出现），不必再走名册/添加好友。仅在未标记时写一次，避免重复落库。
         const target = characters.find(c => c.id === charId);
@@ -2589,17 +2583,12 @@ const ChatHub: React.FC = () => {
         if (hasOfflineSession(charId)) {
             try { sessionStorage.setItem('moro_chat_resume_offline_char_id', charId); } catch { /* ignore */ }
         }
-        if (typeof messageId === 'number') {
-            try {
-                sessionStorage.setItem('moro_chat_jump_to_message', JSON.stringify({ charId, messageId }));
-            } catch { /* ignore */ }
-        }
         setActiveCharacterId(charId);
         openApp(AppID.Chat);
     };
 
     /** 进入群聊：从名册打开时也会把被收起的往来窗口恢复回来 */
-    const openGroupChat = (group: GroupProfile, messageId?: number) => {
+    const openGroupChat = (group: GroupProfile) => {
         if (group.dissolved) {
             addToast('该群聊已被解散', 'info');
             setView('list');
@@ -2610,20 +2599,6 @@ const ChatHub: React.FC = () => {
         setActiveGroup(group);
         setView('chat');
         setShowGroupOfflineMode(hasGroupOfflineSession(group.id));
-        if (typeof messageId === 'number') {
-            setHighlightMsgId(messageId);
-            void DB.getGroupMessages(group.id).then(all => {
-                jumpTargetRef.current = messageId;
-                setMessages(all);
-                setVisibleCount(all.length);
-                setSearchAllMsgs(all);
-                setJumpNonce(n => n + 1);
-            }).catch(err => {
-                console.warn('[GroupChat] jump to message failed', err);
-                addToast('打开原消息失败，已进入群聊', 'info');
-            });
-            window.setTimeout(() => setHighlightMsgId(prev => (prev === messageId ? null : prev)), 2600);
-        }
     };
 
     useEffect(() => {
@@ -2993,30 +2968,13 @@ const ChatHub: React.FC = () => {
     };
 
     const handleManualUnblockFromContacts = async (char: CharacterProfile) => {
-        await unblockCharacterByUser({ char, updateCharacter, handledFrom: 'manual', clearUnread });
-        setPendingUnblockAppeals(prev => prev.filter(item => item.charId !== char.id));
+        await updateCharacter(char.id, {
+            blacklisted: false,
+            blacklistedAt: undefined,
+            unblockAppeal: { active: false, awaiting: false, nextAt: 0, rejectedCount: 0 },
+        });
         setConvoRefreshTick(t => t + 1);
         addToast(`已将 ${char.name} 移出黑名单`, 'success');
-    };
-
-    const handleBulkUnblock = async () => {
-        if (bulkUnblockBusy || blacklistedCharacters.length === 0) return;
-        setBulkUnblockBusy(true);
-        try {
-            const result = await unblockCharactersByUser({
-                chars: blacklistedCharacters,
-                updateCharacter,
-                clearUnread,
-            });
-            setPendingUnblockAppeals(prev => prev.filter(item => !blacklistedCharacters.some(c => c.id === item.charId)));
-            setConvoRefreshTick(t => t + 1);
-            addToast(`已解除 ${result.count} 位黑名单角色`, 'success');
-        } catch (err: any) {
-            console.warn('[ChatHub] bulk unblock failed', err);
-            addToast(`批量解除失败：${err?.message || err}`, 'error');
-        } finally {
-            setBulkUnblockBusy(false);
-        }
     };
 
     const handleUnblockAppealDecision = async (decision: UnblockAppealDecision) => {
@@ -3075,25 +3033,6 @@ const ChatHub: React.FC = () => {
         setModalType('none');
         setSelectedMessage(null);
         addToast('已复制到剪贴板', 'success');
-    };
-
-    const handleAddGroupMessageToDashboard = async () => {
-        if (!selectedMessage || !activeGroup) return;
-        try {
-            await createMessageFollowup({
-                message: selectedMessage,
-                targetKind: 'group',
-                targetId: activeGroup.id,
-                targetName: activeGroup.name,
-            });
-            addToast('已记到絮语总览', 'success');
-        } catch (err) {
-            console.warn('[ChatHub] add group message to dashboard failed', err);
-            addToast('记到总览失败', 'error');
-        } finally {
-            setModalType('none');
-            setSelectedMessage(null);
-        }
     };
 
     const handleEnterSelectionMode = () => {
@@ -4167,8 +4106,7 @@ ${outputShape}`;
     // --- Logic: Group Summary & Distribution ---
 
     const handleGroupSummary = async () => {
-        const summaryApi = resolveAuxApi(auxApiConfig, apiConfig);
-        if (!activeGroup || !summaryApi.baseUrl || !summaryApi.model) {
+        if (!activeGroup || !apiConfig.apiKey) {
             addToast('请检查配置', 'error');
             return;
         }
@@ -4237,17 +4175,19 @@ ${logText.substring(0, 10000)}
 `;
                 }
 
-                const data = await callChatCompletion(summaryApi, {
-                    model: summaryApi.model,
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.3
-                }, {
-                    meta: makeApiUsageMeta('chat.postProcess.summary', {
-                        apiRole: summaryApi.apiRole || 'aux',
-                        apiBinding: summaryApi.apiBinding || 'Group archive',
-                    }),
+                const response = await fetch(`${apiConfig.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiConfig.apiKey}` },
+                    body: JSON.stringify({
+                        model: apiConfig.model,
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.3
+                    })
                 });
-                let content = (extractContent(data) || '').trim();
+
+                if (response.ok) {
+                    const data = await safeResponseJson(response);
+                    let content = data.choices[0].message.content.trim();
                     // Basic YAML extraction
                     const yamlMatch = content.match(/summary:\s*["']?([\s\S]*?)["']?$/);
                     let summaryText = yamlMatch ? yamlMatch[1] : content.replace(/^summary:\s*/i, '');
@@ -4272,6 +4212,7 @@ ${logText.substring(0, 10000)}
                             }
                         }
                     }
+                }
                 
                 await new Promise(r => setTimeout(r, 500)); // Rate limit buffer
             }
@@ -4778,8 +4719,9 @@ ${logText.substring(0, 10000)}
         mode: 'opening' | 'turn',
     ): Promise<GroupCallBubble[]> => {
         const group = activeGroup;
+        const baseUrl = apiConfig.baseUrl?.replace(/\/+$/, '');
         if (!group || group.id !== session.groupId) throw new Error('群聊电话已经不在当前群');
-        if (!apiConfig.baseUrl || !apiConfig.model) throw new Error('请先在「文具盒」里配置聊天 API');
+        if (!baseUrl || !apiConfig.apiKey) throw new Error('请先在「文具盒」里配置聊天 API');
         if (group.dissolved) throw new Error('该群聊已被解散');
         if (group.mutedAll) throw new Error('全员禁言中，群友暂时不能说话');
 
@@ -4787,15 +4729,7 @@ ${logText.substring(0, 10000)}
         const availableMembers = groupMembers.filter(m => !isMuted(group, m.id));
         if (!availableMembers.length) throw new Error('当前没有可发言的群成员');
 
-        const groupCallScanMessages = [
-            ...transcript.map(item => `${item.name}: ${item.text}`),
-            spokenText ? `${userProfile.name || '用户'}: ${spokenText}` : '',
-        ].filter(Boolean).slice(-40);
-        let sharedScene!: ReturnType<typeof ContextBuilder.buildGroupSharedScene>;
-        const memberContexts: string[] = [];
-        await WorldbookRuntime.withContext({ scanMessages: groupCallScanMessages }, async () => {
-            sharedScene = ContextBuilder.buildGroupSharedScene(groupMembers, userProfile);
-        });
+        const sharedScene = ContextBuilder.buildGroupSharedScene(groupMembers, userProfile);
         const rosterLines = groupMembers.map(m => {
             const muted = isMuted(group, m.id) ? ' | 禁言中，本轮不能说话' : '';
             const nick = group.memberNicknames?.[m.id];
@@ -4804,29 +4738,29 @@ ${logText.substring(0, 10000)}
         }).join('\n');
         const userName = group.memberNicknames?.['user'] || userProfile.name || '我';
         const currentTimeStr = `${virtualTime.hours.toString().padStart(2, '0')}:${virtualTime.minutes.toString().padStart(2, '0')}`;
-        await WorldbookRuntime.withContext({ scanMessages: groupCallScanMessages }, async () => {
-            for (const member of groupMembers) {
-                const privateMsgs = await DB.getMessagesByCharId(member.id);
-                await injectMemoryPalace(member, privateMsgs);
-                const coreContext = ContextBuilder.buildCoreContext(member, userProfile, true, undefined, {
-                    skipUserProfile: true,
-                    skipWorldview: sharedScene.worldviewIsShared,
-                    skipWorldbookIds: sharedScene.sharedWorldbookIds,
-                    headerOverride: `[Group Voice Call Member: ${formatCharacterWithId(member)}]`,
-                });
-                const lensBlock = buildGroupMemberLensBlock(
-                    group,
-                    member,
-                    groupMembers,
-                    (charId) => displayNameOf(group, charId),
-                );
-                const privateGapInfo = await getPrivateTimeGap(member.id);
-                const recentPrivate = privateMsgs
-                    .filter(m => !m.groupId)
-                    .slice(-6)
-                    .map(m => `[${m.role === 'user' ? userName : formatCharacterWithId(member)}]: ${String(m.content || '').slice(0, 80)}`)
-                    .join('\n');
-                memberContexts.push(`
+        const memberContexts: string[] = [];
+        for (const member of groupMembers) {
+            const privateMsgs = await DB.getMessagesByCharId(member.id);
+            await injectMemoryPalace(member, privateMsgs);
+            const coreContext = ContextBuilder.buildCoreContext(member, userProfile, true, undefined, {
+                skipUserProfile: true,
+                skipWorldview: sharedScene.worldviewIsShared,
+                skipWorldbookIds: sharedScene.sharedWorldbookIds,
+                headerOverride: `[Group Voice Call Member: ${formatCharacterWithId(member)}]`,
+            });
+            const lensBlock = buildGroupMemberLensBlock(
+                group,
+                member,
+                groupMembers,
+                (charId) => displayNameOf(group, charId),
+            );
+            const privateGapInfo = await getPrivateTimeGap(member.id);
+            const recentPrivate = privateMsgs
+                .filter(m => !m.groupId)
+                .slice(-6)
+                .map(m => `[${m.role === 'user' ? userName : formatCharacterWithId(member)}]: ${String(m.content || '').slice(0, 80)}`)
+                .join('\n');
+            memberContexts.push(`
 <<< 成员档案 START: ${formatCharacterWithId(member)} >>>
 ${coreContext}
 ${lensBlock}
@@ -4837,8 +4771,7 @@ ${lensBlock}
 ${recentPrivate || '(暂无私聊)'}
 <<< 成员档案 END >>>
 `);
-            }
-        });
+        }
 
         const allGroupMsgs = await DB.getGroupMessages(group.id);
         const recentGroupMsgs = allGroupMsgs
@@ -4917,9 +4850,14 @@ ${mode === 'opening' ? '群语音刚接通。请让 1-3 位最可能先开口的
             Object.assign(requestBody, rest);
         }
 
-        const data = await callChatCompletion(apiConfig, requestBody, {
-            meta: makeApiUsageMeta('chat.groupReply', { apiRole: 'main', apiBinding: 'Group voice call' }),
-        });
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiConfig.apiKey}` },
+            body: JSON.stringify(requestBody),
+            __moroMeta: makeApiUsageMeta('chat.groupReply', { apiRole: 'main', apiBinding: '群语音文字回复' }),
+        } as RequestInit & { __moroMeta?: unknown });
+        if (!response.ok) throw new Error(`文本接口调用失败（HTTP ${response.status}）`);
+        const data = await safeResponseJson(response);
         if (data.usage?.total_tokens) {
             setLastTokenUsage(data.usage.total_tokens);
             setTokenBreakdown({
@@ -5345,18 +5283,7 @@ ${mode === 'opening' ? '群语音刚接通。请让 1-3 位最可能先开口的
             // 1. 共享场景块（用户档案 + 共有世界书 + 共有 worldview）
             //    每个角色都"看见"的舞台只描述一次，避免按成员数 N 倍复制。
             //    每个角色的人设/印象/记忆仍保持完整，不做任何压缩。
-            const groupScanMessages = currentMsgs
-                .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-                .slice(-40)
-                .map(m => {
-                    if (m.role === 'user') return `${userProfile.name || '用户'}: ${m.content}`;
-                    const speaker = groupMembers.find(member => member.id === m.charId);
-                    return `${speaker ? displayNameOf(activeGroup, speaker.id) : displayNameOf(activeGroup, m.charId)}: ${m.content}`;
-                });
-            let sharedScene!: ReturnType<typeof ContextBuilder.buildGroupSharedScene>;
-            await WorldbookRuntime.withContext({ scanMessages: groupScanMessages }, async () => {
-                sharedScene = ContextBuilder.buildGroupSharedScene(groupMembers, userProfile);
-            });
+            const sharedScene = ContextBuilder.buildGroupSharedScene(groupMembers, userProfile);
 
             // 群成员花名册：群名片（昵称）/ 头衔 / 禁言状态。改群名、改名片、禁言等事件
             // 会以 [系统通知] 出现在聊天记录里，角色据此自然反应。
@@ -5396,7 +5323,6 @@ ${rosterLines}
 ${sharedScene.text}`;
 
             // 2. Inject Member Context (Strict Isolation via ContextBuilder)
-            await WorldbookRuntime.withContext({ scanMessages: groupScanMessages }, async () => {
             for (const member of groupMembers) {
                 // Fetch Private Logs
                 const privateMsgs = await DB.getMessagesByCharId(member.id);
@@ -5439,7 +5365,6 @@ ${recentPrivate || '(暂无私聊)'}
 <<< 角色档案 END >>>
 `;
             }
-            });
 
             // 3. Group History (uses configurable context limit)
             // image 的 content 是 base64（processImage 压的 JPEG），emoji 是图床 URL——
@@ -5703,6 +5628,7 @@ ${attachedImagesNote}
             };
 
             const callGroupCompletion = async (api: GroupApiConfig, content: any, maxTokens: number, pass: string) => {
+                const baseUrl = api.baseUrl.replace(/\/+$/, '');
                 const usageFeatureId = isLiveDraftRun ? 'chat.groupLiveDraft' : 'chat.groupReply';
                 const usageBinding = isLiveDraftRun ? `群聊实时草稿 · ${pass}` : pass;
                 const messages = await buildScopedGroupCompletionMessages(content, 'chat.groupText', userProfile.name || '用户', activeGroup.name);
@@ -5717,9 +5643,14 @@ ${attachedImagesNote}
                     const { temperature: _t, max_tokens: _m, ...rest } = presetGenParams;
                     Object.assign(requestBody, rest);
                 }
-                return callChatCompletion(api, requestBody, {
-                    meta: makeApiUsageMeta(usageFeatureId, { apiRole: api === mainChatApi ? 'main' : 'custom', apiBinding: usageBinding }),
-                });
+                const response = await fetch(`${baseUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.apiKey}` },
+                    body: JSON.stringify(requestBody),
+                    __moroMeta: makeApiUsageMeta(usageFeatureId, { apiRole: 'custom', apiBinding: usageBinding }),
+                } as RequestInit & { __moroMeta?: unknown });
+                if (!response.ok) throw new Error(`${pass} Failed (${baseUrl} · ${api.model})`);
+                return safeResponseJson(response);
             };
 
             const buildMessageContent = (text: string): any => attachedImages.length > 0
@@ -6297,30 +6228,6 @@ ${attachedImagesNote}
                     />
                     </div>
                 )}
-                {showDashboard && (
-                    <ChatHubDashboard
-                        onClose={() => setShowDashboard(false)}
-                        onOpenPrivate={(charId, messageId) => {
-                            setShowDashboard(false);
-                            openPrivateChat(charId, messageId);
-                        }}
-                        onOpenGroup={(group, messageId) => {
-                            setShowDashboard(false);
-                            openGroupChat(group, messageId);
-                        }}
-                        onOpenMoments={() => {
-                            setShowDashboard(false);
-                            setHubTab('moments');
-                        }}
-                        onOpenCouple={(charId) => {
-                            if (charId) {
-                                try { localStorage.setItem('moro_couple_partner_id', charId); } catch { /* ignore */ }
-                            }
-                            setShowDashboard(false);
-                            setHubTab('couple');
-                        }}
-                    />
-                )}
                 {/* safe-top spacer 透明 + backdrop-blur，下方容器/list bubbles 透出+模糊（跟 iOS 系统 status bar 一致），避免 header 白 bg 在刘海下铺一条突兀白带 */}
                 <div className="shrink-0 z-10 sticky top-0">
                     <div className="bg-transparent backdrop-blur-xl" style={{ height: 'var(--safe-top)' }} />
@@ -6360,14 +6267,6 @@ ${attachedImagesNote}
                                             color: '#334155',
                                         }}
                                     >
-                                        <button
-                                            onClick={() => { setShowPlusMenu(false); setShowDashboard(true); }}
-                                            className="w-full px-4 py-3 flex items-center gap-2.5 text-sm font-bold active:scale-[0.98] transition-all hover:bg-[#fff6f9]"
-                                        >
-                                            <ChartBar size={18} weight="bold" className="shrink-0" style={{ color: '#9c5e74' }} />
-                                            絮语总览
-                                        </button>
-                                        <div className="mx-4 border-t" style={{ borderColor: '#f2d9e2' }} />
                                         <button
                                             onClick={() => { setShowPlusMenu(false); setModalType('add-friend'); }}
                                             className="w-full px-4 py-3 flex items-center gap-2.5 text-sm font-bold active:scale-[0.98] transition-all hover:bg-[#fff6f9]"
@@ -6647,8 +6546,8 @@ ${attachedImagesNote}
                                             ? '正在读取 TA 递来的验证消息…'
                                             : blockedByChar
                                             ? 'TA 把你拉黑了，递一条好友验证看看。'
-                                            : '等待处理验证。';
-                                    const badge = appeal ? '回复' : awaitingUnblockAppeal ? '稍等' : blockedByChar ? '验证' : '查看';
+                                            : '你已将 TA 加入黑名单。';
+                                    const badge = appeal ? '回复' : awaitingUnblockAppeal ? '稍等' : blockedByChar ? '验证' : '解除';
                                     const openRequest = () => {
                                         if (appeal) {
                                             setUnblockAppealTarget(appeal);
@@ -6663,7 +6562,7 @@ ${attachedImagesNote}
                                             setVerifyCharId(c.id);
                                             return;
                                         }
-                                        openPrivateChat(c.id);
+                                        void handleManualUnblockFromContacts(c);
                                     };
                                     return (
                                         <div
@@ -6693,66 +6592,8 @@ ${attachedImagesNote}
                                 })}
                             </div>
                         )}
-                        {blacklistedCharacters.length > 0 && (
-                            <div className="space-y-2">
-                                <div className={`px-2 pb-1 flex items-center justify-between gap-2 ${newFriendCharacters.length > 0 ? 'pt-2' : ''}`}>
-                                    <span className="text-[10px] font-black tracking-[0.18em] text-[#9c5e74]/70">黑名单</span>
-                                    <button
-                                        onClick={() => { void handleBulkUnblock(); }}
-                                        disabled={bulkUnblockBusy}
-                                        className="px-2.5 py-1 rounded-full bg-[#262626] text-white text-[10px] font-black disabled:opacity-50 active:scale-95"
-                                    >
-                                        {bulkUnblockBusy ? '处理中' : '全部解除'}
-                                    </button>
-                                </div>
-                                {blacklistedCharacters.map((c, i) => {
-                                    const appeal = pendingUnblockAppealByCharId.get(c.id);
-                                    const displayName = c.convoSettings?.remarkName?.trim() || c.name;
-                                    const blockedAt = c.blacklistedAt ? formatConvoTime(c.blacklistedAt) : '已拉黑';
-                                    const openBlocked = () => {
-                                        if (appeal) {
-                                            setUnblockAppealTarget(appeal);
-                                            setUnblockAppealReply('');
-                                            return;
-                                        }
-                                        openPrivateChat(c.id);
-                                    };
-                                    return (
-                                        <div
-                                            key={`blacklist-${c.id}`}
-                                            onClick={openBlocked}
-                                            style={{ animationDelay: `${Math.min(i, 14) * 32}ms` }}
-                                            className="scrap-card p-3.5 rounded-2xl flex items-center gap-3 active:scale-[0.98] hover:-translate-y-0.5 transition-all cursor-pointer hover:bg-[#f7f4ee] anim-row-in"
-                                            data-manual-anchor={i === 0 ? 'manual-chathub-blacklist' : undefined}
-                                        >
-                                            <img src={c.convoSettings?.charAvatarOverride || c.avatar} className="w-12 h-12 rounded-full object-cover border border-rose-100 shadow-sm shrink-0 grayscale-[0.35]" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="font-bold text-slate-700 truncate text-sm">{displayName}</span>
-                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-black shrink-0">
-                                                        {appeal ? '有申请' : '黑名单'}
-                                                    </span>
-                                                </div>
-                                                <div className="text-[11px] text-slate-400 mt-0.5 truncate">
-                                                    {appeal ? `验证消息：${previewOf(appeal.message)}` : `${blockedAt} · 不会主动打扰你`}
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    void handleManualUnblockFromContacts(c);
-                                                }}
-                                                className="text-[10px] px-2.5 py-1 rounded-full font-black shrink-0 bg-slate-700 text-white active:scale-95"
-                                            >
-                                                解除
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
                         {visibleGroups.length > 0 && (
-                            <div className={`px-2 pb-1 text-[10px] font-black tracking-[0.18em] text-[#9c5e74]/70 ${(newFriendCharacters.length > 0 || blacklistedCharacters.length > 0) ? 'pt-2' : ''}`}>群聊</div>
+                            <div className={`px-2 pb-1 text-[10px] font-black tracking-[0.18em] text-[#9c5e74]/70 ${newFriendCharacters.length > 0 ? 'pt-2' : ''}`}>群聊</div>
                         )}
                         {visibleGroups.map((g, i) => (
                             <div key={`contact-group-${g.id}`} onClick={() => openGroupChat(g)} style={{ animationDelay: `${Math.min(i, 14) * 32}ms` }} className={`scrap-card p-3.5 rounded-2xl flex items-center gap-3 active:scale-[0.98] hover:-translate-y-0.5 transition-all cursor-pointer hover:bg-[#f7f4ee] anim-row-in ${g.dissolved ? 'opacity-70' : ''}`}>
@@ -6850,7 +6691,7 @@ ${attachedImagesNote}
                 {/* ── 情侣空间 tab：参考 QQ 情侣空间（恋爱天数 / 亲密度 / 动态 / 纪念日 / 相册 / 约定 / 悄悄话） ── */}
                 {hubTab === 'couple' && (
                     <div className="flex-1 min-h-0 overflow-hidden" data-manual-anchor="manual-chathub-couple">
-                        <CoupleSpace visibleCharacters={visibleCharacters} />
+                        <CoupleSpace />
                     </div>
                 )}
 
@@ -6879,14 +6720,9 @@ ${attachedImagesNote}
                                 <button
                                     key={t.id}
                                     onClick={() => setHubTab(t.id)}
-                                    className={`relative flex flex-col items-center gap-0.5 py-2.5 transition-all duration-200 active:scale-90 ${active ? t.on : 'text-slate-400'}`}
+                                    className={`flex flex-col items-center gap-0.5 py-2.5 transition-all duration-200 active:scale-90 ${active ? t.on : 'text-slate-400'}`}
                                 >
                                     <t.Icon size={22} weight={active ? 'fill' : 'regular'} className={`transition-transform duration-300 ${active ? 'scale-110 -translate-y-0.5' : ''}`} />
-                                    {t.id === 'moments' && momentsUnreadCount > 0 && !active && (
-                                        <span className="absolute top-2 right-[28%] min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black leading-4 shadow-sm">
-                                            {momentsUnreadCount > 9 ? '9+' : momentsUnreadCount}
-                                        </span>
-                                    )}
                                     <span className="text-[10px] font-bold">{t.label}</span>
                                 </button>
                             );
@@ -8731,9 +8567,6 @@ ${attachedImagesNote}
                     )}
                     {selectedMessage?.type === 'text' && (
                         <ScrapRowBtn onClick={handleStartEditMessage} icon={<PencilSimpleLine size={18} weight="bold" />}>改改措辞</ScrapRowBtn>
-                    )}
-                    {selectedMessage?.role !== 'system' && (
-                        <ScrapRowBtn onClick={handleAddGroupMessageToDashboard} icon={<NotePencil size={18} weight="bold" />}>记到总览</ScrapRowBtn>
                     )}
                     <ScrapRowBtn onClick={() => setModalType('forward-pick')} icon={<ShareNetwork size={18} weight="bold" />}>转给别人看</ScrapRowBtn>
                     {selectedMessage?.role === 'user' && !selectedMessage?.metadata?.recalled && (

@@ -93,6 +93,7 @@ export const API_USAGE_CATALOG = [
     feature('chat.memoGenerate', AppID.GroupChat, '絮语', '角色备忘录', '生成角色备忘录', ['絮语', '聊天设置', '角色备忘录'], 'aux', false),
     feature('chat.friendVerify', AppID.GroupChat, '絮语', '好友验证', '判断好友验证', ['絮语', '加好友', '好友验证'], 'aux', false),
     feature('chat.lockScreen', AppID.GroupChat, '絮语', '锁屏互动', '生成锁屏内容', ['絮语', '聊天设置', '锁屏互动'], 'main', false),
+    feature('screen-peek.userPhoneComment', AppID.GroupChat, '絮语', 'TA 窥屏', '生成真实手机录屏悬浮评论', ['絮语', '聊天工具', 'TA 窥屏', '录屏', '悬浮评论'], 'aux'),
     feature('chat.userScreenWatch.comment', AppID.GroupChat, '絮语', '观屏评论', '生成实时短评', ['絮语', '私聊工具', '观屏评论'], 'main', false),
     feature('chat.conversationSettings', AppID.GroupChat, '絮语', '聊天设置', '生成设置建议', ['絮语', '聊天设置'], 'main', false),
     feature('chat.emotionApi.fetchModels', AppID.GroupChat, '絮语', '聊天设置', '拉取情绪 API 模型', ['絮语', '聊天设置', '情绪 API', '拉取模型'], 'custom', false, '情绪 API'),

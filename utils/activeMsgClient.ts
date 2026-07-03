@@ -14,8 +14,6 @@ import { safeResponseJson } from './safeApi';
 import { ActiveMsgStore } from './activeMsgStore';
 import { KeepAlive } from './keepAlive';
 import { activeMsg2ImportantRules, activeMsg2LegacyStyleHint, activeMsg2ModeInstruction } from './laiwangPrompts';
-import { buildOpenAiEndpoint } from './openAiCompat';
-import { WorldbookRuntime } from './worldbookRuntime';
 
 const ACTIVE_MSG_VAPID_PUBLIC_KEY = import.meta.env.VITE_AMSG_VAPID_PUBLIC_KEY || '';
 const ACTIVE_MSG_API_BASE_OVERRIDE = (import.meta.env.VITE_AMSG_API_BASE_URL || '').trim();
@@ -97,7 +95,7 @@ export const sanitizeActiveMsgDatabaseUrl = (value: string) => {
     .trim();
 };
 
-const normalizeChatApiUrl = (baseUrl: string) => buildOpenAiEndpoint(baseUrl, 'chat.completions');
+const normalizeChatApiUrl = (baseUrl: string) => `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
 
 const buildActiveMsgApiHint = () => {
   const apiBase = resolveActiveMsgApiBase();
@@ -242,19 +240,15 @@ const buildCompletePrompt = async (
   const legacyHint = buildLegacyStyleProactiveHint(userProfile.name || '对方', currentTime, timeSinceUser);
   const emojis = await DB.getEmojis();
   const categories = await DB.getEmojiCategories();
-  const scanMessages = recentMessages
-    .filter(message => (message.role === 'user' || message.role === 'assistant') && typeof message.content === 'string')
-    .slice(-20)
-    .map(message => String(message.content));
-  const systemPrompt = await WorldbookRuntime.withContext({ scanMessages }, () => ChatPrompts.buildSystemPrompt(
-      char,
-      userProfile,
-      groups,
-      emojis,
-      categories,
-      recentMessages,
-      realtimeConfig,
-  ));
+  const systemPrompt = await ChatPrompts.buildSystemPrompt(
+    char,
+    userProfile,
+    groups,
+    emojis,
+    categories,
+    recentMessages,
+    realtimeConfig,
+  );
   const { apiMessages } = ChatPrompts.buildMessageHistory(
     recentMessages,
     Math.min(char.contextLimit || 120, 120),

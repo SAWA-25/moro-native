@@ -71,6 +71,18 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-03-native-install-106-release',
+    date: '2026-07-03',
+    title: '安装版 1.0.6 已同步最新内容',
+    kind: 'improvement',
+    summary: '新版安装包合入 7 月 3 日上游更新，并继续按正式 native 包规则隐藏开发角标、使用发布证书签名和更新校验。',
+    items: [
+      'Android 安装包版本升到 1.0.6，可以从 1.0.5 直接升级；正式构建默认不显示右下角开发角标。',
+      '单聊回形针里的“窥屏”入口会同时保留看 TA 的虚拟手机和让 TA 看你的真实手机这两种用法，授权前不会开始录屏。',
+      'APK 继续使用 release 签名、R8 混淆、资源压缩、禁调试和禁备份等基础防护；iOS 包仍需要用自己的 Apple 证书重签后安装。',
+    ],
+  },
+  {
     id: '2026-07-03-offline-mode-main-model',
     date: '2026-07-03',
     title: '线下见面改用主模型生成',

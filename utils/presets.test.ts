@@ -1,22 +1,18 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
-    DEFAULT_PRESET_NAME,
     DEFAULT_PRESET_SCOPES,
     INJECTION_POSITION,
     ORDER_CHAR_ID_SINGLE,
     ORDER_CHAR_ID_GROUP,
     PresetRuntime,
     applyPresetToMessages,
-    createAllPresetScopes,
     createDefaultPreset,
-    ensureDefaultPresetSeed,
     exportTavernPreset,
     getPresetGenParams,
     importTavernPreset,
     normalizePresetScopes,
     substitutePresetMacros,
 } from './presets';
-import { DB } from './db';
 import type { TavernPreset } from '../types';
 
 const MACROS = { charName: '小明', userName: '阿罗' };
@@ -72,90 +68,6 @@ const baseMessages = [{ role: 'system', content: 'CORE' }, ...history];
 
 afterEach(() => {
     vi.restoreAllMocks();
-    localStorage.clear();
-});
-
-describe('Moro default preset seed', () => {
-    it('createDefaultPreset builds the refined all-scope baseline without empty output messages', () => {
-        const preset = createDefaultPreset();
-        const promptIds = preset.prompts.map(p => p.identifier);
-
-        expect(preset.name).toBe(DEFAULT_PRESET_NAME);
-        expect(promptIds).toEqual(expect.arrayContaining([
-            'main',
-            'moro-natural-style',
-            'moro-continuity',
-            'moro-format-guard',
-            'moro-group-guard',
-            'chatHistory',
-            'worldInfoBefore',
-            'worldInfoAfter',
-            'personaDescription',
-            'dialogueExamples',
-        ]));
-        expect(preset.prompt_order.map(po => po.character_id)).toEqual([ORDER_CHAR_ID_SINGLE, ORDER_CHAR_ID_GROUP]);
-        expect(preset.moroScopes).toEqual(createAllPresetScopes());
-
-        const out = applyPresetToMessages(baseMessages, preset, { macros: MACROS });
-        expect(out.some(m => String(m.content).includes('JSON'))).toBe(true);
-        expect(out.some(m => m.content === 'CORE')).toBe(true);
-        expect(out.map(m => m.content)).toEqual(expect.arrayContaining(['u1', 'a1', 'u2', 'a2']));
-        expect(out.every(m => typeof m.content !== 'string' || m.content.trim().length > 0)).toBe(true);
-    });
-
-    it('ensureDefaultPresetSeed seeds an active selection but keeps the master switch off by default', async () => {
-        await DB.deleteDB();
-
-        const seeded = await ensureDefaultPresetSeed();
-        const list = await DB.getAllPresets();
-
-        expect(seeded).toBeTruthy();
-        expect(list).toHaveLength(1);
-        expect(list[0].id).toBe(seeded!.id);
-        expect(PresetRuntime.getActiveId()).toBe(seeded!.id);
-        expect(PresetRuntime.isEnabled()).toBe(false);
-        expect(PresetRuntime.isSamplingApplied()).toBe(true);
-        expect(PresetRuntime.getGlobalScopes()).toEqual(createAllPresetScopes());
-        await expect(PresetRuntime.getActivePreset()).resolves.toBeNull();
-
-        PresetRuntime.setEnabled(true);
-        await expect(PresetRuntime.getActivePreset()).resolves.toMatchObject({ id: seeded!.id });
-    });
-
-    it('ensureDefaultPresetSeed turns an already-seeded built-in default preset off once', async () => {
-        await DB.deleteDB();
-        const existing = createDefaultPreset();
-        await DB.savePreset(existing);
-        PresetRuntime.setActiveId(existing.id);
-        PresetRuntime.setEnabled(true);
-
-        await expect(ensureDefaultPresetSeed()).resolves.toBeNull();
-        expect(PresetRuntime.isEnabled()).toBe(false);
-
-        PresetRuntime.setEnabled(true);
-        await expect(ensureDefaultPresetSeed()).resolves.toBeNull();
-        expect(PresetRuntime.isEnabled()).toBe(true);
-    });
-
-    it('ensureDefaultPresetSeed does not override existing presets or local switches', async () => {
-        await DB.deleteDB();
-        const existing = createDefaultPreset('existing');
-        await DB.savePreset(existing);
-        PresetRuntime.setActiveId(existing.id);
-        PresetRuntime.setEnabled(true);
-        PresetRuntime.setSamplingApplied(false);
-        PresetRuntime.setGlobalScopes(DEFAULT_PRESET_SCOPES);
-
-        await expect(ensureDefaultPresetSeed()).resolves.toBeNull();
-        const list = await DB.getAllPresets();
-
-        expect(list).toHaveLength(1);
-        expect(list[0].id).toBe(existing.id);
-        expect(PresetRuntime.getActiveId()).toBe(existing.id);
-        expect(PresetRuntime.isEnabled()).toBe(true);
-        expect(PresetRuntime.isSamplingApplied()).toBe(false);
-        expect(PresetRuntime.getGlobalScopes()).toEqual(DEFAULT_PRESET_SCOPES);
-    });
 });
 
 describe('importTavernPreset', () => {

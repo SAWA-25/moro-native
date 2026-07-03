@@ -30,6 +30,8 @@ public class MainActivity extends BridgeActivity {
         }
 
         registerPlugin(MoroUpdaterPlugin.class);
+        registerPlugin(MoroDeviceInsightPlugin.class);
+        registerPlugin(MoroScreenCapturePlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();

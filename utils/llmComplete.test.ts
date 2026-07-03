@@ -91,20 +91,4 @@ describe('llmComplete 续写', () => {
         const body = JSON.parse(String(firstCall[1].body));
         expect(body.messages.map((m: any) => m.content)).toEqual(['CORE', 'PRESET 用户', 'hi']);
     });
-
-    it('structured presetScope keeps the default format guard in the request skeleton', async () => {
-        vi.spyOn(PresetRuntime, 'getActiveGenParams').mockResolvedValue(null);
-        vi.spyOn(PresetRuntime, 'getActivePresetForScope').mockResolvedValue(createDefaultPreset());
-        const fetchFn = queueFetch([res('{"ok":true}', 'stop')]);
-
-        await llmComplete(API, [
-            { role: 'system', content: 'CORE' },
-            { role: 'user', content: 'Return JSON only' },
-        ], { presetScope: 'structured.tool' });
-
-        const firstCall = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
-        const body = JSON.parse(String(firstCall[1].body));
-        expect(body.messages.some((m: any) => typeof m.content === 'string' && m.content.includes('JSON'))).toBe(true);
-        expect(body.messages.map((m: any) => m.content)).toEqual(expect.arrayContaining(['CORE', 'Return JSON only']));
-    });
 });

@@ -1,20 +1,20 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { APIConfig, AuxApiConfig, AppID, OSTheme, VirtualTime, CharacterProfile, ChatTheme, Toast, FullBackupData, UserProfile, ApiPreset, GroupProfile, SystemLog, Worldbook, NovelBook, SongSheet, Message, RealtimeConfig, AppearancePreset, CloudBackupConfig, CloudBackupFile, CharLifeEvent, AdjustBalanceMeta, SuspendedVideoCallInfo, SuspendedOfflineSessionInfo, ChatAlarm, PeriodReminderSettings, HealthReminder } from '../types';
+import { APIConfig, AuxApiConfig, AppID, OSTheme, VirtualTime, CharacterProfile, ChatTheme, Toast, FullBackupData, UserProfile, ApiPreset, GroupProfile, SystemLog, Worldbook, NovelBook, SongSheet, Message, RealtimeConfig, AppearancePreset, CloudBackupConfig, CloudBackupFile, CharLifeEvent, AdjustBalanceMeta, SuspendedVideoCallInfo, SuspendedOfflineSessionInfo, ChatAlarm, PeriodReminderSettings, HealthReminder, ScreenPeekCard, ScreenPeekCommentSession, ScreenPeekLiveComment } from '../types';
 import { DB } from '../utils/db';
 import { createAutoBankTransaction } from '../utils/bankLedger';
-import { DEFAULT_WB_CATEGORY, WorldbookRuntime, loadGroupScopesFromStorage, loadGroupSettingsFromStorage, loadGroupTogglesFromStorage, saveGroupScopesToStorage, saveGroupSettingsToStorage, saveGroupTogglesToStorage, type WorldbookGroupScope, type WorldbookGroupSettings } from '../utils/worldbookRuntime';
+import { DEFAULT_WB_CATEGORY, WorldbookRuntime, loadGroupScopesFromStorage, loadGroupTogglesFromStorage, saveGroupScopesToStorage, saveGroupTogglesToStorage, type WorldbookGroupScope } from '../utils/worldbookRuntime';
 import { ProactiveChat } from '../utils/proactiveChat';
 import { mirrorProactiveSnapshots, reconcileProactiveFires } from '../utils/mirrorProactive';
 import { advanceLife, isAutonomousLifeEnabled, resolveLifeApi, buildAutonomousProactiveHint, catchUpOfflineLife, CATCHUP_MIN_GAP_MS, planAutonomousProactiveTurn } from '../utils/autonomousLife';
 import { proactiveFallbackHint } from '../utils/laiwangPrompts';
-import { canCharContactUser, CHAR_BLOCK_EVENT, extractBlockUserDirective, isCharBlockDisabled, randomUnblockDelayMs } from '../utils/blockSystem';
+import { CHAR_BLOCK_EVENT, extractBlockUserDirective, isCharBlockDisabled, randomUnblockDelayMs } from '../utils/blockSystem';
 import { isAppealDue, generateUnblockAppeal } from '../utils/unblockAppeal';
 import { resolveAuxApi } from '../utils/auxApi';
 import { CHAR_USER_REMARK_EVENT, type UserRemarkEventDetail } from '../utils/userRemarkSystem';
 import { CHAR_PAT_SUFFIX_EVENT } from '../utils/patSuffix';
 import { RELATIONSHIP_EVENT, PROPOSAL_EVENT, MARRIAGE_PLAN_EVENT, buildRelationshipState, sanitizeRelationshipUpdate, isRelationshipStage, applyAffectionDelta } from '../utils/relationship';
-import { TAKEOUT_ORDER_EVENT, synthesizeCharOrder, postTakeoutPlacedToChat, buildTakeoutReceivedHint, notifyTakeoutUpdated, getDefaultTakeoutAddressLine } from '../utils/takeout';
+import { TAKEOUT_ORDER_EVENT, synthesizeCharOrder, postTakeoutPlacedToChat, buildTakeoutReceivedHint, notifyTakeoutUpdated } from '../utils/takeout';
 import {
   applyCoupleAutoCareDraft,
   buildCoupleTakeoutMemoryCard,
@@ -36,14 +36,14 @@ import { normalizeCharacterDefaults } from '../utils/impression';
 import { createCharacterId, ensureCharacterModelId } from '../utils/characterIdentity';
 import { isEmotionBuffFeatureOn, isScheduleFeatureOn } from '../utils/scheduleGenerator';
 import { evaluateEmotionBackground } from '../hooks/useChatAI';
-import { maybeRunMomentsAutoPost } from '../utils/momentsAutoPost';
 import { buildChatRequestPayload } from '../utils/chatRequestPayload';
-import { PresetRuntime, ensureDefaultPresetSeed, refreshPresetRegexCache } from '../utils/presets';
+import { PresetRuntime, refreshPresetRegexCache } from '../utils/presets';
 import { extractHtmlBlocks } from '../utils/htmlPrompt';
 import { splitOutRichBlocks } from '../utils/chatRichContent';
 import { extractThinkingChainFromCompletion, flattenContent, stripThinkBlocks } from '../utils/llmReasoning';
 import { loadMusicPlaybackSnapshot } from './MusicContext';
 import { setMinimaxRegion } from '../utils/minimaxEndpoint';
+import { appendScreenPeekCommentToCard } from '../utils/screenPeekComments';
 import {
   buildRelationshipForwardCard,
   chooseAutoRelationshipTargets,
@@ -305,9 +305,6 @@ interface OSContextType {
   /** 整书作用域（按分组/书名，undefined/local = 局部需挂载；global = 所有角色可用） */
   worldbookGroupScopes: Record<string, WorldbookGroupScope>;
   setWorldbookGroupScope: (category: string, scope: WorldbookGroupScope) => void;
-  /** 整书高级设置（递归扫描 / 预算等） */
-  worldbookGroupSettings: Record<string, WorldbookGroupSettings>;
-  setWorldbookGroupSettings: (category: string, settings: WorldbookGroupSettings) => void;
 
   // Novels (NEW)
   novels: NovelBook[];
@@ -395,6 +392,14 @@ interface OSContextType {
   // Chat UI subscribes to this to render a soft "正在送达消息…" indicator
   // instead of having the message just pop in.
   proactiveComposingChars: Record<string, true>;
+
+  // TA 窥屏：当前 Moro 内全局悬浮评论会话（Android 授权后可看用户真实手机使用情况）。
+  screenPeekCommentSession: ScreenPeekCommentSession | null;
+  startScreenPeekCommentSession: (args: { messageId: number; card: ScreenPeekCard; charAvatar?: string; trigger?: ScreenPeekLiveComment['trigger'] }) => void;
+  stopScreenPeekCommentSession: () => void;
+  setScreenPeekCommentCollapsed: (collapsed: boolean) => void;
+  setScreenPeekCommentStatus: (status: ScreenPeekCommentSession['status'], error?: string) => void;
+  appendScreenPeekComment: (comment: ScreenPeekLiveComment) => Promise<void>;
 
   // Cloud Backup
   cloudBackupConfig: CloudBackupConfig;
@@ -716,6 +721,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const [characters, setCharacters] = useState<CharacterProfile[]>([]);
   const [activeCharacterId, setActiveCharacterId] = useState<string>('');
+  const [screenPeekCommentSession, setScreenPeekCommentSession] = useState<ScreenPeekCommentSession | null>(null);
 
   // 刷新后能恢复"上一次聊的角色"：所有调用方（聊天切换/通知 onclick/记忆宫殿 handleSwitchChar）
   // 都走裸 setActiveCharacterId，集中在这里同步到 localStorage，避免每个调用点各写一遍
@@ -731,8 +737,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [worldbookGroupToggles, setWorldbookGroupToggles] = useState<Record<string, boolean>>(() => loadGroupTogglesFromStorage());
   // 整书作用域（按 category 分组）：local=需挂载，global=所有角色可用
   const [worldbookGroupScopes, setWorldbookGroupScopes] = useState<Record<string, WorldbookGroupScope>>(() => loadGroupScopesFromStorage());
-  // 整书高级设置（按 category 分组）：递归扫描 / 预算 / 最大递归轮数
-  const [worldbookGroupSettings, setWorldbookGroupSettingsState] = useState<Record<string, WorldbookGroupSettings>>(() => loadGroupSettingsFromStorage());
   const [novels, setNovels] = useState<NovelBook[]>([]); // New
   const [songs, setSongs] = useState<SongSheet[]>([]);
 
@@ -1064,12 +1068,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   // 启动预热「预设自带正则」运行时缓存：用户可能直接进聊天（不开活字盘），
   // 激活预设带来的脚本要在第一条消息（含 USER_INPUT 挂载点）就能命中。
-  useEffect(() => {
-      void (async () => {
-          await ensureDefaultPresetSeed();
-          await refreshPresetRegexCache();
-      })();
-  }, []);
+  useEffect(() => { void refreshPresetRegexCache(); }, []);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -1499,14 +1498,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                       void (async () => {
                           try {
                               const api = resolveAuxApi(auxApiConfig, apiConfig);
-                              const recent = await DB.getRecentMessagesByCharId(char.id, 30).catch(() => []);
-                              const userName = userProfileRef.current?.name || '用户';
-                              const recentContext = recent
-                                  .filter(m => (m.role === 'user' || m.role === 'assistant') && (!m.type || m.type === 'text') && !m.metadata?.hidden && typeof m.content === 'string' && m.content.trim())
-                                  .slice(-12)
-                                  .map(m => `${m.role === 'user' ? userName : char.name}：${String(m.content).replace(/\s+/g, ' ').slice(0, 90)}`)
-                                  .join('\n');
-                              const text = await generateUnblockAppeal({ char, userProfile: userProfileRef.current, api, recentContext });
+                              const text = await generateUnblockAppeal({ char, userProfile: userProfileRef.current, api });
                               // 二次确认：生成期间用户可能已解封 / 已有待处理申诉
                               const fresh = charactersRef.current.find(c => c.id === char.id) || char;
                               if (!fresh.blacklisted || !fresh.unblockAppeal?.active || fresh.unblockAppeal?.awaiting) return;
@@ -1694,8 +1686,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           // Only mark unread if user is NOT currently viewing this character's chat
           // Always bump timestamp so Chat reloads messages if currently open
           setLastMsgTimestamp(Date.now());
-          const eventChar = charactersRef.current.find(c => c.id === charId);
-          if (eventChar && !canCharContactUser(eventChar)) return;
 
           // 未读按本轮气泡条数累加（count 优先，退而数 bodies），每个消息气泡算一条
           const inc = normalizeUnreadIncrement(count ?? (Array.isArray(bodies) ? bodies.length : 1));
@@ -1741,10 +1731,11 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           // 同一条链路）。页面级 `new Notification(...)` 在标签后台 / PWA / 移动端会
           // 静默失败，必须走 SW registration 才稳定。
           if (!skipSystemNotify && source !== 'chat-alarm' && !Capacitor.isNativePlatform() && 'serviceWorker' in navigator && window.Notification && Notification.permission === 'granted') {
+              const char = characters.find(c => c.id === charId);
               navigator.serviceWorker.ready.then(reg => {
                   reg.showNotification(charName, {
                       body: preview,
-                      icon: eventChar?.avatar || './icons/icon-192.png',
+                      icon: char?.avatar || './icons/icon-192.png',
                       badge: './icons/icon-192.png',
                       tag: `proactive-${charId}`,
                       data: { charId, kind: 'proactive-1.0' },
@@ -1860,7 +1851,8 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           if (!d?.charId) return;
           const char = charactersRef.current.find(c => c.id === d.charId);
           if (!char || !char.convoSettings?.proactiveTakeoutOrder) return;
-          const address = getDefaultTakeoutAddressLine();
+          let address = '城南花园 3 栋 502';
+          try { address = localStorage.getItem('moro_takeout_address') || address; } catch { /* ignore */ }
           try {
               const order = synthesizeCharOrder(d.charId, d.desc || '', address);
               order.cardPosted = true;
@@ -2096,45 +2088,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   useEffect(() => {
       if (!isDataLoaded) return;
-      const run = (trigger: string, charIds?: string[]) => {
-          void maybeRunMomentsAutoPost({
-              characters: charactersRef.current,
-              userProfile: userProfileRef.current,
-              apiConfig: apiConfigRef.current,
-              auxApiConfig: auxApiConfigRef.current,
-              trigger,
-              charIds,
-          });
-      };
-      const onVisible = () => {
-          if (document.visibilityState === 'visible') run('focus');
-      };
-      const onProactive = (e: Event) => {
-          const charId = (e as CustomEvent).detail?.charId as string | undefined;
-          run('proactive-message-sent', charId ? [charId] : undefined);
-      };
-      const onCatchup = (e: Event) => {
-          const detail = (e as CustomEvent).detail || {};
-          const charIds = Array.isArray(detail.events)
-              ? Array.from(new Set(detail.events.map((ev: CharLifeEvent) => ev.charId).filter(Boolean)))
-              : (detail.charId ? [detail.charId] : undefined);
-          run('autonomous-life-catchup', charIds as string[] | undefined);
-      };
-      run('startup');
-      document.addEventListener('visibilitychange', onVisible);
-      window.addEventListener('focus', onVisible);
-      window.addEventListener('proactive-message-sent', onProactive);
-      window.addEventListener('autonomous-life-catchup', onCatchup);
-      return () => {
-          document.removeEventListener('visibilitychange', onVisible);
-          window.removeEventListener('focus', onVisible);
-          window.removeEventListener('proactive-message-sent', onProactive);
-          window.removeEventListener('autonomous-life-catchup', onCatchup);
-      };
-  }, [isDataLoaded]);
-
-  useEffect(() => {
-      if (!isDataLoaded) return;
 
       const drainQueuedProactive = () => {
           const nextQueued = proactiveQueueRef.current.shift();
@@ -2204,31 +2157,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           if (char.charBlock?.active) {
               drainQueuedProactive();
               console.log(`🔕 [Proactive/Global] Skipped for ${char.name}: char blocked user`);
-              return;
-          }
-
-          // 用户拉黑角色期间：角色仍可在本地过自己的生活，但不能主动消息、未读或通知打扰用户。
-          if (char.blacklisted) {
-              if (!customHint && isAutonomousLifeEnabled(char)) {
-                  const lifeApi = resolveLifeApi(char, auxApiConfigRef.current, currentApiConfig);
-                  if (lifeApi.baseUrl) {
-                      try {
-                          const recentMsgs = await DB.getRecentMessagesByCharId(charId, 40);
-                          const userName = currentUserProfile?.name || '对方';
-                          const recentChat = recentMsgs
-                              .filter(m => (m.role === 'user' || m.role === 'assistant') && (!m.type || m.type === 'text') && !m.metadata?.proactiveHint && typeof m.content === 'string' && m.content.trim())
-                              .slice(-6)
-                              .map(m => `${m.role === 'user' ? userName : char.name}：${String(m.content).replace(/\s+/g, ' ').slice(0, 60)}`)
-                              .join('\n');
-                          const ev = await advanceLife(char, lifeApi, { source: 'proactive', triggerSource: 'proactive', recentChat });
-                          if (ev) window.dispatchEvent(new CustomEvent('autonomous-life-advanced', { detail: { charId: char.id, charName: char.name, blocked: true } }));
-                      } catch (e) {
-                          console.warn('[Proactive/Global] blocked life-only advance skipped:', e);
-                      }
-                  }
-              }
-              drainQueuedProactive();
-              console.log(`🔕 [Proactive/Global] Skipped for ${char.name}: user blacklisted char`);
               return;
           }
 
@@ -2756,7 +2684,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   if (!alarm.enabled) continue;
                   const char = charById.get(alarm.charId);
                   if (!char) continue;
-                  if (!canCharContactUser(char)) continue;
                   for (const at of collectNativeAlarmOccurrences(alarm, now)) {
                       notifications.push({
                           id: nativeNotificationIdForAlarm(alarm.id, at),
@@ -2977,12 +2904,12 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                       continue;
                   }
 
-                  if (!canCharContactUser(char)) {
+                  await showChatAlarmNotification(char, alarm);
+
+                  if (char.charBlock?.active || char.blacklisted) {
                       await DB.saveChatAlarm(markAlarmFired(alarm, now));
                       continue;
                   }
-
-                  await showChatAlarmNotification(char, alarm);
 
                   const channel = resolveAlarmChannel(alarm);
                   const notificationData = { type: 'chat-alarm', source: 'chat-alarm', charId: alarm.charId, alarmId: alarm.id };
@@ -3048,7 +2975,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   const eligibleChars = canTellChars
                       ? charIds
                           .map(charId => charactersRef.current.find(c => c.id === charId))
-                          .filter((char): char is CharacterProfile => !!char && canCharContactUser(char))
+                          .filter((char): char is CharacterProfile => !!char && !char.charBlock?.active && !char.blacklisted)
                       : [];
                   const shouldShowSystem = settings.notifyChannel === 'system' || settings.notifyChannel === 'both' || !canTellChars || eligibleChars.length === 0;
                   if (shouldShowSystem) {
@@ -3093,7 +3020,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   const eligibleChars = canTellChars
                       ? charIds
                           .map(charId => charactersRef.current.find(c => c.id === charId))
-                          .filter((char): char is CharacterProfile => !!char && canCharContactUser(char))
+                          .filter((char): char is CharacterProfile => !!char && !char.charBlock?.active && !char.blacklisted)
                       : [];
                   const shouldShowSystem = reminder.channel === 'system' || reminder.channel === 'both' || !canTellChars || eligibleChars.length === 0;
                   if (shouldShowSystem) {
@@ -3162,7 +3089,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   const userName = userProfileRef.current?.name || '对方';
                   for (const [charId, lines] of byChar) {
                       const char = charactersRef.current.find(c => c.id === charId);
-                      if (!char || !canCharContactUser(char)) continue;
+                      if (!char || char.charBlock?.active || char.blacklisted) continue;
                       await runProactive(char.id, {
                           customHint: buildHealthSummaryCompanionHint({
                               summaryText: `${date}：${lines.join('；')}`,
@@ -3244,7 +3171,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                       updates.coupleSpace = { ...cs, memoryCards: [card, ...(cs.memoryCards || [])], updatedAt: now };
                   }
                   updateCharacter(o.charId, updates);
-                  if (!canCharContactUser(char)) continue; // 拉黑期间不反应
+                  if (char.charBlock?.active || char.blacklisted) continue; // 拉黑期间不反应
                   void runCoupleAutoCareForSource(o.charId, {
                       source: 'takeout',
                       id: o.id,
@@ -3811,26 +3738,11 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       });
   };
 
-  const setWorldbookGroupSettings = (category: string, settings: WorldbookGroupSettings) => {
-      const normalizedCategory = category || DEFAULT_WB_CATEGORY;
-      setWorldbookGroupSettingsState(prev => {
-          const next = { ...prev };
-          const clean: WorldbookGroupSettings = {};
-          if (typeof settings.recursiveScanning === 'boolean') clean.recursiveScanning = settings.recursiveScanning;
-          if (typeof settings.tokenBudget === 'number' && settings.tokenBudget >= 0) clean.tokenBudget = Math.floor(settings.tokenBudget);
-          if (typeof settings.maxRecursionSteps === 'number' && settings.maxRecursionSteps >= 0) clean.maxRecursionSteps = Math.floor(settings.maxRecursionSteps);
-          if (Object.keys(clean).length > 0) next[normalizedCategory] = clean;
-          else delete next[normalizedCategory];
-          saveGroupSettingsToStorage(next);
-          return next;
-      });
-  };
-
   // 世界书注册表镜像：让 ContextBuilder / chatRequestPayload 这些非 React 模块
   // 能读到最新的全量世界书、整书开关与整书作用域
   useEffect(() => {
-      WorldbookRuntime.sync(worldbooks, worldbookGroupToggles, worldbookGroupScopes, worldbookGroupSettings);
-  }, [worldbooks, worldbookGroupToggles, worldbookGroupScopes, worldbookGroupSettings]);
+      WorldbookRuntime.sync(worldbooks, worldbookGroupToggles, worldbookGroupScopes);
+  }, [worldbooks, worldbookGroupToggles, worldbookGroupScopes]);
 
   const updateWorldbook = async (id: string, updates: Partial<Worldbook>) => {
       // Compute the updated entity up-front. Relying on a closure side-effect
@@ -3916,13 +3828,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           const next = { ...prev };
           delete next[normalizedCategory];
           saveGroupScopesToStorage(next);
-          return next;
-      });
-
-      setWorldbookGroupSettingsState(prev => {
-          const next = { ...prev };
-          delete next[normalizedCategory];
-          saveGroupSettingsToStorage(next);
           return next;
       });
 
@@ -5229,6 +5134,57 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setSuspendedOfflineSession(null);
   };
 
+  const startScreenPeekCommentSession = useCallback((args: { messageId: number; card: ScreenPeekCard; charAvatar?: string; trigger?: ScreenPeekLiveComment['trigger'] }) => {
+      const comments = args.card.liveComments || [];
+      setScreenPeekCommentSession({
+          id: `spcs_${args.messageId}_${Date.now()}`,
+          messageId: args.messageId,
+          charId: args.card.charId,
+          charName: args.card.charName,
+          charAvatar: args.charAvatar,
+          startedAt: Date.now(),
+          card: { ...args.card, viewTarget: args.card.viewTarget || 'user_phone', liveComments: comments },
+          commentCount: comments.length,
+          lastCommentAt: comments[comments.length - 1]?.createdAt,
+          collapsed: false,
+          status: 'idle',
+      });
+  }, []);
+
+  const stopScreenPeekCommentSession = useCallback(() => {
+      setScreenPeekCommentSession(null);
+  }, []);
+
+  const setScreenPeekCommentCollapsed = useCallback((collapsed: boolean) => {
+      setScreenPeekCommentSession(current => current ? { ...current, collapsed } : current);
+  }, []);
+
+  const setScreenPeekCommentStatus = useCallback((status: ScreenPeekCommentSession['status'], error?: string) => {
+      setScreenPeekCommentSession(current => current ? { ...current, status, error } : current);
+  }, []);
+
+  const appendScreenPeekComment = useCallback(async (comment: ScreenPeekLiveComment): Promise<void> => {
+      const session = screenPeekCommentSession;
+      if (!session) return;
+      const targetMessageId = session.messageId;
+      setScreenPeekCommentSession(current => current && current.messageId === targetMessageId ? { ...current, status: 'idle', error: undefined } : current);
+      const updatedCard = await DB.updateScreenPeekCard(targetMessageId, (prev) => {
+          return appendScreenPeekCommentToCard(prev, comment);
+      });
+      setScreenPeekCommentSession(current => {
+          if (!current || current.messageId !== targetMessageId) return current;
+          const comments = updatedCard.liveComments || [];
+          return {
+              ...current,
+              card: updatedCard,
+              commentCount: comments.length,
+              lastCommentAt: comment.createdAt,
+              status: 'idle',
+              error: undefined,
+          };
+      });
+  }, [screenPeekCommentSession]);
+
   // --- Back Handler Logic ---
   const registerBackHandler = useCallback((handler: () => boolean, appId?: AppID) => {
       const ownerAppId = appId ?? activeAppRef.current;
@@ -5282,8 +5238,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setWorldbookGroupEnabled,
     worldbookGroupScopes,
     setWorldbookGroupScope,
-    worldbookGroupSettings,
-    setWorldbookGroupSettings,
     deleteWorldbook,
     deleteWorldbookCategory,
     novels,
@@ -5336,6 +5290,12 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     clearUnread,
     markUnread,
     proactiveComposingChars,
+    screenPeekCommentSession,
+    startScreenPeekCommentSession,
+    stopScreenPeekCommentSession,
+    setScreenPeekCommentCollapsed,
+    setScreenPeekCommentStatus,
+    appendScreenPeekComment,
     cloudBackupConfig,
     updateCloudBackupConfig,
     cloudBackupToWebDAV,

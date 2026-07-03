@@ -20,15 +20,14 @@ isDevDebugAvailable()  // utils/devDebug.ts
 | 情况 | 是否显示 |
 |------|---------|
 | 在 `main` / `master` 构建 | ❌ 隐藏（视为正式发布） |
-| 执行 native 正式构建（`pnpm build` / `pnpm build:native` / `pnpm build:ios`） | ❌ 隐藏（即使当前分支不是 `main` / `master`） |
-| 在其他分支开发运行（`pnpm dev`） | ✅ 显示 |
+| 在其他分支构建 | ✅ 显示 |
 | 设了 `VITE_HIDE_BUILD_BADGE=1` | ❌ 强制隐藏（覆盖默认） |
 | 设了 `VITE_SHOW_BUILD_BADGE=1` | ✅ 强制显示（在 master 本地调试用） |
 | 设置页底部连点「构建版本」5 下 | ✅ 显示（**手动解锁**，会话级、刷新即关，正式版临时排障用） |
 
 > 分支名的来源：CI 优先读 `GITHUB_REF_NAME` / `VERCEL_GIT_COMMIT_REF` / `CF_PAGES_BRANCH` / `BRANCH`，本地退化成 `git rev-parse --abbrev-ref HEAD`，非 git 环境是 `'unknown'`（`'unknown'` 不在发布分支集合里，所以会显示）。
 
-**关键含义**：正式 native 安装包不会因为在 `native-main` 这类发布分支构建而露出右下角开发角标；在 master 上本地想调试，跑 `VITE_SHOW_BUILD_BADGE=1 pnpm dev` 即可，不用改代码。
+**关键含义**：在 master 上本地想调试，跑 `VITE_SHOW_BUILD_BADGE=1 pnpm dev` 即可，不用改代码。
 
 **正式版排障（手动解锁）**：设置页底部连点 `VersionInfo`（构建版本那栏）5 下 → `unlockDevDebug()` **会话级**解锁（**不落 localStorage**），`isDevDebugAvailable()` 放行、`<DevDebugPanel />` 经 `subscribeDevDebugAvailability` 即时弹出。
 

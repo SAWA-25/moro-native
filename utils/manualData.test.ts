@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import {
   getManualUpdateNotices,
   MANUAL_DESTINATIONS,
@@ -136,23 +136,23 @@ describe('manual guide data', () => {
     const presetEntry = MANUAL_ENTRIES.find(entry => entry.en === 'Presets');
     const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-03-preset-default-seed');
 
-    expect(notice?.summary).toContain('默认不接管聊天');
-    expect(presetEntry?.features.join('\n')).toContain('默认关闭');
-    expect(presetEntry?.beginnerSteps?.join('\n')).toContain('默认关闭');
+    expect(notice?.summary).toContain('榛樿涓嶆帴绠¤亰澶?);
+    expect(presetEntry?.features.join('\n')).toContain('榛樿鍏抽棴');
+    expect(presetEntry?.beginnerSteps?.join('\n')).toContain('榛樿鍏抽棴');
   });
 
   it('documents the chat hub dashboard entry and destination', () => {
-    const chat = MANUAL_ENTRIES.find(entry => entry.app === '絮语');
-    const dashboard = MANUAL_ENTRIES.find(entry => entry.app === '絮语·总览');
+    const chat = MANUAL_ENTRIES.find(entry => entry.app === '绲');
+    const dashboard = MANUAL_ENTRIES.find(entry => entry.app === '绲路鎬昏');
 
     expect(MANUAL_UPDATE_NOTICES.some(notice => notice.id === '2026-07-03-chat-hub-dashboard-v2')).toBe(true);
-    expect(chat?.features.join('\n')).toContain('絮语总览');
+    expect(chat?.features.join('\n')).toContain('绲鎬昏');
     expect(dashboard?.settingSections?.[0].settings.map(setting => setting.id)).toContain('chat-dashboard-followups');
-    expect(MANUAL_DESTINATIONS['絮语·总览']?.deepLink?.route).toBe('dashboard');
+    expect(MANUAL_DESTINATIONS['绲路鎬昏']?.deepLink?.route).toBe('dashboard');
   });
 
   it('documents private chat user screen watch boundaries', () => {
-    const tools = MANUAL_ENTRIES.find(entry => entry.app === '絮语·单聊工具');
+    const tools = MANUAL_ENTRIES.find(entry => entry.app === '绲路鍗曡亰宸ュ叿');
     const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-03-chat-user-screen-watch');
     const text = [
       notice?.summary,
@@ -164,14 +164,14 @@ describe('manual guide data', () => {
         setting.description,
         ...(setting.options || []).map(option => `${option.label}${option.description}`),
       ])),
-      ...(MANUAL_DESTINATIONS['絮语·单聊工具']?.details || []),
+      ...(MANUAL_DESTINATIONS['绲路鍗曡亰宸ュ叿']?.details || []),
     ].join('\n');
 
     expect(notice).toBeTruthy();
-    expect(text).toContain('观屏评论');
-    expect(text).toContain('主动共享');
-    expect(text).toContain('Moro 内部');
-    expect(text).toContain('不会读取真实系统后台 App 列表');
-    expect(text).toContain('不会创建 Android 全局悬浮窗');
+    expect(text).toContain('瑙傚睆璇勮');
+    expect(text).toContain('涓诲姩鍏变韩');
+    expect(text).toContain('Moro 鍐呴儴');
+    expect(text).toContain('涓嶄細璇诲彇鐪熷疄绯荤粺鍚庡彴 App 鍒楄〃');
+    expect(text).toContain('涓嶄細鍒涘缓 Android 鍏ㄥ眬鎮诞绐?);
   });
 });
