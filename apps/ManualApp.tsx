@@ -481,9 +481,25 @@ const ManualApp: React.FC = () => {
       setPage('updates');
       return;
     }
+    const targetApp = typeof target.payload?.app === 'string' ? target.payload.app : '';
     if (target.route === 'map' || target.payload?.view === 'map') {
       setPage('guide');
       setView('map');
+      return;
+    }
+    if (target.route === 'guide' || target.anchorId || targetApp) {
+      setPage('guide');
+      setView('detail');
+      setCategory('all');
+      setQuery('');
+      if (targetApp) setActiveApp(targetApp);
+      if (target.anchorId) {
+        setManualSearchTarget({
+          app: targetApp || MANUAL_ENTRIES[0]?.app || '',
+          anchorId: target.anchorId,
+          nonce: Date.now(),
+        });
+      }
     }
   }, []));
 

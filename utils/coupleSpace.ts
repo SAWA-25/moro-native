@@ -875,7 +875,8 @@ export function applyCoupleAutoCareDraft(
   now = Date.now(),
 ): { space: CoupleSpace; applied: CoupleAutoCareKind; message?: string } {
   const base = ensureCoupleSpace({ coupleSpace: space });
-  const decision = shouldRunCoupleAutoCare(base, now);
+  const manual = source.source === 'manual';
+  const decision = manual ? { shouldRun: true, allowRecap: true, reason: 'manual' } : shouldRunCoupleAutoCare(base, now);
   const kind = draft?.kind || 'none';
   const autoCare = { ...(base.autoCare || {}), lastRunAt: now, lastSource: source.source, lastSummary: cleanShort(source.text, 80) };
   if (!decision.shouldRun || kind === 'none') {
@@ -886,7 +887,7 @@ export function applyCoupleAutoCareDraft(
   if (!text && kind !== 'recap') return { space: { ...base, autoCare, updatedAt: now }, applied: 'none' };
 
   if (kind === 'moment') {
-    if (sameLocalDay(base.autoCare?.lastMomentAt, now)) return { space: { ...base, autoCare, updatedAt: now }, applied: 'none' };
+    if (!manual && sameLocalDay(base.autoCare?.lastMomentAt, now)) return { space: { ...base, autoCare, updatedAt: now }, applied: 'none' };
     const moment: CoupleMoment = {
       id: genCoupleId('mo'),
       author: 'char',
@@ -923,7 +924,7 @@ export function applyCoupleAutoCareDraft(
   }
 
   if (kind === 'recap') {
-    if (now - (base.autoCare?.lastRecapAt || 0) < AUTO_RECAP_COOLDOWN_MS) return { space: { ...base, autoCare, updatedAt: now }, applied: 'none' };
+    if (!manual && now - (base.autoCare?.lastRecapAt || 0) < AUTO_RECAP_COOLDOWN_MS) return { space: { ...base, autoCare, updatedAt: now }, applied: 'none' };
     const highlights = draft?.highlights?.length ? draft.highlights : (text ? [text] : []);
     const recap: CoupleRecap = {
       id: genCoupleId('rc'),

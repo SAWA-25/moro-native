@@ -1,4 +1,4 @@
-﻿
+
 export enum AppID {
   Launcher = 'launcher',
   Settings = 'settings',
@@ -25,47 +25,47 @@ export enum AppID {
   SpecialMoments = 'special_moments', // Valentine's Day & future events
   XhsFreeRoam = 'xhs_free_roam', // Character autonomous XHS activity
   Songwriting = 'songwriting', // Songwriting / Lyric creation app
-  Call = 'call', // 璇煶鐢佃瘽娴嬭瘯锛圡iniMax TTS锛?
-  VoiceDesigner = 'voice_designer', // 鎹忓０闊?鈥?MiniMax 闊宠壊璁捐鍣?
-  Guidebook = 'guidebook', // 鏀荤暐鏈?鈥?瑙掕壊鏀荤暐鐢ㄦ埛灏忔父鎴?
-  LifeSim = 'lifesim', // 妯℃嫙浜虹敓 鈥?涓庤鑹插叡鍚岀粡钀ョ殑灏忎笘鐣?
-  MemoryPalace = 'memory_palace', // 璁板繂瀹 鈥?涓冧釜鎴块棿鍙鍖?
-  Handbook = 'handbook', // 鎵嬭处 鈥?璺ㄨ鑹茶仛鍚堢殑鐢熸椿鐣欑棔鏈紙LLM 浠ｇ瑪 + 瑙掕壊鐢熸椿娴侀櫔浼达級
-  QQBridge = 'qq_bridge', // QQ 妗ユ帴 鈥?閫氳繃 NapCat 鎶?QQ 绉佽亰鎺ュ叆褰撳墠瑙掕壊锛屽叡浜?IndexedDB 涓婁笅鏂?
-  HotNews = 'hot_news', // 鐑偣 鈥?鍒嗘椂娈靛彫鍥炵殑澶氬钩鍙扮儹姒滃彲瑙嗗寲锛堝喅瀹氳鑹插彲鑳借亰璧风殑璇濋锛?
-  VRWorld = 'vrworld', // 椤靛 鈥?瑙掕壊鑷富鐧诲叆鐨勮櫄鎷熶笘鐣岋紙瀹氭椂椹卞姩锛屾埧闂撮噷鐪嬪皬璇?鍚瓕/鐣欒█锛屼骇鍑烘椿鍔ㄥ崱娉ㄥ叆鑱婂ぉ+璁板繂锛?
-  CharCreatorDev = 'char_creator_dev', // 鎹忚劯绯荤粺寮€鍙戞ā寮?鈥?浠呭紑鍙戞ā寮忓彲瑙侊紝鍚戞崗浜哄櫒鎸囧畾绫荤洰杩藉姞鑷畾涔夐儴浠?
-  Phone = 'phone', // 鐢佃瘽 鈥?鎷ㄥ彿閿洏 / 閫氳瘽璁板綍锛堟嫧鍑郝锋帴鍚锋湭鎺ワ級/ 閫氳瘽褰曢煶鍥炴斁涓庨€愬瓧绋?
-  ExchangeDiary = 'exchange_diary', // 鏃ヨ绀?鈥?澶氳鑹蹭氦鎹㈡棩璁版湰锛堣鑹茶瑙掓棩璁?+ 姣忔棩瀵硅瘽鎬荤粨锛?
-  Presets = 'presets', // 棰勮 鈥?SillyTavern 寮?Chat Completion 棰勮锛堟彁绀鸿瘝绠＄悊鍣?+ 閲囨牱鍙傛暟锛屽彲瀵煎叆閰掗棰勮 JSON锛?
-  Personas = 'personas', // 浜鸿 鈥?SillyTavern 寮忕敤鎴蜂汉璁剧鐞嗭紙澶氬鐢ㄦ埛韬唤锛屽彲缁戝畾瑙掕壊 / 榛樿 / 涓栫晫涔︼紝鎻忚堪鎸変綅缃敞鍏?prompt锛?
-  Regex = 'regex', // 姝ｅ垯 鈥?SillyTavern 寮忔鍒欒剼鏈紙鍏ㄥ眬/瑙掕壊灞€閮紝浣滅敤浜庣敤鎴疯緭鍏?AI 杈撳嚭/鎻愮ず璇?鏄剧ず锛屽彲瀵煎叆閰掗姝ｅ垯 JSON锛?
-  Creative = 'creative', // 鍒涗綔绀?鈥?銆岀瑪鍙嬩細銆嶏紙鍏卞垱灏忚锛変笌銆屽啓姝屻€嶏紙鍏卞垱姝屾洸锛夊悎骞跺叆鍙ｏ紝棣栭〉閫夋ā寮忓悗杩涘叆瀵瑰簲鍒涗綔鍙?
-  Theater = 'theater', // 鎶樺瓙鎴?鈥?銆屾敾鐣ユ湰銆?galgame 鎭嬬埍鏀荤暐) 涓庛€孴RPG銆?璺戝洟鍐掗櫓) 鍚堝苟鍏ュ彛锛屽皝闈㈤〉閫夋ā寮忓悗杩涘叆瀵瑰簲鍓х洰锛圙uidebook/Game 瀛?App 淇濈暀璺敱鍏煎锛?
-  Almanac = 'almanac', // 宀佹椂璁?鈥?銆屾椂鍏夊绾︺€?鏃ョ▼/蹇冩効鍗?绾康鏃ュ€掓暟) 涓庛€岀壒鍒椂鍏夈€?鑺傛棩璁板繂娲诲姩) 鍚堝苟鍏ュ彛锛屽皝闈㈤〉閫夋ā寮忓悗杩涘叆瀵瑰簲椤碉紙Schedule/SpecialMoments 瀛?App 淇濈暀璺敱鍏煎锛?
-  Takeout = 'takeout', // 澶栧崠 鈥?鍙傝€冪編鍥細鏈湴鐢熸垚搴楅摵鐐硅彍涓嬪崟銆侀厤閫佽繘搴︺€佸拰楠戞墜/鍟嗗鑱婂ぉ銆佽嚜浠?浠ｄ粯锛屽苟涓庢潵寰€鑱斿姩锛堢粰瑙掕壊鐐瑰崟/浠ｄ粯锛?
-  Shop = 'shop', // 璐墿鍟嗗煄 鈥?铏氭嫙绀肩墿鍟嗗煄锛氫拱绀肩墿閫佽鑹诧紙鑱婂ぉ閲岃惤绀肩墿鍗?+ 瑙掕壊鍥炲簲/鎰熻阿淇★級锛岃鑹蹭篃浼氳嚜宸遍€涳紙鑷喘/鍥炶禒锛夛紝鏌ヨ鑹茶喘鐗╁皬绁?
-  Harem = 'harem', // 妞掓埧璁?鈥?AI 鍚庡鏂囨父锛欰I 瀹炴椂鐢熸垚鍚庡鎭嬬埍鍓ф儏鐨勪簰鍔ㄥ皬璇达紝鐜╁鐢ㄩ€夋嫨褰卞搷濂芥劅/淇′换/瀚夊/璁板繂/浜嬩欢flag/缁撳眬锛屽惈闀挎湡璁板繂路瑙掕壊鐙珛璁板繂路澶氬懆鐩?
-  Forum = 'forum', // 鑼惰瘽浜?鈥?鍙祻瑙堢殑璁哄潧锛氭澘鍧?甯栧瓙/璺熷笘锛岀敤鎴峰彂甯栧洖甯栵紝瑙掕壊涓庡尶鍚嶇綉鍙嬶紙鍓?API锛夋潵鐩栨ゼ/寮€甯?
-  Twitter = 'twitter', // 鎺ㄧ壒 鈥?鏈湴 AI 鐢熸垚鐨?X/Twitter 寮忔椂闂寸嚎锛岃鑹?NPC 鑷敱鍙戞帹浜掑姩
-  VideoCall = 'video_call', // 瑙嗛閫氳瘽 鈥?鑱婂ぉ閲屽彂璧风殑瑙嗛閫氳瘽锛氳鑹蹭晶鐢ㄩ€氳瘽绔嬬粯锛岀敤鎴蜂晶鍙嚜閫夊紑/鍏虫憚鍍忓ご锛堝彧寮€涓€涓嬪氨鍏筹級锛岀炕杞暅澶?
-  Xunji = 'xunji', // 寰抗 鈥?瑙掕壊 Screenlife 婕斿嚭 + 寮傚湴鎭嬪紡鐩戣/鎶ュ妯℃嫙锛宭ocal-first 钀藉簱
-  DesktopPet = 'desktop_pet', // 妗屽疇 鈥?DyberPet 妗岄潰瀹犵墿锛氬杺椋熴€佹懜鎽搞€佹彁閱掑拰璺?App 鎮诞
-  Health = 'health', // 鍋ュ悍 鈥?缁忔湡璁板綍銆侀娴嬩笌鎻愰啋
-  Manual = 'manual', // 璇存槑涔?鈥?鎸?App 鍒嗙被鏀剁撼鐢ㄦ埛鍙搷浣滃姛鑳借鏄?
+  Call = 'call', // 语音电话测试（MiniMax TTS）
+  VoiceDesigner = 'voice_designer', // 捏声音 — MiniMax 音色设计器
+  Guidebook = 'guidebook', // 攻略本 — 角色攻略用户小游戏
+  LifeSim = 'lifesim', // 模拟人生 — 与角色共同经营的小世界
+  MemoryPalace = 'memory_palace', // 记忆宫殿 — 七个房间可视化
+  Handbook = 'handbook', // 手账 — 跨角色聚合的生活留痕本（LLM 代笔 + 角色生活流陪伴）
+  QQBridge = 'qq_bridge', // QQ 桥接 — 通过 NapCat 把 QQ 私聊接入当前角色，共享 IndexedDB 上下文
+  HotNews = 'hot_news', // 热点 — 分时段召回的多平台热榜可视化（决定角色可能聊起的话题）
+  VRWorld = 'vrworld', // 页外 — 角色自主登入的虚拟世界（定时驱动，房间里看小说/听歌/留言，产出活动卡注入聊天+记忆）
+  CharCreatorDev = 'char_creator_dev', // 捏脸系统开发模式 — 仅开发模式可见，向捏人器指定类目追加自定义部件
+  Phone = 'phone', // 电话 — 拨号键盘 / 通话记录（拨出·接听·未接）/ 通话录音回放与逐字稿
+  ExchangeDiary = 'exchange_diary', // 日记社 — 多角色交换日记本（角色视角日记 + 每日对话总结）
+  Presets = 'presets', // 预设 — SillyTavern 式 Chat Completion 预设（提示词管理器 + 采样参数，可导入酒馆预设 JSON）
+  Personas = 'personas', // 人设 — SillyTavern 式用户人设管理（多套用户身份，可绑定角色 / 默认 / 世界书，描述按位置注入 prompt）
+  Regex = 'regex', // 正则 — SillyTavern 式正则脚本（全局/角色局部，作用于用户输入/AI 输出/提示词/显示，可导入酒馆正则 JSON）
+  Creative = 'creative', // 创作社 — 「笔友会」（共创小说）与「写歌」（共创歌曲）合并入口，首页选模式后进入对应创作台
+  Theater = 'theater', // 折子戏 — 「攻略本」(galgame 恋爱攻略) 与「TRPG」(跑团冒险) 合并入口，封面页选模式后进入对应剧目（Guidebook/Game 子 App 保留路由兼容）
+  Almanac = 'almanac', // 岁时记 — 「时光契约」(日程/心愿单/纪念日倒数) 与「特别时光」(节日记忆活动) 合并入口，封面页选模式后进入对应页（Schedule/SpecialMoments 子 App 保留路由兼容）
+  Takeout = 'takeout', // 外卖 — 参考美团：本地生成店铺点菜下单、配送进度、和骑手/商家聊天、自付/代付，并与来往联动（给角色点单/代付）
+  Shop = 'shop', // 购物商城 — 虚拟礼物商城：买礼物送角色（聊天里落礼物卡 + 角色回应/感谢信），角色也会自己逛（自购/回赠），查角色购物小票
+  Harem = 'harem', // 椒房记 — AI 后宫文游：AI 实时生成后宫恋爱剧情的互动小说，玩家用选择影响好感/信任/嫉妒/记忆/事件flag/结局，含长期记忆·角色独立记忆·多周目
+  Forum = 'forum', // 茶话亭 — 可浏览的论坛：板块/帖子/跟帖，用户发帖回帖，角色与匿名网友（副 API）来盖楼/开帖
+  Twitter = 'twitter', // 推特 — 本地 AI 生成的 X/Twitter 式时间线，角色/NPC 自由发推互动
+  VideoCall = 'video_call', // 视频通话 — 聊天里发起的视频通话：角色侧用通话立绘，用户侧可自选开/关摄像头（只开一下就关），翻转镜头
+  Xunji = 'xunji', // 循迹 — 角色 Screenlife 演出 + 异地恋式监视/报备模拟，local-first 落库
+  DesktopPet = 'desktop_pet', // 桌宠 — DyberPet 桌面宠物：喂食、摸摸、提醒和跨 App 悬浮
+  Health = 'health', // 健康 — 经期记录、预测与提醒
+  Manual = 'manual', // 说明书 — 按 App 分类收纳用户可操作功能说明
 }
 
 // =====================================================================
-// 姝ｅ垯鑴氭湰锛圫illyTavern Regex Script 瀹屾暣绉绘锛?
+// 正则脚本（SillyTavern Regex Script 完整移植）
 // =====================================================================
 
 /**
- * 鍗曟潯姝ｅ垯鑴氭湰銆傚瓧娈典笌 SillyTavern 鐨?RegexScriptData 涓€涓€瀵瑰簲锛?
- * 瀵煎叆閰掗姝ｅ垯 JSON锛堝崟鏉″璞℃垨鏁扮粍锛夊彲鏃犳崯钀藉簱銆?
- * - findRegex 鏀寔 "/pattern/flags" 涓庤８ pattern 涓ょ鍐欐硶
- * - placement 鍙栧€艰 utils/regex/engine.ts 鐨?regex_placement
- * - markdownOnly = 浠呮敼鑱婂ぉ鏄剧ず锛堜笉鍔ㄦ秷鎭師鏂囷級锛沺romptOnly = 浠呮敼鍙戠粰 LLM 鐨勬彁绀鸿瘝
- * - 涓よ€呴兘涓嶅嬀 = 鐩存帴鏀瑰啓娑堟伅鍘熸枃锛堣惤搴撳墠鐢熸晥锛?
+ * 单条正则脚本。字段与 SillyTavern 的 RegexScriptData 一一对应，
+ * 导入酒馆正则 JSON（单条对象或数组）可无损落库。
+ * - findRegex 支持 "/pattern/flags" 与裸 pattern 两种写法
+ * - placement 取值见 utils/regex/engine.ts 的 regex_placement
+ * - markdownOnly = 仅改聊天显示（不动消息原文）；promptOnly = 仅改发给 LLM 的提示词
+ * - 两者都不勾 = 直接改写消息原文（落库前生效）
  */
 export interface RegexScriptData {
   id: string;
@@ -78,36 +78,36 @@ export interface RegexScriptData {
   markdownOnly: boolean;
   promptOnly: boolean;
   runOnEdit: boolean;
-  /** 0=涓嶆浛鎹㈠畯 1=鍘熸牱鏇挎崲 {{user}}/{{char}} 2=鏇挎崲鍚庡仛姝ｅ垯杞箟 */
+  /** 0=不替换宏 1=原样替换 {{user}}/{{char}} 2=替换后做正则转义 */
   substituteRegex: number;
-  /** 鏈€灏忔繁搴︼紙-1/null = 涓嶉檺锛夛紝depth 0 = 鏈€鍚庝竴鏉℃秷鎭?*/
+  /** 最小深度（-1/null = 不限），depth 0 = 最后一条消息 */
   minDepth?: number | null;
   maxDepth?: number | null;
 }
 
 // =====================================================================
-// --- 浜鸿锛圫illyTavern Persona Management 绉绘锛?---
-// 涓?ST 鐨?power_user.personas / persona_descriptions 瀵归綈锛?
-// 涓€濂椾汉璁?= 鍚嶅瓧 + 澶村儚 + 鎻忚堪 + 娉ㄥ叆浣嶇疆 (+ 涓栫晫涔︾粦瀹?+ 瑙掕壊缁戝畾)銆?
-// 婵€娲讳汉璁炬椂鎶?name/avatar/description 鍐欏叆 UserProfile锛堝叏閾捐矾绔嬪嵆鐢熸晥锛夛紝
-// 浣嶇疆 / 娣卞害 / 涓栫晫涔︾瓑楂樼骇璇箟鐢?utils/personas.ts 鐨?PersonaRuntime 鍦?
-// 涓昏亰澶╅摼璺紙buildChatRequestPayload锛夐噷瑙ｆ瀽銆?
+// --- 人设（SillyTavern Persona Management 移植） ---
+// 与 ST 的 power_user.personas / persona_descriptions 对齐：
+// 一套人设 = 名字 + 头像 + 描述 + 注入位置 (+ 世界书绑定 + 角色绑定)。
+// 激活人设时把 name/avatar/description 写入 UserProfile（全链路立即生效），
+// 位置 / 深度 / 世界书等高级语义由 utils/personas.ts 的 PersonaRuntime 在
+// 主聊天链路（buildChatRequestPayload）里解析。
 // =====================================================================
 
 /**
- * 浜鸿鎻忚堪娉ㄥ叆浣嶇疆锛堜繚鐣?ST persona_description_positions 鐨勫師濮嬫暟鍊硷級銆?
- * Moro 娌℃湁浣滆€呮敞閲婏紙Author's Note锛夛紝ST 鐨?2锛堥《閮級/ 3锛堝簳閮級瀵煎叆鏃堕檷绾т负 0銆?
+ * 人设描述注入位置（保留 ST persona_description_positions 的原始数值）。
+ * Moro 没有作者注释（Author's Note），ST 的 2（顶部）/ 3（底部）导入时降级为 0。
  */
 export const PERSONA_POSITION = {
-    /** 宓屽叆鎻愮ず璇嶏紙榛樿锛夛細杩涙牳蹇冧笂涓嬫枃鐨勩€屼簰鍔ㄥ璞°€嶅潡 / 棰勮鐨?personaDescription marker */
+    /** 嵌入提示词（默认）：进核心上下文的「互动对象」块 / 预设的 personaDescription marker */
     IN_PROMPT: 0,
-    /** @Depth 娉ㄥ叆锛氫互鎸囧畾 role 鎻掑埌鑱婂ぉ鍘嗗彶鐨勫搴旀繁搴︼紙鍚屼笘鐣屼功 @D 璇箟锛?*/
+    /** @Depth 注入：以指定 role 插到聊天历史的对应深度（同世界书 @D 语义） */
     AT_DEPTH: 4,
-    /** 涓嶆敞鍏ワ細鎻忚堪涓嶈繘 prompt锛堝悕瀛椾粛閫氳繃 {{user}} 涓庛€屼簰鍔ㄥ璞°€嶅潡鐢熸晥锛?*/
+    /** 不注入：描述不进 prompt（名字仍通过 {{user}} 与「互动对象」块生效） */
     NONE: 9,
 } as const;
 
-/** @Depth 娉ㄥ叆鏃剁殑娑堟伅 role锛堝悓 ST persona_description_role锛夛細0=system 1=user 2=assistant */
+/** @Depth 注入时的消息 role（同 ST persona_description_role）：0=system 1=user 2=assistant */
 export type PersonaDepthRole = 0 | 1 | 2;
 
 export interface PersonaConnection {
@@ -117,31 +117,31 @@ export interface PersonaConnection {
 
 export interface Persona {
     id: string;
-    /** 浜鸿鍚嶏紙鑱婂ぉ閲屼綔涓虹敤鎴峰悕锛寋{user}} 瀹忕殑瑙ｆ瀽鍊硷級 */
+    /** 人设名（聊天里作为用户名，{{user}} 宏的解析值） */
     name: string;
-    /** 浠呭睍绀虹敤灏忔爣棰橈紙ST 鐨?title锛夛紝涓嶈繘 prompt */
+    /** 仅展示用小标题（ST 的 title），不进 prompt */
     title?: string;
     avatar: string;
-    /** 浜鸿鎻忚堪锛堣繘 prompt锛涙敮鎸?{{char}} / {{user}} 瀹忥級 */
+    /** 人设描述（进 prompt；支持 {{char}} / {{user}} 宏） */
     description: string;
-    /** 娉ㄥ叆浣嶇疆锛圥ERSONA_POSITION 鏁板€硷紱鍏煎瀵煎叆鐨?ST 澶囦唤閲屽嚭鐜扮殑 1/2/3 鈫?瑙嗕负 0锛?*/
+    /** 注入位置（PERSONA_POSITION 数值；兼容导入的 ST 备份里出现的 1/2/3 → 视为 0） */
     position: number;
-    /** @Depth 娉ㄥ叆娣卞害锛堜粎 position=4 鐢熸晥锛夛紝榛樿 2锛堝悓 ST锛?*/
+    /** @Depth 注入深度（仅 position=4 生效），默认 2（同 ST） */
     depth?: number;
-    /** @Depth 娉ㄥ叆 role锛堜粎 position=4 鐢熸晥锛夛紝榛樿 0=system */
+    /** @Depth 注入 role（仅 position=4 生效），默认 0=system */
     role?: PersonaDepthRole;
-    /** 缁戝畾鐨勪笘鐣屼功鍒嗙粍鍚嶏紙=ST 浜鸿涓栫晫涔︼級锛氭縺娲绘椂璇ョ粍鏉＄洰鎸夊悇鑷綅缃?寮€鍏虫敞鍏ヤ富鑱婂ぉ */
+    /** 绑定的世界书分组名（=ST 人设世界书）：激活时该组条目按各自位置/开关注入主聊天 */
     lorebookCategory?: string;
-    /** 缁戝畾鐨勮鑹?缇わ紙=ST connections锛夛細杩涘叆瀵瑰簲鑱婂ぉ鏃惰嚜鍔ㄥ垏鎹㈠埌鏈汉璁?*/
+    /** 绑定的角色/群（=ST connections）：进入对应聊天时自动切换到本人设 */
     connections?: PersonaConnection[];
     createdAt: number;
     updatedAt: number;
 }
 
 // =====================================================================
-// --- LLM 棰勮锛圫illyTavern Chat Completion 棰勮绉绘锛?---
-// 瀛楁鍚嶄笌 SillyTavern 棰勮 JSON 瀹屽叏瀵归綈锛坰nake_case锛夛紝瀵煎叆瀵煎嚭闆惰浆鎹€?
-// 璇﹁ utils/presets.ts 鐨勫鍏?/ 缁勮閫昏緫銆?
+// --- LLM 预设（SillyTavern Chat Completion 预设移植） ---
+// 字段名与 SillyTavern 预设 JSON 完全对齐（snake_case），导入导出零转换。
+// 详见 utils/presets.ts 的导入 / 组装逻辑。
 // =====================================================================
 
 export type PresetPromptRole = 'system' | 'user' | 'assistant';
@@ -155,28 +155,28 @@ export type PresetScopeKey =
     | 'creative.text'
     | 'structured.tool';
 
-/** 棰勮閲岀殑涓€鏉℃彁绀鸿瘝锛堜笌 ST PromptManager 鐨?Prompt 瀵归綈锛夈€?*/
+/** 预设里的一条提示词（与 ST PromptManager 的 Prompt 对齐）。 */
 export interface PresetPrompt {
-    /** 鍞竴鏍囪瘑銆傚唴缃」鏄浐瀹氬悕锛坢ain / jailbreak / chatHistory鈥︼級锛岀敤鎴疯嚜寤洪」鏄?UUID */
+    /** 唯一标识。内置项是固定名（main / jailbreak / chatHistory…），用户自建项是 UUID */
     identifier: string;
     name: string;
-    /** ST 璇箟锛歵rue = 绯荤粺鍐呯疆鎻愮ず璇嶏紱false/缂虹渷 = 鐢ㄦ埛鑷缓 */
+    /** ST 语义：true = 系统内置提示词；false/缺省 = 用户自建 */
     system_prompt?: boolean;
     role?: PresetPromptRole;
     content?: string;
-    /** marker = 鐢辩郴缁熷～鍏呯殑鍗犱綅绗︼紙chatHistory / charDescription 绛夛級锛宑ontent 涓嶅彲缂栬緫 */
+    /** marker = 由系统填充的占位符（chatHistory / charDescription 等），content 不可编辑 */
     marker?: boolean;
-    /** 娉ㄥ叆浣嶇疆锛? = 鐩稿锛堟寜鍒楄〃椤哄簭鎺掕繘娑堟伅娴侊級锛? = 缁濆锛園Depth 娉ㄥ叆鑱婂ぉ鍘嗗彶锛?*/
+    /** 注入位置：0 = 相对（按列表顺序排进消息流）；1 = 绝对（@Depth 注入聊天历史） */
     injection_position?: number;
-    /** 缁濆娉ㄥ叆鏃惰窛鑱婂ぉ鍘嗗彶鏈熬鐨勬繁搴︼紙0 = 绱ц窡鏈€鍚庝竴鏉℃秷鎭箣鍓嶏級锛岄粯璁?4 */
+    /** 绝对注入时距聊天历史末尾的深度（0 = 紧跟最后一条消息之前），默认 4 */
     injection_depth?: number;
-    /** 鍚屾繁搴﹀唴鐨勪紭鍏堢骇锛屽ぇ鐨勬洿闈犺繎鏈熬锛岄粯璁?100 */
+    /** 同深度内的优先级，大的更靠近末尾，默认 100 */
     injection_order?: number;
-    /** ST锛氱姝㈣鑹插崱瑕嗙洊锛坢ain / jailbreak 鐢級銆侻oro 鏃犺鑹插崱瑕嗙洊鏈哄埗锛屼粎淇濈暀瀛楁 */
+    /** ST：禁止角色卡覆盖（main / jailbreak 用）。Moro 无角色卡覆盖机制，仅保留字段 */
     forbid_overrides?: boolean;
-    /** ST锛氶檺瀹氳繖鏉℃彁绀鸿瘝鍦ㄥ摢绫?generation 瑙﹀彂锛涚┖ / 缂虹渷 = 鍏ㄩ儴瑙﹀彂銆?*/
+    /** ST：限定这条提示词在哪类 generation 触发；空 / 缺省 = 全部触发。 */
     injection_trigger?: string[];
-    /** 涓埆 ST 瀵煎嚭浼氭妸寮€鍏崇洿鎺ュ啓鍦?prompt 涓婏紱姝ｅ紡寮€鍏冲湪 prompt_order 閲?*/
+    /** 个别 ST 导出会把开关直接写在 prompt 上；正式开关在 prompt_order 里 */
     enabled?: boolean;
 }
 
@@ -185,19 +185,19 @@ export interface PresetPromptOrderEntry {
     enabled: boolean;
 }
 
-/** ST 绾﹀畾锛歝haracter_id 100000 = 鍗曡亰榛樿锛?00001 = 缇よ亰榛樿銆?*/
+/** ST 约定：character_id 100000 = 单聊默认，100001 = 群聊默认。 */
 export interface PresetPromptOrderCharacter {
     character_id: number;
     order: PresetPromptOrderEntry[];
 }
 
-/** 涓€浠藉畬鏁撮璁俱€傞噰鏍峰瓧娈靛悕涓?ST 涓€鑷达紱鍏朵綑 ST 瀛楁杩?raw 鍏滃簳锛屽鍑烘椂鍚堝苟鍥炲幓銆?*/
+/** 一份完整预设。采样字段名与 ST 一致；其余 ST 字段进 raw 兜底，导出时合并回去。 */
 export interface TavernPreset {
     id: string;
     name: string;
     createdAt: number;
     updatedAt: number;
-    // 鈥斺€?閲囨牱鍙傛暟锛堜笌 ST 瀛楁鍚屽悕锛?鈥斺€?
+    // —— 采样参数（与 ST 字段同名） ——
     temperature?: number;
     frequency_penalty?: number;
     presence_penalty?: number;
@@ -206,31 +206,31 @@ export interface TavernPreset {
     top_a?: number;
     min_p?: number;
     repetition_penalty?: number;
-    /** 涓婁笅鏂囩獥鍙?token 鏁帮紙ST openai_max_context锛夈€侻oro 鎸夋潯鏁版埅鍘嗗彶锛屾鍊间粎瀛樻。灞曠ず */
+    /** 上下文窗口 token 数（ST openai_max_context）。Moro 按条数截历史，此值仅存档展示 */
     openai_max_context?: number;
-    /** 鍥炲 max_tokens锛圫T openai_max_tokens锛?*/
+    /** 回复 max_tokens（ST openai_max_tokens） */
     openai_max_tokens?: number;
     /**
-     * 缁戝畾鐨?Moro API 棰勮 id锛堣缃?App 閲屼繚瀛樼殑 os_api_presets 鏉＄洰锛夈€?
-     * 婵€娲绘湰棰勮鏃惰嚜鍔ㄥ鐢ㄥ搴?API 閰嶇疆锛坆aseUrl/key/model锛夛紝绫讳技 ST 鐨?
-     * 杩炴帴閰嶇疆鍒囨崲銆侻oro 鏈湴瀛楁锛屼笉闅忛厭棣?JSON 瀵煎嚭銆?
+     * 绑定的 Moro API 预设 id（设置 App 里保存的 os_api_presets 条目）。
+     * 激活本预设时自动套用对应 API 配置（baseUrl/key/model），类似 ST 的
+     * 连接配置切换。Moro 本地字段，不随酒馆 JSON 导出。
      */
     moroApiPresetId?: string;
     /**
-     * Moro 鏈湴浣滅敤鑼冨洿寮€鍏炽€傛渶缁堟槸鍚︾敓鏁?= 鍏ㄥ眬鍏佽鑼冨洿 AND 褰撳墠棰勮鑼冨洿銆?
-     * 涓嶉殢 SillyTavern JSON 瀵煎嚭銆?
+     * Moro 本地作用范围开关。最终是否生效 = 全局允许范围 AND 当前预设范围。
+     * 不随 SillyTavern JSON 导出。
      */
     moroScopes?: Partial<Record<PresetScopeKey, boolean>>;
-    // 鈥斺€?鎻愮ず璇嶇鐞嗗櫒 鈥斺€?
+    // —— 提示词管理器 ——
     prompts: PresetPrompt[];
     prompt_order: PresetPromptOrderCharacter[];
     /**
-     * 棰勮鑷甫鐨勬鍒欒剼鏈紙SillyTavern PRESET 浣滅敤鍩燂紝瀛樺湪棰勮 JSON 鐨?
-     * extensions.regex_scripts 閲岋級銆傚鍏ユ椂瑙ｆ瀽濉厖锛屼粎褰撴湰棰勮琚縺娲讳笖鍗板潑寮€鍗版椂
-     * 鐢熸晥锛堟墽琛岄『搴忥細鍏ㄥ眬 鈫?棰勮 鈫?瑙掕壊灞€閮級锛屽鍑烘椂鍐欏洖 extensions.regex_scripts銆?
+     * 预设自带的正则脚本（SillyTavern PRESET 作用域，存在预设 JSON 的
+     * extensions.regex_scripts 里）。导入时解析填充，仅当本预设被激活且印坊开印时
+     * 生效（执行顺序：全局 → 预设 → 角色局部），导出时写回 extensions.regex_scripts。
      */
     regexScripts?: RegexScriptData[];
-    /** 瀵煎叆鏃剁殑鍘熷 JSON 鍏ㄩ噺鍏滃簳锛坲tility prompts / 妯″瀷閫夋嫨绛夋湭鏄犲皠瀛楁锛夛紝瀵煎嚭鏃跺師鏍峰悎骞?*/
+    /** 导入时的原始 JSON 全量兜底（utility prompts / 模型选择等未映射字段），导出时原样合并 */
     raw?: Record<string, any>;
 }
 
@@ -270,9 +270,9 @@ export interface OSTheme {
   wallpaper: string;
   darkMode: boolean;
   contentColor?: string;
-  /** 妗岄潰鏁翠綋鐨偆銆傚姩妫毊鑲ゅ凡涓嬬嚎锛屼粎淇濈暀 'default'锛堟棫瀛樻。涓殑 'animalcrossing' 浼氬湪鍔犺浇鏃惰縼绉伙級銆?*/
+  /** 桌面整体皮肤。动森皮肤已下线，仅保留 'default'（旧存档中的 'animalcrossing' 会在加载时迁移）。 */
   skin?: 'default';
-  launcherWidgetImage?: string; // DEPRECATED: always stripped on load 鈥?never renders.
+  launcherWidgetImage?: string; // DEPRECATED: always stripped on load — never renders.
   launcherWidgets?: Record<string, string>; // slots: 'tl' | 'tr' | 'wide' | 'dsq' (legacy 'bl' / 'br' are banned)
   desktopDecorations?: DesktopDecoration[];
   customFont?: string;
@@ -284,7 +284,7 @@ export interface OSTheme {
   desktopDockStyle?: 'glass' | 'paper' | 'solid' | 'minimal';
   desktopDragMode?: 'gentle' | 'balanced' | 'snappy';
   desktopEditEffect?: 'wiggle' | 'breathe' | 'none';
-  /** 鎮诞绐楀揩鎹疯彍鍗曪細鍏ㄥ眬鍙嫋鍔ㄧ殑鎮诞鐞冿紝鐐瑰紑鏄父鐢?App 蹇嵎鍏ュ彛銆倁ndefined 瑙嗕负寮€鍚紱鏄惧紡 false 鍏抽棴銆?*/
+  /** 悬浮窗快捷菜单：全局可拖动的悬浮球，点开是常用 App 快捷入口。undefined 视为开启；显式 false 关闭。 */
   floatingQuickMenu?: boolean;
   floatingQuickMenuStyle?: FloatingQuickMenuStyle;
   // Chat UI customization (global)
@@ -298,77 +298,77 @@ export interface OSTheme {
   chatInputStyle?: 'default' | 'rounded' | 'flat' | 'wechat' | 'ios' | 'telegram' | 'discord' | 'pixel';
   chatChromeStyle?: 'soft' | 'flat' | 'floating' | 'pixel';
   chatBackgroundStyle?: 'plain' | 'grid' | 'paper' | 'mesh';
-  /** 缇よ亰閫氱敤鑳屾櫙銆傚崟涓兢鑻ヨ缃簡 chatBackgroundImage锛屽垯浼樺厛浣跨敤鍗曠兢鑳屾櫙銆?*/
+  /** 群聊通用背景。单个群若设置了 chatBackgroundImage，则优先使用单群背景。 */
   groupChatBackgroundStyle?: 'plain' | 'grid' | 'paper' | 'mesh';
   chatHeaderAlign?: 'left' | 'center';
   chatHeaderDensity?: 'compact' | 'default' | 'airy';
   chatStatusStyle?: 'subtle' | 'pill' | 'dot';
   chatSendButtonStyle?: 'circle' | 'pill' | 'minimal';
-  /** 鑱婂ぉ銆岃緭鍏ュ姩鏁堛€嶏細鍦ㄨ緭鍏ユ爮涓婂彔涓€灞傝楗板姩鐢?鈥斺€?涓婁紶鍥剧墖锛堝惈鍔ㄥ浘锛夋垨璁?AI 鍐欎竴娈?SVG銆?*/
+  /** 聊天「输入动效」：在输入栏上叠一层装饰动画 —— 上传图片（含动图）或让 AI 写一段 SVG。 */
   chatInputAnimation?: {
     kind: 'image' | 'svg';
-    data: string;             // 鍥剧墖 data URL锛屾垨 SVG 婧愮爜瀛楃涓?
+    data: string;             // 图片 data URL，或 SVG 源码字符串
     position?: 'corner' | 'top' | 'background';
-    opacity?: number;         // 0..1锛岄粯璁?0.9
+    opacity?: number;         // 0..1，默认 0.9
   };
-  /** Instant Push 鐢ㄦ埛姘旀场宸︿晶鐨?鍑嗗涓?鍦嗙偣鍔ㄧ敾銆傞粯璁ゅ紑鍚€?*/
+  /** Instant Push 用户气泡左侧的"准备中"圆点动画。默认开启。 */
   chatPendingIndicator?: boolean;
-  /** 鑱婂ぉ銆岀櫧妗嗐€嶈嚜瀹氫箟 CSS锛氫綔鐢ㄤ簬 .moro-chat-header / .moro-chat-inputbar / .moro-chat-root锛?
-   *  浠ュ強椤舵爮鍚勯浂浠?.moro-chat-back / .moro-chat-avatar / .moro-chat-name / .moro-chat-status /
-   *  .moro-chat-buffs / .moro-chat-token / .moro-chat-trigger銆傚彲鎹㈣壊 / 璐村浘 / 鏀瑰褰?/ 鎸綅銆?*/
+  /** 聊天「白框」自定义 CSS：作用于 .moro-chat-header / .moro-chat-inputbar / .moro-chat-root，
+   *  以及顶栏各零件 .moro-chat-back / .moro-chat-avatar / .moro-chat-name / .moro-chat-status /
+   *  .moro-chat-buffs / .moro-chat-token / .moro-chat-trigger。可换色 / 贴图 / 改外形 / 挪位。 */
   chatChromeCustomCss?: string;
-  /** 闅愯棌椤舵爮鐨勬儏缁?buff 鏍忋€?*/
+  /** 隐藏顶栏的情绪 buff 栏。 */
   chatHideHeaderBuffs?: boolean;
-  /** 鍏ㄥ眬鑷畾涔?CSS锛氭敞鍏ユ暣鏈猴紙妗岄潰 / 閿佸睆 / 鎵€鏈?App锛夛紝閰嶅悎 .moro-* 閽╁瓙绫伙紙moro-clock-card /
-   *  moro-character-card / moro-app-tile / moro-dock / moro-status-bar / moro-lock-screen 绛夛級鍋氬叏灞€缇庡寲銆?
-   *  鍦ㄣ€屼富棰?鈫?鑷畾涔?CSS銆嶇紪杈戯紝瀹炴椂鐢熸晥銆?*/
+  /** 全局自定义 CSS：注入整机（桌面 / 锁屏 / 所有 App），配合 .moro-* 钩子类（moro-clock-card /
+   *  moro-character-card / moro-app-tile / moro-dock / moro-status-bar / moro-lock-screen 等）做全局美化。
+   *  在「主题 → 自定义 CSS」编辑，实时生效。 */
   globalCustomCss?: string;
-  /** 鍗?App 鑷畾涔?CSS锛歬ey = AppID銆傛瘡涓?App 澶栧３閮芥湁 .moro-app-shell / .moro-app-shell-<id> /
-   *  [data-moro-app="<id>"] 閽╁瓙锛岄€傚悎鎶婃煇涓?App 鍗曠嫭鏀规垚鍙︿竴濂楃毊鑲ゃ€?*/
+  /** 单 App 自定义 CSS：key = AppID。每个 App 外壳都有 .moro-app-shell / .moro-app-shell-<id> /
+   *  [data-moro-app="<id>"] 钩子，适合把某个 App 单独改成另一套皮肤。 */
   appCustomCss?: Partial<Record<AppID, string>>;
-  /** 妗岄潰灏忕粍浠惰嚜瀹氫箟锛坘ey = widget id锛歝lock / weather / character / schedule / music / image / imgtl / imgtr / imgwide / text锛夈€?
-   *  鍦ㄣ€屼富棰?鈫?妗岄潰灏忕粍浠躲€嶇紪杈戯細闅愯棌锛堝垹闄わ級銆佹敼缃戞牸灏哄锛堟í鐗?绔栫増/鏂瑰舰锛夈€佹敞鍏ュ皬缁勪欢鑷畾涔?CSS銆?*/
+  /** 桌面小组件自定义（key = widget id：clock / weather / character / schedule / music / image / imgtl / imgtr / imgwide / text）。
+   *  在「主题 → 桌面小组件」编辑：隐藏（删除）、改网格尺寸（横版/竖版/方形）、注入小组件自定义 CSS。 */
   desktopWidgetPrefs?: Record<string, DesktopWidgetPref>;
-  /** 鏂囧瓧灏忕粍浠跺唴瀹癸紙妗岄潰渚跨锛夛細鏍囬 + 姝ｆ枃锛岀偣灏忕粍浠跺嵆鍙紪杈戙€?*/
+  /** 文字小组件内容（桌面便签）：标题 + 正文，点小组件即可编辑。 */
   textWidget?: { title?: string; body?: string };
-  /** 鐏靛姩宀涙牱寮忚嚜瀹氫箟锛堣儗鏅?/ 鏂囧瓧鑹?/ 鍦嗚 / 鑷畾涔?CSS锛夛紝鍦ㄣ€屼富棰?鈫?鐏靛姩宀涖€嶇紪杈戙€?*/
+  /** 灵动岛样式自定义（背景 / 文字色 / 圆角 / 自定义 CSS），在「主题 → 灵动岛」编辑。 */
   dynamicIslandStyle?: DynamicIslandStyle;
-  /** 閿佸睆鏍峰紡鑷畾涔夛紙涓撳睘澹佺焊 / 鏃堕挓瀛椾綋 / 閫氱煡鍗￠鏍?/ 瑙ｉ攣鍔ㄧ敾 / 鑷畾涔?CSS锛夛紝鍦ㄣ€屼富棰?鈫?閿佸睆銆嶇紪杈戙€?*/
+  /** 锁屏样式自定义（专属壁纸 / 时钟字体 / 通知卡风格 / 解锁动画 / 自定义 CSS），在「主题 → 锁屏」编辑。 */
   lockScreenStyle?: LockScreenStyle;
   offlineModeStyle?: OfflineModeStyle;
-  /** 鍗犲崪鐗岄潰缇庡寲锛堟姌瀛愭垙路鍗犲崪璇昏繖閲屾覆鏌撶墝闈級锛氱墝鑳屽浘 / 杈规椋庢牸 / 娓叉煋椋庢牸銆?*/
+  /** 占卜牌面美化（折子戏·占卜读这里渲染牌面）：牌背图 / 边框风格 / 渲染风格。 */
   tarotSkin?: {
-    cardBack?: string;                                  // 鐗岃儗鍥?dataURL锛堢墝闈㈡湭缈诲紑 / 鍗犱綅鏃舵樉绀猴級
-    frame?: 'none' | 'gold' | 'ink' | 'film';           // 杈规锛氭棤 / 鎻忛噾 / 姘村ⅷ / 鑳剁墖
-    renderStyle?: 'classic' | 'minimal' | 'mystic';     // 娓叉煋椋庢牸锛氬彜鍏?/ 鏋佺畝 / 绁炵
+    cardBack?: string;                                  // 牌背图 dataURL（牌面未翻开 / 占位时显示）
+    frame?: 'none' | 'gold' | 'ink' | 'film';           // 边框：无 / 描金 / 水墨 / 胶片
+    renderStyle?: 'classic' | 'minimal' | 'mystic';     // 渲染风格：古典 / 极简 / 神秘
   };
 }
 
-/** 鍗曚釜妗岄潰灏忕粍浠剁殑鑷畾涔夐」 */
+/** 单个桌面小组件的自定义项 */
 export interface DesktopWidgetPref {
-  /** 浠庢闈㈢Щ闄わ紙涓嶆覆鏌撱€佷笉鍗犳牸锛?*/
+  /** 从桌面移除（不渲染、不占格） */
   hidden?: boolean;
-  /** 缃戞牸瀹藉害瑕嗙洊锛?-4 鍒楋級銆備笌 h 鎼厤瀹炵幇妯増 / 绔栫増 / 鏂瑰舰 */
+  /** 网格宽度覆盖（1-4 列）。与 h 搭配实现横版 / 竖版 / 方形 */
   w?: number;
-  /** 缃戞牸楂樺害瑕嗙洊锛?-12 琛岋級 */
+  /** 网格高度覆盖（1-12 行） */
   h?: number;
-  /** 娉ㄥ叆妗岄潰鐨勫師鐢?CSS锛岄厤鍚?.moro-widget-<id> 閽╁瓙绫伙紙濡?.moro-widget-clock锛夎嚜瀹氫箟鏍峰紡 */
+  /** 注入桌面的原生 CSS，配合 .moro-widget-<id> 钩子类（如 .moro-widget-clock）自定义样式 */
   customCss?: string;
 }
 
-/** 鐏靛姩宀涙牱寮忚嚜瀹氫箟 */
+/** 灵动岛样式自定义 */
 export interface DynamicIslandStyle {
-  /** 鑳跺泭鑳屾櫙锛圕SS color / gradient锛夛紝榛樿 #0b0b12 */
+  /** 胶囊背景（CSS color / gradient），默认 #0b0b12 */
   background?: string;
-  /** 鏂囧瓧棰滆壊锛岄粯璁ょ櫧 */
+  /** 文字颜色，默认白 */
   textColor?: string;
-  /** 鍦嗚 px銆傜己鐪佷负鍏ㄥ渾鑳跺泭 */
+  /** 圆角 px。缺省为全圆胶囊 */
   radius?: number;
-  /** 娉ㄥ叆鐨勫師鐢?CSS锛堥厤鍚?.moro-dynamic-island 閽╁瓙绫伙級 */
+  /** 注入的原生 CSS（配合 .moro-dynamic-island 钩子类） */
   customCss?: string;
 }
 
-/** 閿佸睆鏍峰紡鑷畾涔?*/
+/** 锁屏样式自定义 */
 export interface FloatingQuickMenuStyle {
   bubbleBackground?: string;
   menuBackground?: string;
@@ -380,25 +380,25 @@ export interface FloatingQuickMenuStyle {
 }
 
 export interface LockScreenStyle {
-  /** 閿佸睆涓撳睘澹佺焊锛堢己鐪佹部鐢ㄦ闈㈠绾革級 */
+  /** 锁屏专属壁纸（缺省沿用桌面壁纸） */
   wallpaper?: string;
-  /** 鏃堕挓瀛椾綋椋庢牸 */
+  /** 时钟字体风格 */
   clockFont?: 'serif' | 'sans' | 'mono' | 'hand';
   clockTop?: number;
   clockScale?: number;
   dateText?: string;
   greetingText?: string;
   unlockHintText?: string;
-  /** 娑堟伅閫氱煡鍗￠鏍硷細鐜荤拑鎷熸€?/ 绾搁潰鎵嬪笎 / 澧ㄨ壊 */
+  /** 消息通知卡风格：玻璃拟态 / 纸面手帐 / 墨色 */
   notifCardStyle?: 'glass' | 'paper' | 'ink';
   showNotifications?: boolean;
-  /** 瑙ｉ攣杩涘叆妗岄潰鐨勮繃娓″姩鐢?*/
+  /** 解锁进入桌面的过渡动画 */
   unlockAnimation?: 'slide' | 'fade' | 'zoom' | 'none';
   passcodeStyle?: 'glass' | 'paper' | 'ink';
   passcodeTitleText?: string;
   passcodeErrorText?: string;
   passcodeCancelText?: string;
-  /** 娉ㄥ叆鐨勫師鐢?CSS锛堥厤鍚?.moro-lock-screen / .moro-lock-clock / .moro-lock-notif 閽╁瓙绫伙級 */
+  /** 注入的原生 CSS（配合 .moro-lock-screen / .moro-lock-clock / .moro-lock-notif 钩子类） */
   customCss?: string;
 }
 
@@ -437,8 +437,8 @@ export interface ChatLayoutPreset {
 
 export interface TranslationConfig {
   enabled: boolean;
-  sourceLang: string; // e.g. '鏃ユ湰瑾? - the language messages are displayed in (閫?
-  targetLang: string; // e.g. '涓枃' - the language to translate into (璇?
+  sourceLang: string; // e.g. '日本語' - the language messages are displayed in (选)
+  targetLang: string; // e.g. '中文' - the language to translate into (译)
 }
 
 export interface VirtualTime {
@@ -454,24 +454,24 @@ export interface APIConfig {
   apiKey: string;
   minimaxApiKey?: string;
   minimaxGroupId?: string;
-  // 'domestic' 鈫?https://api.minimaxi.com (鍥藉唴绔?
-  // 'overseas' 鈫?https://api.minimax.io  (娴峰绔?
+  // 'domestic' → https://api.minimaxi.com (国内站)
+  // 'overseas' → https://api.minimax.io  (海外站)
   // Missing / unknown falls back to domestic.
   minimaxRegion?: MinimaxRegion;
-  // Replicate token (r8_xxx) for ACE-Step song generation in 鍐欐瓕 App.
+  // Replicate token (r8_xxx) for ACE-Step song generation in 写歌 App.
   aceStepApiKey?: string;
   model: string;
   // Per-API streaming toggle. Some endpoints only support stream:true.
-  // Missing 鈫?false (榛樿闈炴祦寮?.
+  // Missing → false (默认非流式).
   stream?: boolean;
-  // Per-API temperature for chat / 绾︿細 main calls. Missing 鈫?0.85.
+  // Per-API temperature for chat / 约会 main calls. Missing → 0.85.
   temperature?: number;
 }
 
 /**
- * 鍓?API锛堝叏灞€锛夛細璐熻矗澶勭悊銆屼富 API 鑱婂ぉ浠ュ銆嶇殑鍔熻兘鈥斺€旀棩绋嬬敓鎴?鍗忚皟銆佽鑹茬敓娲讳晶鍐欍€?
- * 锛堝悗缁級绾︿細涓栫晫寮曟搸绛夊悗鍙?杈呭姪 LLM 浠诲姟銆傚湪銆屾枃鍏风洅銆嶉噷閰嶇疆锛屾墍鏈夎鑹插叡鐢ㄣ€?
- * 鍏抽棴鎴栨湭濉椂锛岀浉鍏冲姛鑳藉洖閫€鍒颁富 apiConfig锛堣 utils/auxApi.ts resolveAuxApi锛夈€?
+ * 副 API（全局）：负责处理「主 API 聊天以外」的功能——日程生成/协调、角色生活侧写、
+ * （后续）约会世界引擎等后台/辅助 LLM 任务。在「文具盒」里配置，所有角色共用。
+ * 关闭或未填时，相关功能回退到主 apiConfig（见 utils/auxApi.ts resolveAuxApi）。
  */
 export interface AuxApiConfig {
   enabled: boolean;
@@ -483,15 +483,15 @@ export interface AuxApiConfig {
 export interface InstantPushConfig {
   enabled: boolean;
   workerUrl: string;        // https://your-instant.workers.dev
-  // VAPID 鍏閽ュ凡杩佺Щ鍒?utils/pushVapid.ts (push_vapid_v1)锛屼笌 Proactive Push
-  // 鍏变韩鍚屼竴浠斤紝閬垮厤涓よ竟浜掔浉 unsubscribe 鎶㈠悓涓€涓?pushManager 璁㈤槄銆?
-  clientToken?: string;     // 瀵瑰簲 Worker 鐨?AMSG_CLIENT_TOKEN
-  // 鍙戦€佹枃鏈悗鏄惁鑷姩瑙﹀彂 AI 鍥炲 (worker 绔窇 + push 鍥炲啓). 浠呮帶鍒?鑷姩瑙﹀彂"杩欎欢浜?
-  // 涓嶆敼鍙?instant push 鏈韩鐨勫紑鍏冲惈涔? 鍏抽棴鏃?instant 妯″紡涔熶繚鐣欐墜鍔?鈿? 璺熸湰鍦版ā寮忎竴鑷?
-  // 缂虹渷 (undefined) 瑙嗕负鍏抽棴 鈥?閬垮厤"鍚敤 instant = 鑷姩鍥炲"鐨勫弽鐩磋寮虹粦瀹?
+  // VAPID 公私钥已迁移到 utils/pushVapid.ts (push_vapid_v1)，与 Proactive Push
+  // 共享同一份，避免两边互相 unsubscribe 抢同一个 pushManager 订阅。
+  clientToken?: string;     // 对应 Worker 的 AMSG_CLIENT_TOKEN
+  // 发送文本后是否自动触发 AI 回复 (worker 端跑 + push 回写). 仅控制"自动触发"这件事,
+  // 不改变 instant push 本身的开关含义. 关闭时 instant 模式也保留手动 ⚡, 跟本地模式一致.
+  // 缺省 (undefined) 视为关闭 — 避免"启用 instant = 自动回复"的反直觉强绑定.
   autoTriggerOnSend?: boolean;
-  // 澶?payload 鐨勪紶杈撴柟寮忛粯璁よ蛋 multipart銆傚彧鏈夎繛鎺ユ祴璇曠‘璁?Worker 缁戝畾浜嗗彲鐢?D1 鍚?
-  // 鍓嶅彴鎵嶅厑璁哥敤鎴锋墦寮€ D1 envelope銆?
+  // 大 payload 的传输方式默认走 multipart。只有连接测试确认 Worker 绑定了可用 D1 后,
+  // 前台才允许用户打开 D1 envelope。
   useD1BlobStore?: boolean;
   d1Available?: boolean;
   d1CheckedAt?: number;
@@ -557,19 +557,19 @@ export interface ActiveMsg2InboxMessage {
   receivedAt: number;
 }
 
-// Phase 2 Round 1 鈥?Instant Push agentic loop session state, written client-side
+// Phase 2 Round 1 — Instant Push agentic loop session state, written client-side
 // before /instant and consumed by /continue. See plans/instant-push-agentic-loop-phase2.md
 export interface InstantPushOutboundSession {
   sessionId: string;
   charId: string;
-  /** Conversation messages snapshot at /instant call time 鈥?fed to /continue as agentic-loop history. */
+  /** Conversation messages snapshot at /instant call time — fed to /continue as agentic-loop history. */
   messages: any[];
   /** API credentials needed to resume via /continue when worker calls back. */
   apiCredentials: { baseUrl: string; apiKey: string; model: string };
   createdAt: number;
 }
 
-// Phase 2 Round 2 鈥?SW will populate these stores; Round 1 just defines schema (empty).
+// Phase 2 Round 2 — SW will populate these stores; Round 1 just defines schema (empty).
 export interface InstantPushPendingToolCall {
   sessionId: string;
   charId: string;
@@ -589,20 +589,20 @@ export interface InstantPushPendingToolCall {
 
 /**
  * SW writes reasoning_buffer when amsg-instant emits ReasoningPush.
- * 0.8.0-next.2 璧? ReasoningPush 鑷甫 (messageIndex, totalMessages, chunkIndex,
- * totalChunks) 鍥涗釜瀛楁 鈥?long reasoning_content 浼氳 amsg-instant 鎸?UTF-8
- * 瀛楄妭鑷姩鍒囧 push (榛樿 reasoningChunkBytes=2000), 澶?push 閫氳繃 chunks[]
- * 绱Н, claimReasoning 鎸?(messageIndex, chunkIndex) 鎺掑簭鍚庢嫾鎺ユ垚瀹屾暣 reasoning.
+ * 0.8.0-next.2 起, ReasoningPush 自带 (messageIndex, totalMessages, chunkIndex,
+ * totalChunks) 四个字段 — long reasoning_content 会被 amsg-instant 按 UTF-8
+ * 字节自动切多 push (默认 reasoningChunkBytes=2000), 多 push 通过 chunks[]
+ * 累积, claimReasoning 按 (messageIndex, chunkIndex) 排序后拼接成完整 reasoning.
  *
- * `reasoningContent` 瀛楁鏄?claimReasoning 杈撳嚭 (鍚戝悗鍏煎鑰?Round 1 buffer 褰㈡€?.
- * `chunks` 瀛楁鏄?SW 绱Н褰㈡€?(鏂?push 杩涙潵 read-modify-write 杩藉姞涓€鏉?.
+ * `reasoningContent` 字段是 claimReasoning 输出 (向后兼容老 Round 1 buffer 形态).
+ * `chunks` 字段是 SW 累积形态 (新 push 进来 read-modify-write 追加一条).
  */
 export interface InstantPushReasoningBufferEntry {
   sessionId: string;
   charId: string;
-  /** 鎷兼帴鍚庣殑瀹屾暣 reasoning. claimReasoning 杈撳嚭鏃跺～杩欎釜瀛楁; SW 鍐欏叆鏃跺彲鐪佺暐. */
+  /** 拼接后的完整 reasoning. claimReasoning 输出时填这个字段; SW 写入时可省略. */
   reasoningContent?: string;
-  /** SW 绱Н寮?buffer 鈥?姣忔潯 ReasoningPush 杩涙潵杩藉姞涓€鏉? */
+  /** SW 累积式 buffer — 每条 ReasoningPush 进来追加一条. */
   chunks?: Array<{
     messageIndex: number;
     chunkIndex: number;
@@ -620,65 +620,65 @@ export interface ApiPreset {
 export interface CharacterBuff {
   id: string;
   name: string;      // internal key, e.g. 'reconciliation_fragile'
-  label: string;     // display text, e.g. '鑴嗗急鐨勫拰濂?
+  label: string;     // display text, e.g. '脆弱的和好'
   intensity: 1 | 2 | 3;
   emoji?: string;
   color?: string;    // hex, e.g. '#f87171'
-  description?: string;  // 鐢ㄦ埛鍙鐨勭畝鐭鏄庯紙缁欑敤鎴风湅鐨勶紝涓嶆槸缁橝I鐨勶級
+  description?: string;  // 用户可读的简短说明（给用户看的，不是给AI的）
 }
 
-// 瀹炴椂涓婁笅鏂囬厤缃?- 璁〢I瑙掕壊鎰熺煡鐪熷疄涓栫晫
+// 实时上下文配置 - 让AI角色感知真实世界
 export interface RealtimeConfig {
-  // 澶╂皵閰嶇疆
+  // 天气配置
   weatherEnabled: boolean;
-  /** 鍙栨暟鏂瑰紡锛?geo'锛堥粯璁わ紝娴忚鍣ㄥ畾浣?+ Open-Meteo 鍏嶅瘑閽ワ級/ 'manual'锛堟棫鐗堟墜濉?OpenWeatherMap Key + 鍩庡競锛?*/
+  /** 取数方式：'geo'（默认，浏览器定位 + Open-Meteo 免密钥）/ 'manual'（旧版手填 OpenWeatherMap Key + 城市） */
   weatherMode?: 'geo' | 'manual';
-  weatherApiKey: string;  // OpenWeatherMap API Key锛堜粎 manual 妯″紡闇€瑕侊級
-  weatherCity: string;    // 鍩庡競鍚嶏紙浠?manual 妯″紡鐢級
+  weatherApiKey: string;  // OpenWeatherMap API Key（仅 manual 模式需要）
+  weatherCity: string;    // 城市名（仅 manual 模式用）
 
-  // 鏂伴椈閰嶇疆
+  // 新闻配置
   newsEnabled: boolean;
   newsApiKey?: string;
-  newsPlatforms?: string[];  // hot_news 鐑骞冲彴 key 鍒楄〃锛堥粯璁や富婧愶紝鍏嶉壌鏉冿級锛岀暀绌虹敤鍐呯疆榛樿
+  newsPlatforms?: string[];  // hot_news 热榜平台 key 列表（默认主源，免鉴权），留空用内置默认
 
-  // Notion 閰嶇疆
+  // Notion 配置
   notionEnabled: boolean;
   notionApiKey: string;   // Notion Integration Token
-  notionDatabaseId: string; // 鏃ヨ鏁版嵁搴揑D
-  notionNotesDatabaseId?: string; // 鐢ㄦ埛绗旇鏁版嵁搴揑D锛堝彲閫夛紝璁╄鑹茶鍙栫敤鎴风殑鏃ュ父绗旇锛?
+  notionDatabaseId: string; // 日记数据库ID
+  notionNotesDatabaseId?: string; // 用户笔记数据库ID（可选，让角色读取用户的日常笔记）
 
-  // 椋炰功閰嶇疆 (涓浗鍖?Notion 鏇夸唬)
+  // 飞书配置 (中国区 Notion 替代)
   feishuEnabled: boolean;
-  feishuAppId: string;      // 椋炰功搴旂敤 App ID
-  feishuAppSecret: string;  // 椋炰功搴旂敤 App Secret
-  feishuBaseId: string;     // 澶氱淮琛ㄦ牸 App Token
-  feishuTableId: string;    // 鏁版嵁琛?Table ID
+  feishuAppId: string;      // 飞书应用 App ID
+  feishuAppSecret: string;  // 飞书应用 App Secret
+  feishuBaseId: string;     // 多维表格 App Token
+  feishuTableId: string;    // 数据表 Table ID
 
-  // 灏忕孩涔﹂厤缃?(MCP / Skills 鍙屾ā寮忔祻瑙堝櫒鑷姩鍖?
+  // 小红书配置 (MCP / Skills 双模式浏览器自动化)
   xhsEnabled: boolean;
   xhsMcpConfig?: XhsMcpConfig;
 
-  // 缂撳瓨閰嶇疆
+  // 缓存配置
   cacheMinutes: number;
 }
 
-// 鐑偣鍗曟潯锛堜笌 realtimeContext 鐨?NewsItem 缁撴瀯涓€鑷达紝鍗曠嫭鏀惧湪 types 閲岄伩鍏嶅惊鐜緷璧栵級
+// 热点单条（与 realtimeContext 的 NewsItem 结构一致，单独放在 types 里避免循环依赖）
 export interface HotNewsItem {
   title: string;
-  source?: string;  // 骞冲彴灞曠ず鍚嶏紝濡傘€屽井鍗氥€?
+  source?: string;  // 平台展示名，如「微博」
   url?: string;
-  desc?: string;    // 鐑偣绠€浠嬶紙API 鐨?desc 瀛楁锛屽彲鑳戒负绌猴級
+  desc?: string;    // 热点简介（API 的 desc 字段，可能为空）
 }
 
-// 鍒嗘椂娈电儹鐐瑰揩鐓э細姣忓ぉ姣忔椂娈碉紙0-8/8-16/16-24锛夋渶澶氭媺涓€娆★紝鍏ㄨ鑹插叡浜?
+// 分时段热点快照：每天每时段（0-8/8-16/16-24）最多拉一次，全角色共享
 export interface HotNewsSnapshot {
-  id: string;          // `${date}#${slot}`锛屽 2026-05-20#1
+  id: string;          // `${date}#${slot}`，如 2026-05-20#1
   date: string;        // YYYY-MM-DD
-  slot: number;        // 0=鏃╅棿 1=鍗堥棿 2=鏅氶棿
-  slotLabel: string;   // 鏃╅棿 / 鍗堥棿 / 鏅氶棿
+  slot: number;        // 0=早间 1=午间 2=晚间
+  slotLabel: string;   // 早间 / 午间 / 晚间
   items: HotNewsItem[];
-  platforms: string[]; // 鏈鍙洖鐢ㄧ殑骞冲彴 key 鍒楄〃
-  fetchedAt: number;   // 鎷夊彇鏃堕棿鎴?
+  platforms: string[]; // 本次召回用的平台 key 列表
+  fetchedAt: number;   // 拉取时间戳
 }
 
 export interface MemoryPalaceBackupConfig {
@@ -724,7 +724,7 @@ export interface RoomTodo {
     id: string;
     charId: string;
     date: string;
-    /** byUser=true 琛ㄧず杩欐潯鏄敤鎴疯嚜宸卞姞杩涙竻鍗曠殑锛堟爾灞呭織路浠婃棩娓呭崟鑷富鍕剧敾锛夛紝浼氬悓姝ョ粰瑙掕壊 */
+    /** byUser=true 表示这条是用户自己加进清单的（栖居志·今日清单自主勾画），会同步给角色 */
     items: { text: string; done: boolean; byUser?: boolean }[];
     generatedAt: number;
 }
@@ -740,24 +740,24 @@ export interface RoomNote {
 
 export interface ScheduleSlot {
     startTime: string;    // "08:00"
-    endTime?: string;     // "09:00" 璇ユ椂娈靛ぇ鑷寸粨鏉熸椂闂达紙鍙€夛紝浠呭睍绀虹敤锛?
-    activity: string;     // "鏅ㄨ窇"
-    description?: string; // "鍦ㄦ渤杈规參璺?
-    emoji?: string;       // "馃弮"
-    location?: string;    // "娌宠竟"
-    /** 璇ユ椂娈电殑鎯呯华鍩鸿皟锛?-4瀛楋紝濡?鏉惧紱""涓撴敞""鐑﹁簛""鏈熷緟"锛夛紝鐢ㄤ簬鍗＄墖灏忔爣绛?*/
+    endTime?: string;     // "09:00" 该时段大致结束时间（可选，仅展示用）
+    activity: string;     // "晨跑"
+    description?: string; // "在河边慢跑"
+    emoji?: string;       // "🏃"
+    location?: string;    // "河边"
+    /** 该时段的情绪基调（2-4字，如"松弛""专注""烦躁""期待"），用于卡片小标签 */
     mood?: string;
-    /** 璇ユ椂娈电殑鑳介噺姘村钩 1-5锛? 鍥颁箯 / 5 婊＄數锛夛紝鐢ㄤ簬鍗＄墖灏忔寚绀?*/
+    /** 该时段的能量水平 1-5（1 困乏 / 5 满电），用于卡片小指示 */
     energy?: number;
-    innerThought?: string; // 璇ユ椂娈电殑鍐呭績鐙櫧锛岀敓鎴愭椂鐢盇I鍐欏ソ锛岃繍琛屾椂鐩存帴娉ㄥ叆
+    innerThought?: string; // 该时段的内心独白，生成时由AI写好，运行时直接注入
     /**
-     * 鏃ョ▼閿氱偣鏉ユ簮锛?
-     * - 'self'锛堥粯璁?缂虹渷锛夛細瑙掕壊鑷繁瀹夋帓鐨勬椿鍔?
-     * - 'chat'锛氫粠鑱婂ぉ閲屽崗璋冨嚭鏉ョ殑绾﹀畾/鍙樻洿锛堝"鏅氫笂鍏偣涓€璧风湅鐢靛奖"锛夆€斺€旇繖绫绘槸銆屾棩绋嬮敋鐐广€嶏紝
-     *   浼樺厛绾ф渶楂橈紝瑙掕壊浼氬洿鐫€瀹冨畨鎺掑叾瀹冩椂娈点€?
+     * 日程锚点来源：
+     * - 'self'（默认/缺省）：角色自己安排的活动
+     * - 'chat'：从聊天里协调出来的约定/变更（如"晚上八点一起看电影"）——这类是「日程锚点」，
+     *   优先级最高，角色会围着它安排其它时段。
      */
     source?: 'self' | 'chat';
-    /** 鏄惁涓洪敋瀹氭椂娈碉細鑱婂ぉ閲屾槑纭害瀹氥€佽鑹插簲褰撻伒瀹堛€佷笉搴旈殢鎰忔敼鍔ㄧ殑浜嬮」 */
+    /** 是否为锚定时段：聊天里明确约定、角色应当遵守、不应随意改动的事项 */
     anchored?: boolean;
 }
 
@@ -767,11 +767,11 @@ export interface DailySchedule {
     date: string;         // YYYY-MM-DD
     slots: ScheduleSlot[];
     generatedAt: number;
-    coverImage?: string;  // 鐢ㄦ埛鑷畾涔夎鑹茬湅鏉垮浘 (鎸佷箙鍖?
+    coverImage?: string;  // 用户自定义角色看板图 (持久化)
     /**
-     * 鎸夋椂娈电敓鎴愮殑鎰忚瘑娴佺嫭鐧姐€?
-     * key = slot 鐨?startTime锛堝 "08:00"锛夛紝value = 鎴璇ユ椂娈电殑瀹屾暣鍐呭績鐙櫧銆?
-     * 娉ㄥ叆鏃舵牴鎹綋鍓嶆椂闂存壘鍒版渶杩戠殑 key锛岀洿鎺ヤ娇鐢ㄦ暣娈垫枃鏈紝涓嶅仛鎷兼帴銆?
+     * 按时段生成的意识流独白。
+     * key = slot 的 startTime（如 "08:00"），value = 截止该时段的完整内心独白。
+     * 注入时根据当前时间找到最近的 key，直接使用整段文本，不做拼接。
      */
     flowNarrative?: Record<string, string>;
 }
@@ -855,6 +855,92 @@ export interface PhoneEvidence {
     meta?: PhoneEvidenceMeta;
 }
 
+export type PhoneCheckDirection = 'user_to_char' | 'char_to_user';
+export type PhoneCheckMode = 'quick' | 'life' | 'relationship' | 'deep';
+export type PhoneCheckStatus = 'active' | 'finished' | 'interrupted';
+export type PhoneCheckExitMode = 'consent' | 'questions' | 'forced' | 'finished' | 'confront' | 'caught' | 'manual';
+export type PhoneCheckActionType =
+    | 'start'
+    | 'refresh_status'
+    | 'refresh_app'
+    | 'collect_evidence'
+    | 'clear_evidence'
+    | 'confront'
+    | 'delete_record'
+    | 'send_as_character'
+    | 'post_moment_as_character'
+    | 'intrusion_caught'
+    | 'browse_step'
+    | 'char_reply'
+    | 'char_block'
+    | 'char_delete'
+    | 'char_ignore'
+    | 'char_post_moment'
+    | 'char_clear_cart'
+    | 'exit';
+
+export interface PhoneCheckStatusSnapshot {
+    phoneModel?: string;
+    batteryLevel?: number;
+    isCharging?: boolean;
+    unlockCount?: number;
+    screenTimeMinutes?: number;
+    generatedAt?: number;
+    topAppName?: string;
+    topAppMinutes?: number;
+    topAppNote?: string;
+    latestLocation?: string;
+    latestNetwork?: string;
+}
+
+export interface PhoneCheckStepRecord {
+    at: number;
+    app?: string;
+    title?: string;
+    targetName?: string;
+    thought?: string;
+    intent?: string;
+    emotion?: string;
+    risk?: PhoneEvidenceRisk;
+    visibleClue?: string;
+    actionReason?: string;
+    detail?: string;
+}
+
+export interface PhoneCheckActionRecord {
+    id: string;
+    at: number;
+    type: PhoneCheckActionType;
+    label: string;
+    detail?: string;
+    app?: string;
+    targetName?: string;
+    recordId?: string;
+    risk?: PhoneEvidenceRisk;
+    riskDelta?: number;
+    metadata?: Record<string, any>;
+}
+
+export interface PhoneCheckSession {
+    id: string;
+    direction: PhoneCheckDirection;
+    charId: string;
+    charName?: string;
+    userName?: string;
+    mode: PhoneCheckMode;
+    startedAt: number;
+    endedAt?: number;
+    status: PhoneCheckStatus;
+    statusSnapshot?: PhoneCheckStatusSnapshot | null;
+    steps: PhoneCheckStepRecord[];
+    evidence: PhoneEvidence[];
+    actions: PhoneCheckActionRecord[];
+    exitMode?: PhoneCheckExitMode;
+    summary?: string;
+    moodAfter?: string;
+    systemMessageId?: number;
+}
+
 export interface PhoneLockQuestion {
     id: string;
     text: string;
@@ -885,101 +971,113 @@ export interface PhoneLockState {
     unlockedBy?: 'passcode' | 'question' | 'both';
     ownerUserName: string;
     charName: string;
-    /** 榛戝睆閿佹満涓婃柟绯荤粺鎻愮ず锛氱暀瑷€鎾畬鍚庝粛鍙樉绀鸿繖寮犻攣灞忋€?*/
+    /** 黑屏锁机上方系统提示：留言播完后仍只显示这张锁屏。 */
     message: string;
-    /** 鐢ㄦ埛鐣欑粰瑙掕壊鐪嬬殑閿佸睆鐣欒█銆?*/
+    /** 用户留给角色看的锁屏留言。 */
     note: string;
-    /** 鐢ㄦ埛璁剧疆鐨勫彛浠ょ瓟妗堬紱瑙掕壊鏍规嵁鎻愮ず绛斿鍗冲彲瑙ｉ攣銆?*/
+    /** 用户设置的口令答案；角色根据提示答对即可解锁。 */
     passcode: string;
-    /** 鐢ㄦ埛瀹屽叏鑷畾涔夌殑棰樼洰锛涜鑹插畬鎴愪换鎰忎竴棰樺嵆鍙В閿併€?*/
+    /** 用户完全自定义的题目；角色完成任意一题即可解锁。 */
     questions: PhoneLockQuestion[];
     attempts: PhoneLockAttemptRecord[];
 }
 
 /**
- * 鏌ュ矖路瑙掕壊涓撳睘鎵嬫満鐨偆锛堟瘡涓鑹蹭竴濂楋紝璁?缈?TA 鎵嬫満"鐨勬闈㈠崈浜哄崈闈級銆?
- * 涓昏鐢?char.id 纭畾鎬ф淳鐢燂紙閰嶈壊/鎺掔増锛夛紝鍙€夊湴鐢?LLM 鐢熸垚涓€浠芥洿璐翠汉璁剧殑銆屾墜鏈轰晶鍐欍€?
- * 锛堣澶囧悕 / 妗岄潰鍓爣 / 涓€鍙ヨ瘽 vibe / 涓€缁勮创浜鸿鐨?App锛夛紝鐢熸垚鍚庣紦瀛樺湪 phoneState.profile銆?
+ * 查岗·角色专属手机皮肤（每个角色一套，让"翻 TA 手机"的桌面千人千面）。
+ * 主要由 char.id 确定性派生（配色/排版），可选地用 LLM 生成一份更贴人设的「手机侧写」
+ * （设备名 / 桌面副标 / 一句话 vibe / 一组贴人设的 App），生成后缓存在 phoneState.profile。
  */
 export interface PhoneProfile {
-    /** 璁惧鍚嶏紙妗岄潰椤堕儴锛屽銆孍than 鐨?iPhone銆嶏級 */
+    /** 设备名（桌面顶部，如「Ethan 的 iPhone」） */
     deviceName?: string;
-    /** 妗岄潰鍓爣棰?/ 涓€鍙ヨ瘽鐘舵€?*/
+    /** 桌面副标题 / 一句话状态 */
     tagline?: string;
-    /** 澹佺焊锛欳SS 娓愬彉涓叉垨鍥剧墖 url锛堢己鐪佹椂鎸?char.id 娲剧敓娓愬彉锛?*/
+    /** 壁纸：CSS 渐变串或图片 url（缺省时按 char.id 派生渐变） */
     wallpaper?: string;
-    /** 涓婚寮鸿皟鑹?hex */
+    /** 主题强调色 hex */
     accent?: string;
-    /** 閰嶈壊鏂规 id锛堢‘瀹氭€ф淳鐢燂紝鍐冲畾娣辨祬/鑹茬浉锛?*/
+    /** 配色方案 id（确定性派生，决定深浅/色相） */
     paletteId?: string;
-    /** LLM 鐢熸垚鐨勪竴缁勮创浜鸿 App锛堣鐩栭粯璁?App 闆嗙殑灞曠ず鍚?鍥炬爣/鍙栨暟鎸囦护锛?*/
+    /** LLM 生成的一组贴人设 App（覆盖默认 App 集的展示名/图标/取数指令） */
     apps?: Array<{ id: string; name: string; icon: string; color: string; kind: string; prompt?: string }>;
-    /** 鏄惁鐢?LLM 鐢熸垚杩囷紙鐢ㄤ簬鎸夐挳鏂囨 鉁?瑁呯偣 / 鈫?閲嶆柊瑁呯偣锛?*/
+    /** 是否由 LLM 生成过（用于按钮文案 ✎ 装点 / ↻ 重新装点） */
     generated?: boolean;
     generatedAt?: number;
 }
 
-/** 鍥炴湜灏忔姤锛堟槰鏃ユ潵淇?/ 鍥炴湜路鍛ㄧ珷 / 鍥炴湜路鏈堢珷锛夛細鎶婅繃鍘讳竴娈垫椂闂存暣鐞嗘垚濞变箰灏忔姤 */
+/** 回望小报（昨日来信 / 回望·周章 / 回望·月章）：把过去一段时间整理成娱乐小报 */
 export interface Tabloid {
-    /** 'day' 鏄ㄦ棩鏉ヤ俊 / 'week' 鍥炴湜路鍛ㄧ珷 / 'month' 鍥炴湜路鏈堢珷 */
+    /** 'day' 昨日来信 / 'week' 回望·周章 / 'month' 回望·月章 */
     period: 'day' | 'week' | 'month';
-    /** 灏忔姤澶存潯澶ф爣棰?*/
+    /** 小报头条大标题 */
     headline: string;
-    /** 鍓爣 / 鏈熷彿灏忓瓧 */
+    /** 副标 / 期号小字 */
     subhead?: string;
-    /** 涓荤瑪锛堣鑹诧級瀵勮锛氬儚缂栬緫鎵嬭涓€鏍风殑寮€鍦虹櫧 */
+    /** 主笔（角色）寄语：像编辑手记一样的开场白 */
     editorNote?: string;
-    /** 鏍忕洰锛氭瘡鏉℃槸涓€涓ū涔愮増鍧?*/
+    /** 栏目：每条是一个娱乐版块 */
     sections: Array<{ tag: string; title: string; body: string; quote?: string }>;
-    /** 鑺辩诞 / 杈规爮灏忔枡 */
+    /** 花絮 / 边栏小料 */
     sidebar?: string[];
-    /** 缁撳熬绛惧悕 */
+    /** 结尾签名 */
     signoff?: string;
-    /** 瑕嗙洊鐨勬椂闂寸獥鍙?[from, to) */
+    /** 覆盖的时间窗口 [from, to) */
     rangeFrom: number;
     rangeTo: number;
     generatedAt: number;
 }
 
 /**
- * SillyTavern 瑙掕壊鍗″唴宓屼笘鐣屼功 (character_book / lorebook) 鐨勫師濮嬭瀹氥€?
- * Moro 鐨勪笘鐣屼功鏄€屾寕杞藉嵆鍏ㄦ枃娉ㄥ叆銆嶏紝娌℃湁 ST 鐨勫叧閿瘝鎵弿婵€娲绘満鍒讹紝
- * 瀵煎叆鏃舵妸鏉＄洰绾э紙灞€閮級+ 涔︾骇锛堝叏灞€锛夎缃師鏍蜂繚鐣欏湪杩欓噷锛?
- * 涓€鏉ヤ繚璇併€屽叏閮ㄨ瀹氫俊鎭€嶄笉涓紝浜屾潵涓轰互鍚庡疄鐜板叧閿瘝婵€娲荤暀濂芥暟鎹€?
+ * SillyTavern 角色卡内嵌世界书 (character_book / lorebook) 的原始设定。
+ * 导入时把条目级（局部）+ 书级（全局）设置原样保留在这里：
+ * 一来保证「全部设定信息」不丢，二来给运行时兼容 ST 关键词、概率、
+ * 递归和预算等语义提供回填依据。
  */
 export interface WorldbookSTData {
-    // ---- 涔︾骇锛堝叏灞€锛夎缃?----
+    // ---- 书级（全局）设置 ----
     bookName?: string;
     bookDescription?: string;
     scanDepth?: number;
     tokenBudget?: number;
     recursiveScanning?: boolean;
     bookExtensions?: Record<string, any>;
-    // ---- 鏉＄洰绾э紙灞€閮級璁剧疆 ----
+    // ---- 条目级（局部）设置 ----
     entry?: {
         id?: number | string;
         name?: string;
         comment?: string;
-        keys?: string[];           // 瑙﹀彂鍏抽敭璇?
-        secondaryKeys?: string[];  // 浜岀骇杩囨护璇?
-        selective?: boolean;       // 闇€鍚屾椂鍛戒腑浜岀骇璇?
-        constant?: boolean;        // 甯搁┗锛堣摑鐏級
-        enabled?: boolean;         // ST 閲屾槸鍚﹀惎鐢?
-        insertionOrder?: number;   // 鎻掑叆椤哄簭
+        keys?: string[];           // 触发关键词
+        secondaryKeys?: string[];  // 二级过滤词
+        selective?: boolean;       // 需同时命中二级词
+        constant?: boolean;        // 常驻（蓝灯）
+        enabled?: boolean;         // ST 里是否启用
+        insertionOrder?: number;   // 插入顺序
         caseSensitive?: boolean;
+        scanDepth?: number;
+        selectiveLogic?: WorldbookSelectiveLogic;
+        matchWholeWords?: boolean;
+        probability?: number;
+        useProbability?: boolean;
+        ignoreBudget?: boolean;
         priority?: number;
-        position?: string | number; // 'before_char' / 'after_char' / ST 鍐呴儴鏁板瓧浣?
-        extensions?: Record<string, any>; // ST 绉佹湁瀛楁锛坉epth/probability 绛夛級鍏ㄩ噺鍏滃簳
+        position?: string | number; // 'before_char' / 'after_char' / ST 内部数字位
+        extensions?: Record<string, any>; // ST 私有字段（depth/probability 等）全量兜底
     };
 }
 
+export type WorldbookSelectiveLogic =
+    | 'and_any'
+    | 'not_all'
+    | 'not_any'
+    | 'and_all';
+
 /**
- * 涓栫晫涔︽潯鐩殑鎻掑叆浣嶇疆锛堝榻?SillyTavern 鐨?position 璇箟锛夛細
- * - 'before_char'锛氳鑹插畾涔夛紙### 浣犵殑韬唤锛変箣鍓?
- * - 'after_char'锛氳鑹插畾涔変箣鍚庯紙榛樿锛屽嵆鐜版湁銆屾墿灞曡瀹氶泦銆嶅潡鐨勪綅缃級
- * - 'depth_system' / 'depth_user' / 'depth_assistant'锛氫互鎸囧畾 role 娉ㄥ叆鍒拌亰澶╁巻鍙?
- *   鍊掓暟绗?depth 鏉℃秷鎭锛園Depth锛夈€備粎涓昏亰澶╅摼璺湡姝ｆ寜娣卞害鎻掓秷鎭紱
- *   鍏朵粬鍙骇鍑哄崟鏉?system prompt 鐨勮皟鐢ㄦ柟浼氬唴鑱旈檷绾у埌 after_char 鍧椼€?
+ * 世界书条目的插入位置（对齐 SillyTavern 的 position 语义）：
+ * - 'before_char'：角色定义（### 你的身份）之前
+ * - 'after_char'：角色定义之后（默认，即现有「扩展设定集」块的位置）
+ * - 'depth_system' / 'depth_user' / 'depth_assistant'：以指定 role 注入到聊天历史
+ *   倒数第 depth 条消息处（@Depth）。仅主聊天链路真正按深度插消息；
+ *   其他只产出单条 system prompt 的调用方会内联降级到 after_char 块。
  */
 export type WorldbookPosition =
     | 'before_char'
@@ -996,44 +1094,59 @@ export interface Worldbook {
     createdAt: number;
     updatedAt: number;
     /**
-     * 鏉＄洰寮€鍏筹細false = 鍏抽棴锛堜换浣曞満鏅兘涓嶆敞鍏ワ級銆倁ndefined 瑙嗕负 true锛堝悜鍚庡吋瀹癸級銆?
-     * 鏁存湰涔︾殑寮€鍏充笉瀛樺湪鏉＄洰涓?鈥斺€?鎸?category 瀛樺湪 localStorage
-     * 锛堣 utils/worldbookRuntime.ts 鐨?GROUP_TOGGLES_KEY锛夈€?
+     * 条目开关：false = 关闭（任何场景都不注入）。undefined 视为 true（向后兼容）。
+     * 整本书的开关不存在条目上 —— 按 category 存在 localStorage
+     * （见 utils/worldbookRuntime.ts 的 GROUP_TOGGLES_KEY）。
      */
     enabled?: boolean;
     /**
-     * 鏃х増鏉＄洰绾т綔鐢ㄥ煙瀛楁锛屼粎涓哄鍏?澶囦唤鍏煎淇濈暀銆?
-     * 褰撳墠杩愯鏃剁殑鍏ㄥ眬/灞€閮ㄧ敱銆屾暣鏈笘鐣屼功鍒嗙粍銆嶅喅瀹氾細
-     * 瑙?utils/worldbookRuntime.ts 鐨?GROUP_SCOPES_KEY銆?
+     * 旧版条目级作用域字段，仅为导入/备份兼容保留。
+     * 当前运行时的全局/局部由「整本世界书分组」决定：
+     * 见 utils/worldbookRuntime.ts 的 GROUP_SCOPES_KEY。
      */
     scope?: 'local' | 'global';
-    /** 鎻掑叆浣嶇疆锛寀ndefined = 'after_char' */
+    /** 插入位置，undefined = 'after_char' */
     position?: WorldbookPosition;
-    /** position 涓?depth_* 鏃剁殑娉ㄥ叆娣卞害锛堝€掓暟绗嚑鏉℃秷鎭墠锛夛紝榛樿 4锛堝悓 ST锛?*/
+    /** position 为 depth_* 时的注入深度（倒数第几条消息前），默认 4（同 ST） */
     depth?: number;
-    /** 鍚屼竴浣嶇疆鍐呯殑鎻掑叆椤哄簭锛屽皬鐨勫湪鍓嶏紙鍚?ST 鐨勬渶缁堢敓鏁堥『搴忥級锛岄粯璁?100 */
+    /** 同一位置内的插入顺序，小的在前（同 ST 的最终生效顺序），默认 100 */
     order?: number;
     /**
-     * 婵€娲绘柟寮忥紙ST 鍏抽敭璇嶆壂鎻忕Щ妞嶏級锛?
-     * - 'always'锛堥粯璁わ紝鍗?ST 鐨勫父椹?钃濈伅 馃數锛夛細鍙寮€鍏冲紑鐫€灏辨敞鍏?
-     * - 'keyword'锛圫T 鐨勭豢鐏?馃煝锛夛細鎵弿鏈€杩戠殑鑱婂ぉ娑堟伅锛屽懡涓叧閿瘝鎵嶆敞鍏ャ€?
-     *   浠呬富鑱婂ぉ閾捐矾锛坆uildChatRequestPayload 璁剧疆鎵弿涓婁笅鏂囷級鎵ц鎵弿锛?
-     *   娌℃湁鑱婂ぉ涓婁笅鏂囩殑璋冪敤鏂癸紙绾︿細绛夊崟 prompt 鍦烘櫙锛変笉娉ㄥ叆鍏抽敭璇嶆潯鐩€?
+     * 激活方式（ST 关键词扫描移植）：
+     * - 'always'（默认，即 ST 的常驻/蓝灯 🔵）：只要开关开着就注入
+     * - 'keyword'（ST 的绿灯 🟢）：扫描最近的聊天消息，命中关键词才注入。
+     *   仅主聊天链路（buildChatRequestPayload 设置扫描上下文）执行扫描；
+     *   没有聊天上下文的调用方（约会等单 prompt 场景）不注入关键词条目。
      */
     activation?: 'always' | 'keyword';
-    /** 瑙﹀彂鍏抽敭璇嶏紙浠讳竴鍛戒腑鍗虫縺娲伙級锛宎ctivation='keyword' 鏃剁敓鏁?*/
+    /** 触发关键词（任一命中即激活），activation='keyword' 时生效 */
     keys?: string[];
-    /** 浜岀骇杩囨护璇嶏紙selective=true 鏃堕渶鍚屾椂鍛戒腑浠讳竴锛?*/
+    /** 二级过滤词（selective=true 时需同时命中任一） */
     secondaryKeys?: string[];
-    /** 闇€鍚屾椂鍛戒腑浜岀骇杩囨护璇嶏紙鍚?ST selective锛?*/
+    /** 需同时命中二级过滤词（同 ST selective） */
     selective?: boolean;
-    /** 鍏抽敭璇嶅尮閰嶅ぇ灏忓啓鏁忔劅锛岄粯璁や笉鏁忔劅锛堝悓 ST case_sensitive锛?*/
+    /**
+     * 二级过滤逻辑（同 ST selectiveLogic）：
+     * and_any = 主词 + 任一二级词；and_all = 主词 + 全部二级词；
+     * not_any = 主词 + 无二级词命中；not_all = 主词 + 至少一个二级词未命中。
+     * 未设置时沿用旧行为 and_any。
+     */
+    selectiveLogic?: WorldbookSelectiveLogic;
+    /** 关键词匹配大小写敏感，默认不敏感（同 ST case_sensitive） */
     caseSensitive?: boolean;
-    /** 鍏抽敭璇嶆壂鎻忔繁搴︼細鎵渶杩?N 鏉℃秷鎭紝榛樿 4锛堝悓 ST scan_depth 璇箟锛?*/
+    /** 关键词按整词匹配（同 ST match_whole_words），默认 false */
+    matchWholeWords?: boolean;
+    /** 关键词扫描深度：扫最近 N 条消息，默认 4（同 ST scan_depth 语义） */
     scanDepth?: number;
-    /** 'sillytavern' = 浠?SillyTavern 瑙掕壊鍗″鍏ョ殑鏉＄洰 */
+    /** 触发概率百分比（0-100）。undefined / 100 = 必定通过。 */
+    probability?: number;
+    /** false 时忽略 probability，按必定通过处理；用于保留 ST useProbability。 */
+    useProbability?: boolean;
+    /** true 时不计入世界书预算裁剪（同 ST ignore_budget）。 */
+    ignoreBudget?: boolean;
+    /** 'sillytavern' = 从 SillyTavern 角色卡导入的条目 */
     source?: 'sillytavern';
-    /** SillyTavern 鍘熷璁惧畾淇℃伅锛堜粎 source === 'sillytavern' 鏃跺瓨鍦級 */
+    /** SillyTavern 原始设定信息（仅 source === 'sillytavern' 时存在） */
     stData?: WorldbookSTData;
 }
 
@@ -1079,160 +1192,160 @@ export interface NovelBook {
 }
 
 // =====================================================================
-// --- VR WORLD ("椤靛") TYPES ---
-// 瑙掕壊鑷富鐧诲叆鐨勮櫄鎷熶笘鐣屻€傚畾鏃跺櫒椹卞姩姣忎釜瑙掕壊鐙珛璋冪敤涓€娆?LLM锛屽湪鏌愪釜鎴块棿
-// 瀹屾垚涓€娆℃椿鍔紙v1锛氬浘涔﹂鐪嬪皬璇达級锛屼骇鍑轰竴寮犳椿鍔ㄥ崱娉ㄥ叆璇ヨ鑹茬殑 1v1 鑱婂ぉ锛?
-// 澶╃劧琚笂涓嬫枃涓庤蹇嗘€荤粨鎹曟崏銆?
+// --- VR WORLD ("页外") TYPES ---
+// 角色自主登入的虚拟世界。定时器驱动每个角色独立调用一次 LLM，在某个房间
+// 完成一次活动（v1：图书馆看小说），产出一张活动卡注入该角色的 1v1 聊天，
+// 天然被上下文与记忆总结捕捉。
 // =====================================================================
 
-/** 铏氭嫙涓栫晫閲岀殑鎴块棿銆?*/
+/** 虚拟世界里的房间。 */
 export type VRRoomId = 'plaza' | 'library' | 'music' | 'guestbook' | 'gym' | 'postoffice' | 'theater';
 
-/** 鍏ㄥ眬灏忚搴撻噷鐨勪竴鏈功锛堟墍鏈夎鑹插叡浜師鏂囷紝鍚勮嚜鐣欐壒娉ㄣ€佸悇鑷功绛撅級銆?*/
+/** 全局小说库里的一本书（所有角色共享原文，各自留批注、各自书签）。 */
 export interface VRWorldNovel {
     id: string;
     title: string;
     author?: string;
-    /** 绠€浠嬶紝鍠傜粰瑙掕壊褰撹儗鏅紝涔熺敤浜?UI 灞曠ず */
+    /** 简介，喂给角色当背景，也用于 UI 展示 */
     summary?: string;
-    /** 鍘熸枃鎸夐槄璇诲崟鍏冨垏濂界殑娈佃惤鍧楋紙姣忓潡 ~鏁扮櫨瀛楋紝渚夸簬瀹氫綅鎵规敞涓庢帹杩涗功绛撅級銆?*/
+    /** 原文按阅读单元切好的段落块（每块 ~数百字，便于定位批注与推进书签）。 */
     segments: VRNovelSegment[];
-    /** 鎬诲瓧鏁帮紙缂撳瓨锛孶I 灞曠ず鐢級 */
+    /** 总字数（缓存，UI 展示用） */
     totalChars: number;
     createdAt: number;
     updatedAt: number;
 }
 
-/** 灏忚閲岀殑涓€涓槄璇诲崟鍏冿紙鍘熸枃娈佃惤鍧楋級銆?*/
+/** 小说里的一个阅读单元（原文段落块）。 */
 export interface VRNovelSegment {
-    /** 娈佃惤绱㈠紩锛?-based锛岀瓑浜庡湪 segments 鏁扮粍閲岀殑浣嶇疆锛屾寔涔呭寲浠ラ槻閲嶆帓锛?*/
+    /** 段落索引（0-based，等于在 segments 数组里的位置，持久化以防重排） */
     idx: number;
-    /** 鍘熸枃鍐呭 */
+    /** 原文内容 */
     text: string;
-    /** 瀛楁暟锛堢紦瀛橈級 */
+    /** 字数（缓存） */
     chars: number;
 }
 
 /**
- * 涓€鏉℃壒娉ㄣ€傛寕鍦?(novelId, segIdx) 涓婏紝鍙浠讳綍瑙掕壊鍚愭Ы锛坱argetAnnotationId 鎸囧悜琚悙妲界殑鎵规敞锛夈€?
- * 鍏ㄥ眬瀛樺湪 VRWorldNovel 涔嬪鐨勭嫭绔嬮泦鍚堥噷鈥斺€旇 db 鐨?vr_annotations 瀛楁銆?
+ * 一条批注。挂在 (novelId, segIdx) 上，可被任何角色吐槽（targetAnnotationId 指向被吐槽的批注）。
+ * 全局存在 VRWorldNovel 之外的独立集合里——见 db 的 vr_annotations 字段。
  */
 export interface VRNovelAnnotation {
     id: string;
     novelId: string;
-    /** 鎵规敞閿氬畾鐨勬钀界储寮?*/
+    /** 批注锚定的段落索引 */
     segIdx: number;
-    /** 浣滆€呰鑹?id锛坲ser 鐣欐壒娉ㄦ椂涓?'user'锛?*/
+    /** 作者角色 id（user 留批注时为 'user'） */
     authorId: string;
-    /** 浣滆€呭睍绀哄悕锛堣惤搴撳啑浣欙紝閬垮厤瑙掕壊鍒犻櫎鍚庝涪鍚嶏級 */
+    /** 作者展示名（落库冗余，避免角色删除后丢名） */
     authorName: string;
-    /** 鎵规敞/鍚愭Ы姝ｆ枃 */
+    /** 批注/吐槽正文 */
     content: string;
-    /** 鑻ユ槸"鍚愭Ы鍒汉鐨勫悙妲?锛屾寚鍚戣鍚愭Ы鐨勬壒娉?id */
+    /** 若是"吐槽别人的吐槽"，指向被吐槽的批注 id */
     targetAnnotationId?: string;
     createdAt: number;
 }
 
-/** 瑙掕壊鍦ㄨ櫄鎷熶笘鐣岄噷鐨勪釜浜虹姸鎬侊紙鎸傚湪 CharacterProfile.vrState锛夈€?*/
+/** 角色在虚拟世界里的个人状态（挂在 CharacterProfile.vrState）。 */
 export interface VRWorldCharState {
-    /** 鏄惁鍚敤璇ヨ鑹茬殑鑷富鐧诲叆锛堢嫭绔嬩簬涓诲姩鍙戞秷鎭?proactiveConfig锛?*/
+    /** 是否启用该角色的自主登入（独立于主动发消息 proactiveConfig） */
     enabled: boolean;
-    /** 鑷富鐧诲叆闂撮殧锛堝垎閽燂紝30 瀵归綈锛涢粯璁?120 = 2h锛?*/
+    /** 自主登入间隔（分钟，30 对齐；默认 120 = 2h） */
     intervalMinutes: number;
     /**
-     * 姣忔湰灏忚鐨勭嫭绔嬩功绛撅細novelId -> 涓嬩竴娆¤浠庣鍑犱釜 segment 寮€濮嬭銆?
-     * 杩欐槸"姣忎釜瑙掕壊涔︾涓嶄竴鏍?鐨勮惤鐐广€?
+     * 每本小说的独立书签：novelId -> 下一次该从第几个 segment 开始读。
+     * 这是"每个角色书签不一样"的落点。
      */
     novelBookmarks?: Record<string, number>;
-    /** 鏈€杩戜竴娆℃椿鍔ㄨ惤鍦ㄥ摢涓埧闂达紙UI 绔嬬粯绔欎綅鐢級 */
+    /** 最近一次活动落在哪个房间（UI 立绘站位用） */
     currentRoom?: VRRoomId;
-    /** 鏈€杩戜竴娆℃椿鍔ㄦ椂闂存埑锛圲I / 璋冨害灞曠ず鐢級 */
+    /** 最近一次活动时间戳（UI / 调度展示用） */
     lastActiveAt?: number;
-    /** 璇ヨ鑹蹭笓灞?API 瑕嗙洊锛堢敤鎴峰彲鍗曠嫭涓恒€岄〉澶栥€嶆椿鍔ㄩ厤 api锛夛紱涓嶈鍒欏洖钀藉叏灞€ apiConfig銆?*/
+    /** 该角色专属 API 覆盖（用户可单独为「页外」活动配 api）；不设则回落全局 apiConfig。 */
     api?: { baseUrl: string; apiKey: string; model: string };
     /**
-     * 瑙掕壊鍦ㄣ€岄〉澶栥€嶉噷鐨?chibi 褰㈣薄锛圦鐗堝皬浜猴級銆傚惎鐢ㄨ嚜涓荤櫥鍏ユ椂瑕佹眰璁惧畾锛屽彲闅忔椂缂栬緫銆?
-     * img 涓嶈鏃跺洖閫€鍒拌鑹茬珛缁?澶村儚銆?
+     * 角色在「页外」里的 chibi 形象（Q版小人）。启用自主登入时要求设定，可随时编辑。
+     * img 不设时回退到角色立绘/头像。
      */
     chibi?: VRChibi;
-    /** 宸插瓨鐨勫濂楀舰璞★紙鎹㈣浣嶏級锛氶殢鏃朵竴閿垏鎹紱鍒囨崲浼氭妸閫変腑閭ｅ鍐欏洖 chibi銆?*/
+    /** 已存的多套形象（换装位）：随时一键切换；切换会把选中那套写回 chibi。 */
     chibiLooks?: VRChibi[];
 }
 
-/** 涓€濂?chibi 褰㈣薄锛圦鐗堝皬浜猴級銆傛崗灏忎汉鍔熻兘涓庛€屼笘鐣屾埧闂淬€嶆崲瑁呭叡鐢ㄣ€?*/
+/** 一套 chibi 形象（Q版小人）。捏小人功能与「世界房间」换装共用。 */
 export interface VRChibi {
-    /** 褰㈣薄鍥撅紙閫忔槑鑳屾櫙 PNG锛屾潵鑷崗浜哄櫒 transparentDataUrl锛?*/
+    /** 形象图（透明背景 PNG，来自捏人器 transparentDataUrl） */
     img: string;
-    /** 鎹忎汉鍣ㄥ鍑虹殑瀹屾暣鐘舵€侊紝鍥炲～鐢ㄤ簬鍐嶇紪杈戯紙state.selected 鍙綔涓?presets锛?*/
+    /** 捏人器导出的完整状态，回填用于再编辑（state.selected 可作为 presets） */
     state?: any;
-    /** 绔欎綅缂╂斁锛堥粯璁?1锛?*/
+    /** 站位缩放（默认 1） */
     scale?: number;
-    /** 鍨傜洿寰皟锛坧x锛岃礋鏁颁笂绉伙紝榛樿 0锛?*/
+    /** 垂直微调（px，负数上移，默认 0） */
     offsetY?: number;
-    /** 姘村钩寰皟锛坧x锛岃礋鏁板乏绉伙紝榛樿 0锛?*/
+    /** 水平微调（px，负数左移，默认 0） */
     offsetX?: number;
-    /** 鏃嬭浆瑙掑害锛坉eg锛岄粯璁?0锛?*/
+    /** 旋转角度（deg，默认 0） */
     rotate?: number;
-    /** 閫忔槑搴︼紙0.35~1锛岄粯璁?1锛?*/
+    /** 透明度（0.35~1，默认 1） */
     opacity?: number;
-    /** 鏄惁鏄剧ず鎶曞奖锛堥粯璁?true锛?*/
+    /** 是否显示投影（默认 true） */
     shadow?: boolean;
-    /** 鑴氫笅/韬悗鍏夌幆鏍峰紡 */
+    /** 脚下/身后光环样式 */
     halo?: 'none' | 'soft' | 'mint' | 'violet' | 'warm';
-    /** 鏄惁姘村钩缈昏浆 */
+    /** 是否水平翻转 */
     flip?: boolean;
-    /** 鎴块棿鍐呭Э鍔?鍔ㄧ敾锛?idle' | 'bob' | 'wiggle' | 'spin' | 'jump' | 'nod'鈥︼級锛岄┍鍔ㄥ皬浜哄湪涓栫晫閲屾洿鐢熷姩銆?*/
+    /** 房间内姿势/动画（'idle' | 'bob' | 'wiggle' | 'spin' | 'jump' | 'nod'…），驱动小人在世界里更生动。 */
     pose?: string;
-    /** 璐寸焊瑁呴グ锛坋moji锛屾寕鍦ㄥ皬浜哄ご椤讹級锛屾墜璐︽嫾璐村懗銆?*/
+    /** 贴纸装饰（emoji，挂在小人头顶），手账拼贴味。 */
     sticker?: string;
-    /** 璐寸焊姘村钩鍋忕Щ锛坧x锛?*/
+    /** 贴纸水平偏移（px） */
     stickerX?: number;
-    /** 璐寸焊鍨傜洿鍋忕Щ锛坧x锛?*/
+    /** 贴纸垂直偏移（px） */
     stickerY?: number;
-    /** 璐寸焊缂╂斁锛堥粯璁?1锛?*/
+    /** 贴纸缩放（默认 1） */
     stickerSize?: number;
-    /** 鏄惁鏄剧ず鍦ㄧ嚎鍚嶇墝锛堥粯璁?true锛?*/
+    /** 是否显示在线名牌（默认 true） */
     nameVisible?: boolean;
-    /** 杩欏褰㈣薄鐨勫懡鍚嶏紙鎹㈣浣嶆爣绛撅紝閫夊～锛夈€?*/
+    /** 这套形象的命名（换装位标签，选填）。 */
     name?: string;
 }
 
-/** 娉ㄥ叆鑱婂ぉ鐨?vr_card 娑堟伅鐨?metadata 缁撴瀯銆?*/
+/** 注入聊天的 vr_card 消息的 metadata 结构。 */
 export interface VRCardMeta {
     vrCard: true;
     room: VRRoomId;
-    /** 娲诲姩姒傝堪锛坰team 鎻愮ず寮忥紝UI 鏍囬锛?*/
+    /** 活动概述（steam 提示式，UI 标题） */
     activity: string;
     novelId?: string;
     novelTitle?: string;
-    /** 鏈璇诲埌鐨勬钀借寖鍥?[from, to)锛堜粎 library锛?*/
+    /** 本次读到的段落范围 [from, to)（仅 library） */
     segRange?: [number, number];
-    /** 鏈鍐欎笅鐨勬壒娉ㄦ憳瑕侊紙淇濈暀姝ｆ枃锛屽師鏂囩渷鐣ワ級 */
+    /** 本次写下的批注摘要（保留正文，原文省略） */
     annotationExcerpts?: string[];
-    /** 甯︽钀介敋鐐圭殑鎵规敞寮曠敤锛堢敤浜庝粠鍔ㄦ€佺偣鍥炲師鏂囪烦杞級 */
+    /** 带段落锚点的批注引用（用于从动态点回原文跳转） */
     annotationRefs?: { segIdx: number; text: string }[];
-    // --- 鍚瓕鎴夸笓鐢?---
-    /** 鏈璇?鍚殑褰撳墠姝岋紙鍚?- 姝屾墜锛?*/
+    // --- 听歌房专用 ---
+    /** 本次评/听的当前歌（名 - 歌手） */
     songLabel?: string;
-    /** 鏈鐐?鎺掕繘闃熷垪鐨勮嚜宸辩殑姝?*/
+    /** 本次点/排进队列的自己的歌 */
     queuedLabel?: string;
-    /** 姝ゅ埢鐨勮涓烘弿杩帮紙鐩潃璺?璺熷敱/缁檜ser褰曗€︼紱濞变箰瀹や篃鐢級 */
+    /** 此刻的行为描述（盯着跳/跟唱/给user录…；娱乐室也用） */
     behavior?: string;
-    // --- 鐣欒█绨夸笓鐢?---
-    /** 鏈鍙戝埌鐣欒█绨跨殑璇濓紙淇濈暀姝ｆ枃锛?*/
+    // --- 留言簿专用 ---
+    /** 本次发到留言簿的话（保留正文） */
     boardPost?: string;
-    /** 鏈鍙戝埌鐣欒█绨跨殑鎵€鏈夊彂瑷€锛堝師鏍凤紝鍚洖澶嶅璞★級锛岀敤浜庡悓姝ヨ繘 1v1 鑱婂ぉ/璁板繂 */
+    /** 本次发到留言簿的所有发言（原样，含回复对象），用于同步进 1v1 聊天/记忆 */
     boardPosts?: { content: string; replyToName?: string }[];
-    /** 鍥炲浜嗚皝 */
+    /** 回复了谁 */
     boardReplyToName?: string;
-    /** 杩欐潯鍗＄墖鏄?鐢ㄦ埛鍦ㄧ暀瑷€绨垮彂瑷€"骞挎挱缁欒 char 鐨?*/
+    /** 这条卡片是"用户在留言簿发言"广播给该 char 的 */
     userBoardPost?: boolean;
-    // --- 閭眬涓撶敤 ---
-    /** 鏈鍐欎俊/鍥炰俊鐨勬鏂囨憳瑕?*/
+    // --- 邮局专用 ---
+    /** 本次写信/回信的正文摘要 */
     letterExcerpt?: string;
 }
 
-/** 閭眬锛氫竴灏佷俊鏀跺埌鐨勫洖澶嶏紙鐣欐。鐢級銆?*/
+/** 邮局：一封信收到的回复（留档用）。 */
 export interface VRLetterReply {
     pen: string;
     content: string;
@@ -1240,75 +1353,75 @@ export interface VRLetterReply {
 }
 
 /**
- * 閭眬淇′欢锛堟湰鍦板瓨妗?+ 闃熷垪锛夈€?
- * box='outbox'锛氭垜鏂硅鑹插啓鐨勬紓娴佷俊锛堝緟瀵勫嚭鈫掑凡瀵勫嚭鈫掓敹鍒板洖澶嶇暀妗ｏ級銆?
- * box='inbox' 锛氫粠鍒殑鐢ㄦ埛閭ｆ娊鍒扮殑淇★紙寰呭洖淇♀啋寰呭彂閫佸洖淇♀啋宸插彂閫侊級銆?
+ * 邮局信件（本地存档 + 队列）。
+ * box='outbox'：我方角色写的漂流信（待寄出→已寄出→收到回复留档）。
+ * box='inbox' ：从别的用户那抽到的信（待回信→待发送回信→已发送）。
  */
 export interface VRLetter {
-    id: string;                 // 鏈湴 id
+    id: string;                 // 本地 id
     box: 'outbox' | 'inbox';
-    pen: string;                // 绗斿悕锛堝啓淇¤鑹插悕 / 杩滅瀵勪俊鏂圭瑪鍚嶏級
+    pen: string;                // 笔名（写信角色名 / 远端寄信方笔名）
     content: string;
     createdAt: number;
-    charId?: string;            // 鍐欒繖灏佷俊/鍥炰俊鐨勮鑹?
+    charId?: string;            // 写这封信/回信的角色
 
     // outbox
-    status?: 'queued' | 'sent' | 'archived' | 'sealed';  // 寰呭瘎鍑?/ 宸插瘎鍑?/ 鏀跺埌鍥炲鐣欐。 / 瑙掕壊宸茶骞跺皝瀛?
-    remoteId?: string;          // 瀵勫嚭鍚庢湇鍔＄鍒嗛厤鐨勮繙绔?id
-    released?: boolean;         // 浣滆€呭凡銆屽仠姝紶鎾€嶏細鍚庣宸插垹銆侀€€鍑哄叕鍏辨睜锛屾湰鍦颁粛鐣欐。
+    status?: 'queued' | 'sent' | 'archived' | 'sealed';  // 待寄出 / 已寄出 / 收到回复留档 / 角色已读并封存
+    remoteId?: string;          // 寄出后服务端分配的远端 id
+    released?: boolean;         // 作者已「停止传播」：后端已删、退出公共池，本地仍留档
     sentAt?: number;
     repliesReceived?: VRLetterReply[];
-    /** 鍘熶綔鑰呰鑹茶杩囧洖淇″悗鐨勬劅瑙︼紙鍐欏畬鍗冲皝瀛橈紝浣垮懡瀹屾垚锛?*/
+    /** 原作者角色读过回信后的感触（写完即封存，使命完成） */
     reaction?: { content: string; createdAt: number };
 
     // inbox
-    remoteLetterId?: string;    // 杩滅淇?id锛堝洖淇℃椂鐢級
-    replyStatus?: 'none' | 'queued' | 'sent'; // 鏈洖 / 寰呭彂閫佸洖淇?/ 宸插彂閫?
+    remoteLetterId?: string;    // 远端信 id（回信时用）
+    replyStatus?: 'none' | 'queued' | 'sent'; // 未回 / 待发送回信 / 已发送
     reply?: { charId: string; pen: string; content: string; createdAt: number; userNote?: string };
     fetchedAt?: number;
 
-    // 浜掑姩鐑害缂撳瓨锛堟湇鍔＄涓哄噯锛沀I 鍗虫椂鍙嶉鐢級
-    likes?: number;             // 鐐硅禐鏁?
-    dislikes?: number;          // 鐐硅俯(=涓炬姤)鏁?
-    views?: number;             // 琚娊鍒?娴忚娆℃暟
-    myVote?: 1 | -1 | 0;        // 鎴戝杩欏皝淇＄殑鎶曠エ锛坕nbox 鎶藉埌鐨勪俊锛?
+    // 互动热度缓存（服务端为准；UI 即时反馈用）
+    likes?: number;             // 点赞数
+    dislikes?: number;          // 点踩(=举报)数
+    views?: number;             // 被抽到/浏览次数
+    myVote?: 1 | -1 | 0;        // 我对这封信的投票（inbox 抽到的信）
 }
 
-/** 鍚瓕鎴块槦鍒楅」銆?*/
+/** 听歌房队列项。 */
 export interface VRMusicQueueItem {
     song: CharPlaylistSong;
     charId: string;
     charName: string;
 }
 
-/** 鐣欒█绨匡紙鍏变韩鐗堣亰澧欙級鐨勪竴鏉＄暀瑷€銆?*/
+/** 留言簿（共享版聊墙）的一条留言。 */
 export interface VRGuestbookMessage {
     id: string;
-    /** 'user' = 鐢ㄦ埛鏈汉锛屽叾浣欎负 charId */
+    /** 'user' = 用户本人，其余为 charId */
     authorId: string;
     authorName: string;
     content: string;
-    /** 鑻ユ槸鍥炲鏌愭潯鐣欒█ */
+    /** 若是回复某条留言 */
     replyToId?: string;
     replyToName?: string;
     createdAt: number;
 }
 
-/** 鐣欒█绨垮叡浜姸鎬侊紙鍗曚緥锛屾墍鏈夎鑹?+ 鐢ㄦ埛鍏辩敤涓€闈㈠锛夈€?*/
+/** 留言簿共享状态（单例，所有角色 + 用户共用一面墙）。 */
 export interface VRGuestbookState {
-    id: string; // 'board' 鍗曚緥
+    id: string; // 'board' 单例
     messages: VRGuestbookMessage[];
     updatedAt: number;
 }
 
-/** 鍚瓕鎴垮叡浜姸鎬侊紙鍗曚緥锛屾墍鏈夎鑹插叡鐢ㄤ竴涓惊鐜槦鍒楋級銆?*/
+/** 听歌房共享状态（单例，所有角色共用一个循环队列）。 */
 export interface VRMusicRoomState {
-    id: string; // 'state' 鍗曚緥
+    id: string; // 'state' 单例
     nowPlaying?: {
         song: CharPlaylistSong;
         charId: string;
         charName: string;
-        /** 閫夋洸蹇冨/鐞嗙敱 */
+        /** 选曲心境/理由 */
         vibe?: string;
         since: number;
     };
@@ -1316,72 +1429,72 @@ export interface VRMusicRoomState {
     updatedAt: number;
 }
 
-// ============ 鍓ч櫌 / 璇濆墽閮ㄩ棬 ============
+// ============ 剧院 / 话剧部门 ============
 
-/** 鍓ф湰閲岀殑涓€涓櫥鍦鸿鑹诧紙鍚嶅瓧 + 澶ц嚧鎬ф牸锛屼緵閫夎鍖归厤/婕旂粠鐢級銆?*/
+/** 剧本里的一个登场角色（名字 + 大致性格，供选角匹配/演绎用）。 */
 export interface VRPlayRole {
     name: string;
     persona: string;
 }
 
-/** 涓€浠芥姇绋垮墽鏈紙瑙掕壊鍒涗綔 / 鐢ㄦ埛鍐?/ LLM 浠ｅ啓 / 涓婁紶锛夈€?*/
+/** 一份投稿剧本（角色创作 / 用户写 / LLM 代写 / 上传）。 */
 export interface VRScript {
     id: string;
     title: string;
-    /** 涓€鍙ヨ瘽绠€浠嬶紙"鍒涗綔浜嗗叧浜?xxx 鐨勮垶鍙板墽"鐢級 */
+    /** 一句话简介（"创作了关于 xxx 的舞台剧"用） */
     logline: string;
     roles: VRPlayRole[];
-    /** 瀹屾暣鍓ф湰姝ｆ枃锛堝浐瀹氭牸寮忥細骞?鍦?+ 瑙掕壊鍙拌瘝 + 锛堟梺鐧斤級锛?*/
+    /** 完整剧本正文（固定格式：幕/场 + 角色台词 + （旁白）） */
     body: string;
-    /** 浣滆€?id锛?user' | charId | 'llm' */
+    /** 作者 id：'user' | charId | 'llm' */
     authorId: string;
     authorName: string;
     source: 'char' | 'user' | 'llm' | 'upload';
     createdAt: number;
 }
 
-/** 缂栨帓鏃剁殑 LLM 璋冪敤妯″紡锛氶€愯鑹插悇璋冧竴娆★紙绮惧噯锛孨 娆★級/ 鍥哄畾涓ゆ锛堢渷锛屽彲鑳?OOC锛夈€?*/
+/** 编排时的 LLM 调用模式：逐角色各调一次（精准，N 次）/ 固定两次（省，可能 OOC）。 */
 export type VRStageMode = 'per-role' | 'two-call';
 
-/** 閫夎锛氬墽鏈鑹?鈫?婕斿憳锛坈har 鎴?涓存椂 NPC锛夈€?*/
+/** 选角：剧本角色 → 演员（char 或 临时 NPC）。 */
 export interface VRCastAssign {
     roleName: string;
     actorId: string;   // charId | npc_xxx
     actorName: string;
     isNpc: boolean;
-    /** NPC 鐨勬崗鑴哥珛缁橈紙閫忔槑 PNG dataUrl锛?*/
+    /** NPC 的捏脸立绘（透明 PNG dataUrl） */
     npcChibi?: string;
 }
 
-/** 鏌愭紨鍛樿瀹屽墽鏈悗缁欏婕旂殑鎰忚锛堝悙妲?/ 鏀瑰彴璇嶅姩浣?/ 閰嶄笉閰嶅悎锛夈€?*/
+/** 某演员读完剧本后给导演的意见（吐槽 / 改台词动作 / 配不配合）。 */
 export interface VRActorNote {
     actorId: string;
     actorName: string;
     roleName: string;
-    /** 涓€鍙ュ悙妲?/ 鎯虫硶锛圲I 灞曠ず锛?*/
+    /** 一句吐槽 / 想法（UI 展示） */
     note: string;
-    /** 瑙掕壊鎸夎嚜宸辨湰鑹查噸鍐欒繃鐨?鎴戣繖閮ㄥ垎鍙拌瘝 / 鎬庝箞婕?锛堝彲绌?= 鐓у師鏈紨锛?*/
+    /** 角色按自己本色重写过的"我这部分台词 / 怎么演"（可空 = 照原本演） */
     lines?: string;
-    /** 缁濆绂佸繉锛氬婕旂粷涓嶈兘璁╄瑙掕壊鍋氱殑浜嬶紙纭孩绾匡紝鍙┖锛?*/
+    /** 绝对禁忌：导演绝不能让该角色做的事（硬红线，可空） */
     taboo?: string;
-    /** 缁欏婕旂殑鍐欎綔鎸囧锛堣繖鏉＄嚎璇ユ€庝箞澶勭悊锛屽彲绌猴級 */
+    /** 给导演的写作指导（这条线该怎么处理，可空） */
     direction?: string;
-    /** 鎬佸害鍏夎氨锛氭鐒?/ 閰嶅悎 / 鍕夊己 / 闅愬繊 / 鎶佃Е / 鎷掓紨锛堟寜瑙掕壊鎬у瓙鑷劧钀界偣锛屼笉蹇呴兘纭垰锛?*/
+    /** 态度光谱：欣然 / 配合 / 勉强 / 隐忍 / 抵触 / 拒演（按角色性子自然落点，不必都硬刚） */
     attitude?: string;
-    /** 鏄惁閰嶅悎锛堢敱 attitude 鎺ㄥ锛氭姷瑙?鎷掓紨 = false锛?*/
+    /** 是否配合（由 attitude 推导：抵触/拒演 = false） */
     cooperative: boolean;
 }
 
-/** 鏈€缁堟紨鍑鸿剼鏈殑涓€鎷嶏紙鍙拌瘝姘旀场 / 鏃佺櫧 / 涓婂満 / 涓嬪満锛夈€?*/
+/** 最终演出脚本的一拍（台词气泡 / 旁白 / 上场 / 下场）。 */
 export interface VRStageLine {
     kind: 'line' | 'narration' | 'enter' | 'exit';
-    /** line/enter/exit 鏃舵槸璋?*/
+    /** line/enter/exit 时是谁 */
     actorName?: string;
-    /** 鍙拌瘝姘旀场鍐呭 / 鏃佺櫧鏂囧瓧 */
+    /** 台词气泡内容 / 旁白文字 */
     text: string;
 }
 
-/** 涓€鍦哄凡鏀跺綍鐨勬紨鍑猴紙瀵兼紨鏁村悎鍚庣殑鎴愬搧 + 瑙備紬閿愯瘎 + 璇勭骇锛夈€?*/
+/** 一场已收录的演出（导演整合后的成品 + 观众锐评 + 评级）。 */
 export interface VRStagedPlay {
     id: string;
     scriptId: string;
@@ -1389,28 +1502,28 @@ export interface VRStagedPlay {
     logline: string;
     cast: VRCastAssign[];
     notes: VRActorNote[];
-    /** 瀵兼紨鏁村悎鍚庣殑鍙紨鍑鸿剼鏈?*/
+    /** 导演整合后的可演出脚本 */
     stage: VRStageLine[];
-    /** 璧涘崥瑙備紬閿愯瘎 */
+    /** 赛博观众锐评 */
     reviews: { critic: string; text: string }[];
-    /** 璇勭骇锛堝 S / A / 鈽呪槄鈽呪槄鈽嗭級 */
+    /** 评级（如 S / A / ★★★★☆） */
     rating: string;
     createdAt: number;
 }
 
 /**
- * 鎹忚劯绯荤粺鑷畾涔夐儴浠讹紙寮€鍙戞ā寮忚拷鍔狅級銆傝繍琛屾椂鐢?CreatorIframe 璇诲嚭锛岄殢 like520_init
- * 浠?extraItems 娉ㄥ叆鎹忎汉鍣紝鍚堝苟杩涘搴旂被鐩殑 PARTS銆?20 / 椤靛 閮戒細鎷垮埌銆?
+ * 捏脸系统自定义部件（开发模式追加）。运行时由 CreatorIframe 读出，随 like520_init
+ * 以 extraItems 注入捏人器，合并进对应类目的 PARTS。520 / 页外 都会拿到。
  */
 export interface CustomCreatorPart {
     id: string;
-    /** 褰掑睘绫荤洰 key锛堝 skin / fronthair / outfit 鈥︼紝椤讳笌鎹忎汉鍣?PARTS 鐨?key 瀵瑰簲锛?*/
+    /** 归属类目 key（如 skin / fronthair / outfit …，须与捏人器 PARTS 的 key 对应） */
     categoryKey: string;
-    /** 闈㈡澘閲屾樉绀虹殑鍚嶅瓧 */
+    /** 面板里显示的名字 */
     name: string;
-    /** 閮ㄤ欢鍥撅紙閫忔槑 PNG 鐨?data URL锛岄』涓庢崗浜哄櫒鐢诲竷鍚屽昂瀵?鍚岄敋鐐癸級 */
+    /** 部件图（透明 PNG 的 data URL，须与捏人器画布同尺寸/同锚点） */
     src: string;
-    /** 鏄惁鍙鎹㈣壊锛堝搴?item.tintable锛?*/
+    /** 是否可被换色（对应 item.tintable） */
     tintable?: boolean;
     createdAt: number;
 }
@@ -1473,9 +1586,9 @@ export interface SongArrangement {
 
 // Provider identifier for AI-generated audio. Each one has its own pricing
 // / length cap / API path; the actual call site decides which to use.
-//   - 'minimax-free' 鈫?music-2.6-free, free tier, 60s cap
-//   - 'minimax-paid' 鈫?music-2.6, Token-Plan price, 60s cap
-//   - 'ace-step'     鈫?Replicate lucataco/ace-step, $0.015/song, 4-min cap
+//   - 'minimax-free' → music-2.6-free, free tier, 60s cap
+//   - 'minimax-paid' → music-2.6, Token-Plan price, 60s cap
+//   - 'ace-step'     → Replicate lucataco/ace-step, $0.015/song, 4-min cap
 export type MusicProvider = 'minimax-free' | 'minimax-paid' | 'ace-step';
 
 // AI-rendered audio attached to a SongSheet.
@@ -1511,11 +1624,11 @@ export interface SongSheet {
     completedAt?: number;
     arrangement?: SongArrangement;
     audio?: SongAudio;
-    // Custom style prompt 鈥?when set, overrides the preset/genre/mood-derived tags.
+    // Custom style prompt — when set, overrides the preset/genre/mood-derived tags.
     // Plain comma-separated English string the user (or LLM helper) authored.
     // Reused by both ACE-Step (`tags` field) and MiniMax music (`prompt` field).
     aceStepCustomTags?: string;
-    // Last-used music provider for this song 鈥?drives the modal's default selection.
+    // Last-used music provider for this song — drives the modal's default selection.
     musicProvider?: MusicProvider;
     // Lyric structure template chosen at creation. Drives the structure-guide
     // banner shown in the write view so user/char don't write randomly.
@@ -1557,23 +1670,23 @@ export interface BankTransaction {
     note: string;
     timestamp: number;
     dateStr: string; // YYYY-MM-DD
-    /** 杩涜处 / 鏀嚭銆傞粯璁?expense锛堝吋瀹规棫鏁版嵁锛?*/
+    /** 进账 / 支出。默认 expense（兼容旧数据） */
     type?: 'income' | 'expense';
-    /** 鑷姩娴佹按鏉ユ簮锛屽鐢熸椿鎷?/ 蹇冩剰閾?/ 楗エ / 鑱婂ぉ銆?*/
+    /** 自动流水来源，如生活拟 / 心意铺 / 饭票 / 聊天。 */
     sourceApp?: string;
-    /** 鏉ユ簮涓氬姟 id锛屽璁㈠崟 id銆佸矖浣?id銆佽偂绁ㄤ唬鐮併€?*/
+    /** 来源业务 id，如订单 id、岗位 id、股票代码。 */
     sourceId?: string;
-    /** 鏇寸粏鐨勮祫閲戞祦绫诲瀷锛歴alary / shop / stock / loan / company / shopping 绛夈€?*/
+    /** 更细的资金流类型：salary / shop / stock / loan / company / shopping 等。 */
     kind?: string;
-    /** 鏄惁鐢遍挶鍖呭彉鍔ㄨ嚜鍔ㄧ敓鎴愩€?*/
+    /** 是否由钱包变动自动生成。 */
     auto?: boolean;
-    /** 杩欑瑪鍙樺姩鍚庣殑閽卞寘浣欓銆?*/
+    /** 这笔变动后的钱包余额。 */
     balanceAfter?: number;
-    /** 鍒涘缓鑰咃細user 鎵嬪姩 / system 鑷姩 / character 瑙掕壊渚х敓鎴愩€?*/
+    /** 创建者：user 手动 / system 自动 / character 角色侧生成。 */
     createdBy?: 'user' | 'system' | 'character';
-    /** 鍏宠仈瀹炰綋 id锛屽鍏徃 id銆佽捶娆?id銆佹寔浠撲唬鐮併€?*/
+    /** 关联实体 id，如公司 id、贷款 id、持仓代码。 */
     relatedEntityId?: string;
-    /** 瑙掕壊瀵硅繖绗旂幇瀹炶处鐩殑鐐硅瘎锛圓I 鐢熸垚锛屼竴绗斾竴鏉★級 */
+    /** 角色对这笔现实账目的点评（AI 生成，一笔一条） */
     charComment?: { charId: string; charName: string; text: string; ts: number };
 }
 
@@ -1585,11 +1698,11 @@ export interface AdjustBalanceMeta {
     kind?: string;
     relatedEntityId?: string;
     createdBy?: 'user' | 'system' | 'character';
-    /** false = 鍙敼浣欓锛屼笉鑷姩鐢熸垚鐢熸椿鎷熸祦姘淬€?*/
+    /** false = 只改余额，不自动生成生活拟流水。 */
     ledger?: boolean;
 }
 
-/** 璐︽湰閲屼竴鏉¤瘎璁猴紙鐢ㄦ埛 鈫?瑙掕壊浜掕瘎锛?*/
+/** 账本里一条评论（用户 ↔ 角色互评） */
 export interface LedgerComment {
     author: 'user' | 'character';
     text: string;
@@ -1597,8 +1710,8 @@ export interface LedgerComment {
 }
 
 /**
- * 瑙掕壊璐︽湰锛氳鑹叉寜浜鸿缁欒嚜宸辫鐨勪竴鏉¤处锛圓I 鐢熸垚鐨勮繘璐?鏀嚭锛夛紝
- * 鐢ㄦ埛鍙湪涓嬮潰鐣欒█璇勮锛岃鑹蹭細 AI 鍥炲銆備笌鐢ㄦ埛閽卞寘銆佸簵閾哄潎鏃犲叧銆?
+ * 角色账本：角色按人设给自己记的一条账（AI 生成的进账/支出），
+ * 用户可在下面留言评论，角色会 AI 回复。与用户钱包、店铺均无关。
  */
 export interface CharLedgerEntry {
     id: string;
@@ -1644,30 +1757,30 @@ export interface ShopRecipe {
     cost: number; // AP cost to unlock
     appeal: number; // Contribution to shop appeal
     isUnlocked: boolean;
-    /** 鍞环锛氳惀涓氭椂姣忓崠鍑轰竴浠界殑鏀跺叆锛堣繘閽卞寘锛夈€傛湭璁惧垯鐢?appeal 浼扮畻銆?*/
+    /** 售价：营业时每卖出一份的收入（进钱包）。未设则用 appeal 估算。 */
     price?: number;
 }
 
-/** 涓€鏉￠【瀹㈣瘎浠凤紙钀ヤ笟鏃剁敱 NPC / 瑙掕壊椤惧鐣欎笅锛屽奖鍝嶅簵閾哄彛纰戯級 */
+/** 一条顾客评价（营业时由 NPC / 角色顾客留下，影响店铺口碑） */
 export interface ShopReview {
     id: string;
     authorName: string;
-    avatar: string;       // emoji 鎴?URL
-    rating: number;       // 1~5 鏄?
+    avatar: string;       // emoji 或 URL
+    rating: number;       // 1~5 星
     text: string;
-    productName?: string; // 鐐圭殑浠€涔?
+    productName?: string; // 点的什么
     ts: number;
     isNpc?: boolean;
-    aiPending?: boolean;  // 宸叉彁浜?AI 娑﹁壊銆佺瓑寰呰繑鍥烇紙UI 鍙樉绀恒€屽浜烘鍦ㄥ啓鈥︺€嶏級
+    aiPending?: boolean;  // 已提交 AI 润色、等待返回（UI 可显示「客人正在写…」）
 }
 
-/** 鍥炲ご瀹?/ VIP锛氱疮璁″埌璁匡紙鎴愬姛娑堣垂锛夎秺澶氾紝瓒婂繝璇氣€斺€斿父瀹㈠皬璐规洿楂樸€佽瘎鍒嗘洿绋炽€?*/
+/** 回头客 / VIP：累计到访（成功消费）越多，越忠诚——常客小费更高、评分更稳。 */
 export interface ShopRegular {
-    id: string;        // 'npc:鍚嶅瓧' 鎴?'char:瑙掕壊id'
+    id: string;        // 'npc:名字' 或 'char:角色id'
     name: string;
-    avatar: string;    // emoji 鎴?URL
+    avatar: string;    // emoji 或 URL
     isNpc: boolean;
-    visits: number;    // 绱鎴愬姛娑堣垂娆℃暟
+    visits: number;    // 累计成功消费次数
 }
 
 export interface BankConfig {
@@ -1752,21 +1865,21 @@ export interface BankShopState {
     };
     guestbook?: BankGuestbookItem[];
     dollhouse?: DollhouseState;
-    /** 涓婃銆岃惀涓氥€嶇粨绠楃殑鏃堕棿鎴筹紙鐢ㄤ簬钀ヤ笟鍐峰嵈锛?*/
+    /** 上次「营业」结算的时间戳（用于营业冷却） */
     lastBusinessAt?: number;
-    /** 搴楅摵绱钀ヤ笟棰濓紙杩涜繃閽卞寘鐨勬€绘敹鍏ワ紝浠呬綔灞曠ず缁熻锛?*/
+    /** 店铺累计营业额（进过钱包的总收入，仅作展示统计） */
     totalRevenue?: number;
-    /** 椤惧璇勪环锛堟渶杩戣嫢骞叉潯锛岃惀涓氭椂浜х敓锛屽喅瀹氬彛纰戣瘎鍒嗭級 */
+    /** 顾客评价（最近若干条，营业时产生，决定口碑评分） */
     reviews?: ShopReview[];
-    /** 鍚勫晢鍝佸簱瀛橈紙recipeId 鈫?鍓╀綑浠芥暟锛夈€傝惀涓氬崠鍑烘墸鍑忥紝杩涜揣鑺遍挶琛ュ厖銆?*/
+    /** 各商品库存（recipeId → 剩余份数）。营业卖出扣减，进货花钱补充。 */
     stock?: Record<string, number>;
-    /** 鍥炲ご瀹?/ VIP锛坕dentity id 鈫?璁板綍锛夈€傝惀涓氭椂绱鍒拌锛屽父瀹細鍥炲ご鍏夐【銆?*/
+    /** 回头客 / VIP（identity id → 记录）。营业时累计到访，常客会回头光顾。 */
     regulars?: Record<string, ShopRegular>;
-    /** 鎸傛満钀ヤ笟棰濓細绂诲簵鏈熼棿鎸佺画绱銆佺偣閲戝竵鏀惰繘閽卞寘锛堜笂闄愯 IDLE_CAP_HOURS锛夈€?*/
+    /** 挂机营业额：离店期间持续累计、点金币收进钱包（上限见 IDLE_CAP_HOURS）。 */
     pendingRevenue?: number;
-    /** 涓婃鎶婃祦閫濇椂闂存姌绠楁垚 pendingRevenue 鐨勯敋鐐规椂闂存埑銆?*/
+    /** 上次把流逝时间折算成 pendingRevenue 的锚点时间戳。 */
     lastAccrualAt?: number;
-    /** 褰撳墠澶╂皵/闄愭椂浜嬩欢锛堝奖鍝嶅娴佷笌鎸傛満浜у嚭锛夛紝鍒版湡鍚庨殢鏈哄垏鎹€?*/
+    /** 当前天气/限时事件（影响客流与挂机产出），到期后随机切换。 */
     weather?: { id: string; until: number };
 }
 
@@ -2052,9 +2165,9 @@ export interface BankFullState {
 }
 // ---------------------------------
 
-// --- CHAR MUSIC PROFILE (缃戞槗浜戦鏍?路 瑙掕壊鐨勯煶涔愪汉鏍? ---
+// --- CHAR MUSIC PROFILE (网易云风格 · 角色的音乐人格) ---
 
-/** 瑙掕壊鏈湴姝屽崟閲岀殑杞婚噺姝屾洸蹇収 鈥?瀛楁涓?MusicContext 鐨?Song 瀵归綈锛堟棤杩愯鏃?url锛?*/
+/** 角色本地歌单里的轻量歌曲快照 — 字段与 MusicContext 的 Song 对齐（无运行时 url） */
 export interface CharPlaylistSong {
     id: number;
     name: string;
@@ -2064,22 +2177,22 @@ export interface CharPlaylistSong {
     duration: number;
     fee: number;
     /**
-     * 'user' = 杩欓鏄粠 user 閭ｉ噷"鎶?杩囨潵鐨勶紙user 鍦ㄥ惉 鈫?char 鍔犺繘鑷繁姝屽崟锛夈€?
-     * 'discovered' = char 鑷繁鎺㈢储 / 鍒濆鍖栨椂鎵惧埌鐨勩€?
-     * 涓嶅啓榛樿鎸?'discovered' 澶勭悊锛堝悜鍚庡吋瀹瑰凡鏈夋暟鎹級銆?
-     * 鐢ㄩ€旓細褰?char 鍚庣画"鍦ㄥ惉"杩欓鏃讹紝prompt 浼氬憡璇?LLM "杩欐槸浠?user 閭ｅ効鏀舵潵鐨?锛?
-     * 璁╄蹇?瀵硅瘽鑳借嚜鐒跺甫涓婅繖灞傚叧绯伙紝鑰屼笉鏄綋鎴愪竴棣栦腑绔嬬殑姝屻€?
+     * 'user' = 这首是从 user 那里"抄"过来的（user 在听 → char 加进自己歌单）。
+     * 'discovered' = char 自己探索 / 初始化时找到的。
+     * 不写默认按 'discovered' 处理（向后兼容已有数据）。
+     * 用途：当 char 后续"在听"这首时，prompt 会告诉 LLM "这是从 user 那儿收来的"，
+     * 让记忆/对话能自然带上这层关系，而不是当成一首中立的歌。
      */
     source?: 'user' | 'discovered';
-    /** 鍔犲叆姝屽崟鏃堕棿锛岀敤鏉ユ帓搴?/ 鏄剧ず"鏈€杩戞敹钘? */
+    /** 加入歌单时间，用来排序 / 显示"最近收藏" */
     addedAt?: number;
 }
 
 export interface CharPlaylist {
-    id: string;                 // 鏈湴 id (涓嶄笌缃戞槗浜?playlistId 鍐茬獊)
+    id: string;                 // 本地 id (不与网易云 playlistId 冲突)
     title: string;
-    description: string;        // 瑙掕壊鑷繁鍐欑殑姝屽崟绠€浠?
-    coverStyle: string;         // 娓愬彉鑹叉爣璇?or 绗竴棣栨瓕灏侀潰
+    description: string;        // 角色自己写的歌单简介
+    coverStyle: string;         // 渐变色标识 or 第一首歌封面
     songs: CharPlaylistSong[];
     mood?: SongMood;
     createdAt: number;
@@ -2088,65 +2201,162 @@ export interface CharPlaylist {
 
 export interface CharPlayRecord {
     song: CharPlaylistSong;
-    at: number;                 // 鎾斁鏃堕棿鎴筹紙鐪熷疄鏃堕棿锛?
-    context?: string;           // 璇ユ椂鍒荤殑蹇冨澶囨敞锛屽 "澶辩湢鐨勬椂鍊?
+    at: number;                 // 播放时间戳（真实时间）
+    context?: string;           // 该时刻的心境备注，如 "失眠的时候"
 }
 
 export interface CharMusicReview {
     id: string;
     targetType: 'song' | 'user_playlist' | 'user_record';
     targetId: string;           // songId or playlistId as string
-    targetTitle: string;        // 姝屽悕 / 姝屽崟鍚?
-    content: string;            // 璇勮姝ｆ枃
+    targetTitle: string;        // 歌名 / 歌单名
+    content: string;            // 评论正文
     createdAt: number;
 }
 
-/** 杩愯鏃?姝ゅ埢鍦ㄥ惉" 鈥?鏍规嵁 Schedule 鍐冲畾锛屼笉蹇呮寔涔呭寲锛堝彲浠ラ殢鏃?recompute锛?*/
+/** 运行时"此刻在听" — 根据 Schedule 决定，不必持久化（可以随时 recompute） */
 export interface CharCurrentListening {
     songId: number;
     songName: string;
     artists: string;
     albumPic: string;
-    /** 蹇冨 / 閫夋洸鐞嗙敱锛堟潵鑷?slot.innerThought 鎴?description锛?*/
+    /** 心境 / 选曲理由（来自 slot.innerThought 或 description） */
     vibe?: string;
     startedAt: number;
 }
 
 export interface CharMusicProfile {
-    /** 闊充箰鍝佸懗绠€浠嬶紙LLM 鍒濆鍖栫敓鎴愶級 */
+    /** 音乐品味简介（LLM 初始化生成） */
     bio: string;
-    /** 鏇查鏍囩锛堝彲闅忓惉姝屾紨鍖栵級 */
+    /** 曲风标签（可随听歌演化） */
     genreTags: string[];
-    /** 鍋忕埍鐨勮壓浜?*/
+    /** 偏爱的艺人 */
     signatureArtists: { name: string; artistId?: number }[];
-    /** 鏈湴姝屽崟鍒楄〃 */
+    /** 本地歌单列表 */
     playlists: CharPlaylist[];
-    /** 浠?likelist */
+    /** 仿 likelist */
     likedSongIds: number[];
-    /** 鏈€杩戝湪鍚紙浠?user/record锛?*/
+    /** 最近在听（仿 user/record） */
     recentPlays: CharPlayRecord[];
-    /** 绉佷汉 FM 鍏抽敭璇嶇瀛愶紙鐣欑粰鏈潵鍋?char FM锛?*/
+    /** 私人 FM 关键词种子（留给未来做 char FM） */
     fmSeed?: string;
-    /** 瑙掕壊瀵规瓕/user 姝屽崟鐨勭偣璇?*/
+    /** 角色对歌/user 歌单的点评 */
     reviews?: CharMusicReview[];
-    /** 姝ゅ埢鍦ㄥ惉锛圫chedule 杩愯鏃跺～鍏咃紝UI 灞曠ず鐢級 */
+    /** 此刻在听（Schedule 运行时填充，UI 展示用） */
     currentListening?: CharCurrentListening;
-    /** 鏄惁鍏佽 char 璇诲彇 user 鐨勭綉鏄撲簯鏁版嵁锛堥粯璁?true锛?*/
+    /** 是否允许 char 读取 user 的网易云数据（默认 true） */
     canReadUserMusic?: boolean;
-    /** 鍦ㄧ嚎涓€璧峰惉寮€鍏筹細寮€鍚椂 char 鍙湪浣犲惉姝屾椂銆屼竴璧峰惉銆嶏紙杈撳嚭 join 鍗＄墖锛夛紱
-     *  鍏抽棴鍒欎笉鍐嶆彁渚涗竴璧峰惉閫夐」锛堜粛鍙敹姝?鍒嗕韩锛夈€倁ndefined 瑙嗕负寮€鍚紙榛樿琛屼负锛夈€?*/
+    /** 在线一起听开关：开启时 char 可在你听歌时「一起听」（输出 join 卡片）；
+     *  关闭则不再提供一起听选项（仍可收歌/分享）。undefined 视为开启（默认行为）。 */
     listenTogetherEnabled?: boolean;
-    /** 鍒濆鍖栨椂闂?*/
+    /** 初始化时间 */
     initializedAt?: number;
     updatedAt: number;
 }
 
+// --- MUSIC LIBRARY (Music App local-first database) ---
+
+export type MusicLibrarySource = 'netease' | 'qq' | 'local' | 'user' | 'discovered';
+
+export interface MusicLibraryTrack {
+    id: string;                         // `${source}:${stable source id}`
+    source: MusicLibrarySource;
+    sourceId: string;
+    numericId?: number;
+    name: string;
+    artists: string;
+    album: string;
+    albumPic: string;
+    duration: number;
+    fee: number;
+    qqSongMid?: string;
+    qqMediaMid?: string;
+    qqSongId?: string | number;
+    local?: boolean;
+    localAssetKey?: string;
+    localMimeType?: string;
+    localCoverStyle?: string;
+    customAuthorCharIds?: string[];
+    localLyrics?: string;
+    lyricLineTimings?: number[];
+    tags?: string[];
+    liked?: boolean;
+    playCount?: number;
+    lastPlayedAt?: number;
+    firstSeenAt: number;
+    updatedAt: number;
+}
+
+export type MusicLibraryPlaylistKind = 'user' | 'smart' | 'account' | 'character' | 'system';
+
+export interface MusicLibraryPlaylist {
+    id: string;
+    kind: MusicLibraryPlaylistKind;
+    title: string;
+    description?: string;
+    source?: MusicLibrarySource | 'mixed';
+    sourceId?: string;
+    coverUrl?: string;
+    coverStyle?: string;
+    trackCount?: number;
+    sortOrder?: number;
+    pinned?: boolean;
+    createdAt: number;
+    updatedAt: number;
+}
+
+export interface MusicPlaylistItem {
+    id: string;
+    playlistId: string;
+    trackId: string;
+    position: number;
+    source?: 'user' | 'account' | 'character' | 'smart';
+    charId?: string;
+    addedAt: number;
+}
+
+export interface MusicPlayEvent {
+    id: string;
+    trackId: string;
+    source: MusicLibrarySource;
+    sourceId: string;
+    startedAt: number;
+    endedAt?: number;
+    duration?: number;
+    progress?: number;
+    completedRatio?: number;
+    completed?: boolean;
+    playSource?: 'search' | 'library' | 'discover' | 'account' | 'character' | 'local' | 'chat' | 'queue' | 'unknown';
+    listenTogetherWith?: string[];
+}
+
+export interface MusicSearchHistoryItem {
+    id: string;
+    keyword: string;
+    source?: MusicLibrarySource | 'mixed';
+    resultCount?: number;
+    count: number;
+    createdAt: number;
+    updatedAt: number;
+}
+
+export interface MusicRecommendCacheEntry {
+    id: string;
+    kind: 'daily' | 'fm' | 'mixed' | 'character' | 'recent' | 'local';
+    key: string;
+    title: string;
+    trackIds: string[];
+    generatedAt: number;
+    expiresAt: number;
+    reason?: string;
+}
+
 /**
- * 瑙掕壊绂荤嚎鑷富鐢熸椿浜嬩欢 鈥斺€?鐢?utils/autonomousLife.ts 鐨?agent 鐢熸垚銆?
- * 瑙掕壊鍦ㄧ敤鎴风绾?/ 娌″湪鑱婂ぉ鏃躲€岃繃鑷繁鐨勬棩瀛愩€嶏紝姣忔潯浜嬩欢浠ｈ〃 TA 姝ｅ湪鎴栧垰鍒氱粡鍘嗙殑
- * 涓€浠跺皬浜嬶紙涓婄彮銆佸悆楗€佽拷鍓с€佸拰鏈嬪弸鍑洪棬銆乪mo鈥︼級銆傝繖浜涗簨浠舵湁涓や釜鍑哄彛锛?
- *  1. 缁欎富鍔ㄦ秷鎭彇鏉?鈥斺€?瑙掕壊鍒嗕韩鑷繁鐨勭敓娲伙紝鑰屼笉鏄弽澶嶅偓鐢ㄦ埛鍥炲锛堜笉鍥寸潃鐢ㄦ埛杞級锛?
- *  2. 鏀掓垚銆屼綘涓嶅湪鏃?TA 缁忓巻浜嗏€︺€嶇殑绂荤嚎鍔ㄦ€佸洖椤炬椂闂寸嚎锛堟潵寰€ App 鍐呭彲鏌ョ湅锛夈€?
+ * 角色离线自主生活事件 —— 由 utils/autonomousLife.ts 的 agent 生成。
+ * 角色在用户离线 / 没在聊天时「过自己的日子」，每条事件代表 TA 正在或刚刚经历的
+ * 一件小事（上班、吃饭、追剧、和朋友出门、emo…）。这些事件有两个出口：
+ *  1. 给主动消息取材 —— 角色分享自己的生活，而不是反复催用户回复（不围着用户转）；
+ *  2. 攒成「你不在时 TA 经历了…」的离线动态回顾时间线（来往 App 内可查看）。
  */
 export type CharLifeEventKind =
   | 'routine'
@@ -2183,40 +2393,46 @@ export interface CharLifeEvent {
   /** `life_${charId}_${timestamp}_${rand}` */
   id: string;
   charId: string;
-  /** 浜嬩欢鍙戠敓鏃跺埢锛坢s锛夈€傚洖椤炬寜瀹冩帓搴?/ 鍒嗙粍銆?*/
+  /** 事件发生时刻（ms）。回顾按它排序 / 分组。 */
   timestamp: number;
-  /** 涓€鍙ヨ瘽娲诲姩锛屽銆屽湪鍏徃璧舵柟妗堛€嶃€岀獫鍦ㄦ矙鍙戣拷鍓с€?*/
+  /** 一句话活动，如「在公司赶方案」「窝在沙发追剧」 */
   activity: string;
-  /** 褰撲笅蹇冩儏锛屼竴涓や釜璇嶆垨 emoji锛屽銆屾湁鐐圭疮銆嶃€岎煒?鎯剰銆?*/
+  /** 当下心情，一两个词或 emoji，如「有点累」「😌 惬意」 */
   mood?: string;
-  /** 鍙€夊湴鐐癸紝濡傘€屽叕鍙搞€嶃€屾ゼ涓嬪挅鍟″簵銆?*/
+  /** 可选地点，如「公司」「楼下咖啡店」 */
   location?: string;
-  /** 鐢ㄤ簬閫氱煡 / 鍥為【鐨勭畝鐭憳瑕侊紙閫氬父绛変簬 activity锛屾垨鏇村彛璇殑涓€鍙ヨ瘽锛?*/
+  /** 用于通知 / 回顾的简短摘要（通常等于 activity，或更口语的一句话） */
   summary: string;
-  /** 鏄惁宸蹭綔涓轰富鍔ㄦ秷鎭彂缁欑敤鎴凤紙鍥為【閲屾嵁姝ゆ爣娉ㄣ€屽凡缁忚窡浣犺杩囥€嶏紝閬垮厤閲嶅寮鸿皟锛?*/
+  /** 是否已作为主动消息发给用户（回顾里据此标注「已经跟你说过」，避免重复强调） */
   surfacedAsMsg?: boolean;
-  /** 瀹為檯浣滀负涓诲姩娑堟伅鍙戝嚭鐨勬椂鍒伙紱鏃ф暟鎹彲鑳藉彧鏈?surfacedAsMsg銆?*/
+  /** 实际作为主动消息发出的时刻；旧数据可能只有 surfacedAsMsg。 */
   surfacedAt?: number;
-  /** 鐢熸垚鏉ユ簮锛歱roactive 瑙﹀彂鏃堕『甯︾敓鎴?/ 鐢ㄦ埛绂荤嚎鍥炴潵鏃惰ˉ榻?*/
+  /** 生成来源：proactive 触发时顺带生成 / 用户离线回来时补齐 */
   source: 'proactive' | 'catchup';
-  /** v2锛氫簨浠剁被鍨嬶紝鐢ㄤ簬鍥為【鏍囩銆佷富鍔ㄦ秷鎭彇鏉愬拰鍘婚噸銆?*/
+  /** v2：事件类型，用于回顾标签、主动消息取材和去重。 */
   eventKind?: CharLifeEventKind;
-  /** v2锛氬綋涓嬭兘閲忥紝褰卞搷涓诲姩娑堟伅鐭績/鐑儓绋嬪害銆?*/
+  /** v2：当下能量，影响主动消息短促/热烈程度。 */
   energy?: CharLifeEnergy;
-  /** v2锛氫簨浠跺己搴?0-100锛涜秺楂樿秺瀹规槗鍙樻垚涓诲姩鏉ヤ俊銆?*/
+  /** v2：事件强度 0-100；越高越容易变成主动来信。 */
   intensity?: number;
-  /** v2锛氬垎浜剰鎰?0-100锛涙櫤鑳借Е鍙戜綆浜庨槇鍊兼椂鍙褰曠敓娲汇€佷笉鎵撴壈鐢ㄦ埛銆?*/
+  /** v2：分享意愿 0-100；智能触发低于阈值时只记录生活、不打扰用户。 */
   shareWillingness?: number;
-  /** v2锛氳繛缁嚎绱紝渚嬪鈥滄病鐫″ソ->涓嬪崍浣庢皵鍘嬧€濓紝璁╃绾跨敓娲绘洿鍍忓悓涓€澶┿€?*/
+  /** v2：连续线索，例如“没睡好->下午低气压”，让离线生活更像同一天。 */
   thread?: string;
-  /** v2锛氬鏋滆鍙戜富鍔ㄦ秷鎭紝鏇撮€傚悎鐨勫紑鍙ｈ搴︺€?*/
+  /** v2：如果要发主动消息，更适合的开口角度。 */
   proactiveAngle?: CharLifeProactiveAngle;
-  /** v2锛氳繖鏉′簨浠剁敱鍝被瑙﹀彂浜х敓銆?*/
+  /** v2：这条事件由哪类触发产生。 */
   triggerSource?: CharLifeTriggerSource;
+  /** 若这条线下生活事件生成时对齐了今日作息，记录对应日期。 */
+  scheduleDate?: string;
+  /** 若这条线下生活事件生成时对齐了今日作息，记录对应时段开始时间。 */
+  scheduleSlotStartTime?: string;
+  /** 若这条线下生活事件生成时对齐了今日作息，记录对应活动名。 */
+  scheduleSlotActivity?: string;
 }
 
 // =====================================================================
-// 寰抗 App 鈥?瑙掕壊 Screenlife 婕斿嚭 + 寮傚湴鎭嬬洃瑙?鎶ュ妯℃嫙
+// 循迹 App — 角色 Screenlife 演出 + 异地恋监视/报备模拟
 // =====================================================================
 
 export type XunjiTab = 'screenlife' | 'monitor' | 'report' | 'settings';
@@ -2390,11 +2606,11 @@ export interface XunjiSettings {
   id: 'settings';
   activeCharId?: string;
   writeBackToCharacter: boolean;
-  /** 绲鑱斿姩锛氭妸鏈€鏂板惊杩规紨鍑?/ 鐩戣 / 鎶ュ浣滀负瑙掕壊鍙劅鐭ョ殑杩戞湡鐢熸椿鐥曡抗娉ㄥ叆鑱婂ぉ涓婁笅鏂囥€?*/
+  /** 絮语联动：把最新循迹演出 / 监视 / 报备作为角色可感知的近期生活痕迹注入聊天上下文。 */
   chatContextEnabled?: boolean;
-  /** 鐐逛寒杩囦竴娆″悗锛屽惊杩逛細鎸夋椂闂翠负璇ヨ鑹茬画涓婃柊鐨勭敓娲荤棔杩广€傞粯璁ゅ紑鍚€?*/
+  /** 点亮过一次后，循迹会按时间为该角色续上新的生活痕迹。默认开启。 */
   autoTraceEnabled?: boolean;
-  /** per-char 鐨勮嚜鍔ㄧ画鍐欐按浣嶏紝閬垮厤鍚屼竴娈垫椂闂磋閲嶅鐢熸垚銆?*/
+  /** per-char 的自动续写水位，避免同一段时间被重复生成。 */
   autoTraceLastAtByChar?: Record<string, number>;
   defaultDensity: XunjiDensity;
   locationSource?: 'character' | 'browser';
@@ -2409,71 +2625,6 @@ export interface XunjiSettings {
   reportRules: Record<XunjiReportType, boolean>;
 }
 
-export type ScreenPeekCommentTrigger = 'session_start' | 'app_switch' | 'dwell' | 'manual' | 'resume' | 'permission';
-export type ScreenPeekCommentTone = 'soft' | 'tease' | 'curious' | 'alert' | 'quiet';
-
-export interface ScreenPeekObservedApp {
-  appId?: AppID | string;
-  appName: string;
-  packageName?: string;
-  isMoro?: boolean;
-  isSystem?: boolean;
-  durationMinutes?: number;
-  lastTimeUsed?: number;
-  startedAt?: number;
-  endedAt?: number;
-  category?: string;
-  note?: string;
-}
-
-export interface ScreenPeekCaptureFrame {
-  source: 'android_media_projection';
-  capturedAt: number;
-  width?: number;
-  height?: number;
-  dataUrl: string;
-  mimeType?: string;
-}
-
-export interface ScreenPeekDeviceSnapshot {
-  source: 'android_screen_capture' | 'android_usage_stats' | 'unsupported' | 'permission_required' | 'screen_capture_permission_required';
-  native?: boolean;
-  platform?: string;
-  packageName?: string;
-  capturedAt?: number;
-  rangeStart?: number;
-  rangeEnd?: number;
-  usageAccessGranted?: boolean;
-  canOpenUsageAccessSettings?: boolean;
-  screenCaptureActive?: boolean;
-  overlayPermissionGranted?: boolean;
-  canOpenOverlaySettings?: boolean;
-  screenFrame?: ScreenPeekCaptureFrame;
-  currentForegroundApp?: ScreenPeekObservedApp;
-  lastExternalApp?: ScreenPeekObservedApp;
-  appUsage?: ScreenPeekObservedApp[];
-  batteryLevel?: number;
-  isCharging?: boolean;
-  networkLabel?: string;
-  deviceLabel?: string;
-  screenTimeMinutes?: number;
-  unlockCount?: number;
-  unavailableReason?: string;
-}
-
-export interface ScreenPeekLiveComment {
-  id: string;
-  createdAt: number;
-  trigger: ScreenPeekCommentTrigger;
-  observedAppId?: string;
-  observedAppName?: string;
-  observedPackageName?: string;
-  observedScreenCapturedAt?: number;
-  deviceSnapshotSource?: ScreenPeekDeviceSnapshot['source'];
-  text: string;
-  tone?: ScreenPeekCommentTone;
-}
-
 export interface ScreenPeekCard {
   id: string;
   charId: string;
@@ -2481,7 +2632,6 @@ export interface ScreenPeekCard {
   generatedAt: number;
   title: string;
   narrative: string;
-  viewTarget?: 'char_phone' | 'user_phone';
   screen?: {
     appKind: 'chat' | 'takeout' | 'browser' | 'notes' | 'gallery' | 'music' | 'map' | 'social' | 'calendar' | 'app' | 'home';
     appName: string;
@@ -2508,23 +2658,6 @@ export interface ScreenPeekCard {
   notes: { id: string; time: number; text: string }[];
   moments?: XunjiGeneratedMoment[];
   sourceRunId?: string;
-  deviceSnapshot?: ScreenPeekDeviceSnapshot;
-  liveComments?: ScreenPeekLiveComment[];
-}
-
-export interface ScreenPeekCommentSession {
-  id: string;
-  messageId: number;
-  charId: string;
-  charName: string;
-  charAvatar?: string;
-  startedAt: number;
-  card: ScreenPeekCard;
-  commentCount: number;
-  lastCommentAt?: number;
-  collapsed?: boolean;
-  status?: 'idle' | 'thinking' | 'error';
-  error?: string;
 }
 
 export interface UserScreenWatchSettings {
@@ -2701,67 +2834,67 @@ export type SuspendedOfflineSessionInfo =
     };
 
 /**
- * 瑙掕壊鐪熷疄鍩庡競閰嶇疆锛堣 utils/charCity.ts锛夈€?
- * real锛氱幇瀹炰笘鐣岃鑹茬洿鎺ラ€夌湡瀹炲煄甯傦紱virtual锛氭灦绌鸿鑹插彲閫夊師鍨嬪煄甯?+ 铏氭嫙绋嬪害銆?
+ * 角色真实城市配置（见 utils/charCity.ts）。
+ * real：现实世界角色直接选真实城市；virtual：架空角色可选原型城市 + 虚拟程度。
  */
 export interface CharCityConfig {
   mode: 'real' | 'virtual';
-  /** mode==='real'锛氱湡瀹炲煄甯傚悕锛堝銆屼笂娴枫€嶏級 */
+  /** mode==='real'：真实城市名（如「上海」） */
   realCity?: string;
-  /** mode==='virtual'锛氭灦绌哄煄甯傛樉绀哄悕锛堝銆孉 甯傘€嶏級 */
+  /** mode==='virtual'：架空城市显示名（如「A 市」） */
   virtualName?: string;
-  /** mode==='virtual'锛氬師鍨嬬湡瀹炲煄甯傦紙濡傘€屼笂娴枫€嶏級 */
+  /** mode==='virtual'：原型真实城市（如「上海」） */
   prototypeCity?: string;
-  /** mode==='virtual'锛氳櫄鎷熺▼搴?0~100锛? 鍑犱箮璐寸幇瀹炲彲鐩存帴鎸敤锛?00 瀹屽叏鏋剁┖鍙暀绁為煹锛?*/
+  /** mode==='virtual'：虚拟程度 0~100（0 几乎贴现实可直接挪用，100 完全架空只留神韵） */
   fictionLevel?: number;
 }
 
-/** 瑙掕壊澶囧繕褰曠殑涓€鏉★細TA 鎵嬫満澶囧繕褰曢噷鐨勫緟鍔?/ 闅忔墜璁?/ 灏忓績浜嬶紙TA 鑷繁鍐欐垨鐢ㄦ埛甯锛夈€傛敞鍏ヨ亰澶╀笂涓嬫枃璁?TA 璁板緱銆?*/
+/** 角色备忘录的一条：TA 手机备忘录里的待办 / 随手记 / 小心事（TA 自己写或用户帮记）。注入聊天上下文让 TA 记得。 */
 export interface CharMemo {
   id: string;
   text: string;
   createdAt: number;
-  /** 璋佸啓鐨勶細'char'=瑙掕壊鑷繁璁扮殑锛堢敓鎴愶級锛?user'=鐢ㄦ埛甯?TA 璁扮殑 */
+  /** 谁写的：'char'=角色自己记的（生成）；'user'=用户帮 TA 记的 */
   by?: 'char' | 'user';
-  /** 寰呭姙鍕炬帀锛堝畬鎴愮殑涓嶅啀娉ㄥ叆涓婁笅鏂囷級 */
+  /** 待办勾掉（完成的不再注入上下文） */
   done?: boolean;
 }
 
 export interface CharacterProfile {
   id: string;
-  /** 妯″瀷鍙鐨勭ǔ瀹氳韩浠介敋銆傛棫鏁版嵁缂虹渷鏃剁敱杩愯鏃惰ˉ鎴?id锛涜鑹插崱閲嶅瀵煎叆浼氱敓鎴愭柊鐨勬湰鍦伴敋锛屽畬鏁村浠芥仮澶嶄細淇濈暀鍘熼敋銆?*/
+  /** 模型可见的稳定身份锚。旧数据缺省时由运行时补成 id；角色卡重复导入会生成新的本地锚，完整备份恢复会保留原锚。 */
   modelId?: string;
   name: string;
   avatar: string;
-  /** 鍓奖闆嗗垪琛ㄥ娉細浠呬緵鐣岄潰灞曠ず涓庢悳绱紝涓嶆敞鍏ヤ换浣?AI 鎻愮ず璇嶃€?*/
+  /** 剪影集列表备注：仅供界面展示与搜索，不注入任何 AI 提示词。 */
   description: string;
   systemPrompt: string;
   worldview?: string;
-  /** 瑙掕壊澶囧繕褰曪細TA 鐨勫緟鍔?闅忔墜璁?灏忓績浜嬶紝鑱婂ぉ鏃堕殢韬惡甯︼紙娉ㄥ叆涓婁笅鏂囷級锛孴A 浼氳寰楄嚜宸卞啓杩囩殑浜嬨€?*/
+  /** 角色备忘录：TA 的待办/随手记/小心事，聊天时随身携带（注入上下文），TA 会记得自己写过的事。 */
   memos?: CharMemo[];
-  /** 澶栬矊 Tag锛歜ooru 椋庢牸鑻辨枃澶栬矊鏍囩锛屽杺鏂囩敓鍥撅紙绔嬬粯/澶村儚/鐩稿唽锛夌敤銆傚彲浠庝汉璁?缁戝畾涓栫晫涔︿竴閿敓鎴愶紙utils/appearanceTags.ts锛夛紝涔熷彲鎵嬫敼銆?*/
+  /** 外貌 Tag：booru 风格英文外貌标签，喂文生图（立绘/头像/相册）用。可从人设+绑定世界书一键生成（utils/appearanceTags.ts），也可手改。 */
   appearanceTags?: string;
   /**
-   * 寮€鍦虹櫧锛圫illyTavern 瑙掕壊鍗?first_mes锛夈€備繚鐣欏師濮嬪畯锛坽{user}} / {{char}}锛夛紝
-   * 杩涘叆绌鸿亰澶╅€夋嫨寮€鍦虹櫧鏃舵墠鏇挎崲 鈥斺€?鎹汉璁惧悗鍐嶅紑鑱婂ぉ锛屽畯浼氳В鏋愭垚鏂板悕瀛椼€?
+   * 开场白（SillyTavern 角色卡 first_mes）。保留原始宏（{{user}} / {{char}}），
+   * 进入空聊天选择开场白时才替换 —— 换人设后再开聊天，宏会解析成新名字。
    */
   firstMes?: string;
-  /** 澶囬€夊紑鍦虹櫧锛堣鑹插崱 alternate_greetings锛夛紝涓?firstMes 涓€璧锋瀯鎴愯繘鍏ヨ亰澶╂椂宸﹀彸鍒囨崲鐨勫€欓€?*/
+  /** 备选开场白（角色卡 alternate_greetings），与 firstMes 一起构成进入聊天时左右切换的候选 */
   alternateGreetings?: string[];
   /**
-   * 瀵硅瘽绀轰緥锛圫illyTavern 瑙掕壊鍗?mes_example锛夈€傜嫭绔嬩簬 systemPrompt 瀛樺偍锛?
-   * 鏈惎鐢ㄩ璁炬椂浣滀负銆屽璇濈ず渚嬨€嶅潡娉ㄥ叆鏍稿績涓婁笅鏂囷紱鍚敤棰勮鏃惰惤鍦?
-   * dialogueExamples 鍗犱綅锛堝彈 marker 寮€鍏虫帶鍒讹級銆?START> 鍒嗛殧澶氭绀轰緥锛圫T 鎯緥锛夈€?
+   * 对话示例（SillyTavern 角色卡 mes_example）。独立于 systemPrompt 存储：
+   * 未启用预设时作为「对话示例」块注入核心上下文；启用预设时落在
+   * dialogueExamples 占位（受 marker 开关控制）。<START> 分隔多段示例（ST 惯例）。
    */
   mesExample?: string;
   /**
-   * 瑙掕壊灞€閮ㄦ鍒欒剼鏈紙SillyTavern scoped regex锛夈€傛潵婧愶細
-   * - 瑙掕壊鍗?data.extensions.regex_scripts 闅忓崱瀵煎叆
-   * - 琛ヤ竵閾猴紙姝ｅ垯 App锛夐噷鎵嬪姩娣诲姞 / 瀵煎叆鍒拌瑙掕壊
-   * 涓庡叏灞€鑴氭湰锛堣ˉ涓侀摵銆屾弧閾洪€氱敤銆嶆爣绛撅紝localStorage锛夊彔鍔犵敓鏁堬紝鍏ㄥ眬鍦ㄥ墠銆?
+   * 角色局部正则脚本（SillyTavern scoped regex）。来源：
+   * - 角色卡 data.extensions.regex_scripts 随卡导入
+   * - 补丁铺（正则 App）里手动添加 / 导入到该角色
+   * 与全局脚本（补丁铺「满铺通用」标签，localStorage）叠加生效，全局在前。
    */
   regexScripts?: RegexScriptData[];
-  /** 鏃ョ▼鍗＄墖/妗岄潰灏忕粍浠剁殑涓婚鑹茬浉锛圚SL hue 0~360锛夛紝鏈缃椂鍙栭粯璁ょ传 260 */
+  /** 日程卡片/桌面小组件的主题色相（HSL hue 0~360），未设置时取默认紫 260 */
   themeColor?: number;
   memories: MemoryFragment[];
   refinedMemories?: Record<string, string>;
@@ -2770,9 +2903,9 @@ export interface CharacterProfile {
   writerPersona?: string;
   writerPersonaGeneratedAt?: number;
 
-  /** 鎸傝浇鐨勪笘鐣屼功鏉＄洰蹇収銆傛敞鍏ユ椂浠ヤ笘鐣屼功 App 鐨?live 璁板綍涓哄噯锛堟寜 id銆侀€€鑰屾寜
-   *  鍒嗙粍+鏍囬鍖归厤锛夛紝live 璁板綍涓嶅瓨鍦ㄦ椂鎸夊揩鐓х敓鏁?鈥斺€?enabled 闅?live 鍚屾锛?
-   *  淇濊瘉鏉＄洰寮€鍏冲蹇収鍏滃簳璺緞鍚屾牱鐢熸晥 */
+  /** 挂载的世界书条目快照。注入时以世界书 App 的 live 记录为准（按 id、退而按
+   *  分组+标题匹配），live 记录不存在时按快照生效 —— enabled 随 live 同步，
+   *  保证条目开关对快照兜底路径同样生效 */
   mountedWorldbooks?: { id: string; title: string; content: string; category?: string; enabled?: boolean }[];
 
   bubbleStyle?: string;
@@ -2780,7 +2913,7 @@ export interface CharacterProfile {
   contextLimit?: number;
   hideSystemLogs?: boolean; 
   hideBeforeMessageId?: number; 
-  /** 绲绉佽亰妗ｆ锛氬綋鍓嶆墦寮€鐨勮亰澶╄褰曞揩鐓?id銆傚疄闄呮椿璺冩秷鎭粛钀?messages 琛紝鍒囨崲妗ｆ鏃舵仮澶嶃€?*/
+  /** 絮语私聊档案：当前打开的聊天记录快照 id。实际活跃消息仍落 messages 表，切换档案时恢复。 */
   activePrivateChatId?: string;
   
   dateBackground?: string;
@@ -2794,52 +2927,52 @@ export interface CharacterProfile {
   savedDateState?: DateState;
   specialMomentRecords?: Record<string, SpecialMomentRecord>;
 
-  // 灏忕孩涔?per-character toggle
+  // 小红书 per-character toggle
   xhsEnabled?: boolean;
 
   socialProfile?: {
       handle: string;
       bio?: string;
-      region?: string; // 鍦板尯锛堣鑹蹭富椤靛睍绀猴紝濡傘€屽畨寰?浜冲窞銆嶏級
+      region?: string; // 地区（角色主页展示，如「安徽 亳州」）
   };
 
-  /** 鐪熷疄鍩庡競绯荤粺锛氱湡瀹?鏋剁┖鍩庡競閫夋嫨 + 瀹炴椂淇℃伅鎺ュ湴锛堣 utils/charCity.ts锛?*/
+  /** 真实城市系统：真实/架空城市选择 + 实时信息接地（见 utils/charCity.ts） */
   cityConfig?: CharCityConfig;
 
-  /** 鏈嬪弸璁剧疆锛堣鑹蹭富椤靛彸涓婅 路路路 杩涘叆锛夛細鏄熸爣鏈嬪弸 / 榛戝悕鍗?*/
+  /** 朋友设置（角色主页右上角 ··· 进入）：星标朋友 / 黑名单 */
   starredFriend?: boolean;
-  /** 宸茶繘鍏ャ€屽線鏉ャ€嶄細璇濆垪琛細鏂板缓/瀵煎叆鍗崇疆 true锛屾垨棣栨鎵撳紑绉佽亰鏃剁疆 true銆?
-   *  璁╄鑹插垱寤?瀵煎叆鍚庢棤闇€鍏堛€屾坊鍔犲ソ鍙嬨€嶅嵆鍙湪寰€鏉ョ洿鎺ュ嚭鐜板苟寮€鑱娿€?*/
+  /** 已进入「往来」会话列表：新建/导入即置 true，或首次打开私聊时置 true。
+   *  让角色创建/导入后无需先「添加好友」即可在往来直接出现并开聊。 */
   addedToChat?: boolean;
-  /** 鐢便€岀敤鎴风ぞ浜ゅ湀銆嶅奖瀛愯仈绯讳汉杞垚鐨勬寮忚鑹层€傘€岄殣钘忓凡鎺ュ叆 NPC 涓庣兢銆嶅紑鍚椂锛岀诞璇垪琛ㄤ細闅愯棌杩欑被 NPC銆?*/
+  /** 由「用户社交圈」影子联系人转成的正式角色。「隐藏已接入 NPC 与群」开启时，絮语列表会隐藏这类 NPC。 */
   ambientSocialSource?: {
       entryId: string;
       relation?: AmbientSocialRelation;
       relationLabel?: string;
   };
-  /** 鎷嶄竴鎷嶅悗缂€锛堝井淇″紡锛夛細鍒汉銆屾媿浜嗘媿 TA 鐨?鍚庣紑>銆嶉噷鐨勫悗缂€銆傝鑹插彲鐢?[[PAT_SUFFIX: x]] 鑷繁鏀癸紝榛樿銆岃剳琚嬨€嶃€?*/
+  /** 拍一拍后缀（微信式）：别人「拍了拍 TA 的<后缀>」里的后缀。角色可用 [[PAT_SUFFIX: x]] 自己改，默认「脑袋」。 */
   patSuffix?: string;
   blacklisted?: boolean;
-  /** 鐢ㄦ埛鎷夐粦瑙掕壊鐨勬椂鍒烩€斺€旀鍚庤鑹插彂鏉ョ殑娑堟伅姘旀场鏃佸甫绾㈣壊鎰熷徆鍙?*/
+  /** 用户拉黑角色的时刻——此后角色发来的消息气泡旁带红色感叹号 */
   blacklistedAt?: number;
-  /** 琚敤鎴锋媺榛戝悗鐨勩€岃В闄ゆ媺榛戦獙璇併€嶇敵璇夌姸鎬侊細瑙掕壊浼氫富鍔ㄥ彂鏉ラ獙璇佹秷鎭眰瑙ｅ皝锛?
-   *  鐢ㄦ埛鍙悓鎰忥紙瑙ｉ櫎鎷夐粦锛夋垨鎷掔粷锛涙嫆缁濆悗瑙掕壊浼氬湪 nextAt 涔嬪悗鍐嶅彂锛岀洿鍒扮敤鎴峰悓鎰忋€?*/
+  /** 被用户拉黑后的「解除拉黑验证」申诉状态：角色会主动发来验证消息求解封，
+   *  用户可同意（解除拉黑）或拒绝；拒绝后角色会在 nextAt 之后再发，直到用户同意。 */
   unblockAppeal?: {
-      active: boolean;        // 鎷夐粦鏈熼棿鏄惁浠嶅湪鐢宠瘔锛堝悓鎰?绉诲嚭榛戝悕鍗曞悗缃?false锛?
-      awaiting: boolean;      // 宸插彂鍑轰竴鏉＄敵璇夈€佹绛夌敤鎴峰鐞嗭紙true 鏃朵笉鍐嶅彂鏂扮殑锛?
-      nextAt: number;         // 涓嬩竴娆″彲鍙戠敵璇夌殑鏃堕棿鎴?
-      rejectedCount: number;  // 琚嫆娆℃暟锛堝奖鍝嶆帾杈炰笌涓嬫闂撮殧锛?
+      active: boolean;        // 拉黑期间是否仍在申诉（同意/移出黑名单后置 false）
+      awaiting: boolean;      // 已发出一条申诉、正等用户处理（true 时不再发新的）
+      nextAt: number;         // 下一次可发申诉的时间戳
+      rejectedCount: number;  // 被拒次数（影响措辞与下次间隔）
   };
 
-  /** 瑙掕壊鎷夐粦鐢ㄦ埛锛圓I 杈撳嚭 [[BLOCK_USER]] 瑙﹀彂锛夛細active 鏈熼棿鐢ㄦ埛鏃犳硶鍙戞秷鎭紝
-   *  鍒?unblockAt锛堥殢鏈?30 鍒嗛挓 ~ 24 灏忔椂锛夎嚜鍔ㄨВ闄わ紝鎴栭€氳繃濂藉弸楠岃瘉鎻愬墠鎷夊洖 */
+  /** 角色拉黑用户（AI 输出 [[BLOCK_USER]] 触发）：active 期间用户无法发消息，
+   *  到 unblockAt（随机 30 分钟 ~ 24 小时）自动解除，或通过好友验证提前拉回 */
   charBlock?: {
       active: boolean;
       blockedAt: number;
       unblockAt: number;
   };
 
-  /** 浼氳瘽璁剧疆锛堣亰澶╃晫闈?路路路 鈫?鑱婂ぉ璁剧疆锛夛細鏈細璇濅笓灞炵殑灞曠ず / 琛屼负 / 鎻愮ず璇嶉厤缃?*/
+  /** 会话设置（聊天界面 ··· → 聊天设置）：本会话专属的展示 / 行为 / 提示词配置 */
   convoSettings?: ConvoSettings;
 
   roomConfig?: {
@@ -2861,9 +2994,9 @@ export interface CharacterProfile {
   phoneState?: {
       records: PhoneEvidence[];
       customApps?: PhoneCustomApp[];
-      /** 瑙掕壊涓撳睘鎵嬫満鐨偆锛堢‘瀹氭€ф淳鐢?+ 鍙€?LLM 瑁呯偣锛岃瑙?PhoneProfile锛?*/
+      /** 角色专属手机皮肤（确定性派生 + 可选 LLM 装点，详见 PhoneProfile） */
       profile?: PhoneProfile;
-      /** 鐢ㄦ埛閫氳繃绲銆岄攣鏈恒€嶈繙绋嬮攣浣忚鑹叉墜鏈猴紱瑙掕壊瀹屾垚鍙ｄ护鎴栦换鎰忛鐩悗鑷姩瑙ｉ攣銆?*/
+      /** 用户通过絮语「锁机」远程锁住角色手机；角色完成口令或任意题目后自动解锁。 */
       lock?: PhoneLockState;
   };
 
@@ -2882,18 +3015,18 @@ export interface CharacterProfile {
       pitch?: number;
   };
 
-  // 鏃堕棿鎰熺煡寮哄寲锛氬紑鍚紙榛樿锛夋椂浼氬悜涓婁笅鏂囨敞鍏ャ€岃窛绂讳笂娆¤亰澶╁凡杩囧幓澶氫箙銆嶇殑寮哄寲鎻愮ず锛?
-  // 璁╄鑹插己鍖栨椂闂磋蹇点€佷富鍔ㄥ尮閰嶇幇瀹炰笘鐣屾椂闂淬€傚叧鎺夊悗涓嶅啀娉ㄥ叆杩欑粍鎻愮ず璇?
-  // 锛堟敞鎰忥細鍘嗗彶娑堟伅鏈韩浠嶅甫鏃堕棿鎴筹紝鍏虫帀鍚庡急鍖栫▼搴﹀彇鍐充簬妯″瀷鑷韩鐞嗚В锛夈€?
-  // 杩欓噷鎵胯浇銆屾椂闂存祦閫濇劅鐭ャ€嶏細涓ゆ鑱婂ぉ / 鏈夊緟璺熻繘浜嬩欢鏃讹紝TA 鐭ラ亾杩囧幓浜嗗涔呫€?
+  // 时间感知强化：开启（默认）时会向上下文注入「距离上次聊天已过去多久」的强化提示，
+  // 让角色强化时间观念、主动匹配现实世界时间。关掉后不再注入这组提示词
+  // （注意：历史消息本身仍带时间戳，关掉后弱化程度取决于模型自身理解）。
+  // 这里承载「时间流逝感知」：两次聊天 / 有待跟进事件时，TA 知道过去了多久。
   timeAwarenessEnabled?: boolean;
 
-  // 鏌旈『濂夊吇锛圫oft Devotion Chat锛夛細寮€鍚悗杩欎釜瑙掕壊鍦ㄨ亰澶╅噷鍏辨儏鑳藉姏澶у箙鎻愬崌鈥斺€?
-  // 鏇村亸鐖便€佹洿鑰愬績鍦版帴浣忕敤鎴风殑鏁忔劅銆佹拻濞囧拰涓嶅畨锛堝悜 system prompt 娉ㄥ叆鍏辨儏寮哄寲娈碉級銆?
+  // 柔顺奉养（Soft Devotion Chat）：开启后这个角色在聊天里共情能力大幅提升——
+  // 更偏爱、更耐心地接住用户的敏感、撒娇和不安（向 system prompt 注入共情强化段）。
   softDevotionChatEnabled?: boolean;
 
-  // 鍥炴湜灏忔姤缂撳瓨锛氶敭涓哄懆鏈熸爣璇嗭紙'day-YYYY-MM-DD' / 'week-YYYY-WW' / 'month-YYYY-MM'锛夛紝
-  // 鍊间负宸茬敓鎴愮殑濞变箰灏忔姤銆傚紑鍏冲湪浼氳瘽璁剧疆 convoSettings.tabloidEnabled銆?
+  // 回望小报缓存：键为周期标识（'day-YYYY-MM-DD' / 'week-YYYY-WW' / 'month-YYYY-MM'），
+  // 值为已生成的娱乐小报。开关在会话设置 convoSettings.tabloidEnabled。
   generatedTabloids?: Record<string, Tabloid>;
 
   // Chat & Date voice TTS settings
@@ -2905,29 +3038,29 @@ export interface CharacterProfile {
   // Cross-session guidebook insights: what char has discovered about user across games
   guidebookInsights?: string[];
 
-  // 涓诲姩娑堟伅閰嶇疆
+  // 主动消息配置
   proactiveConfig?: {
     enabled: boolean;
     intervalMinutes: number; // 30, 60, 120, 240, etc.
-    /** 闅忔満鏃堕棿妯″紡锛氶棿闅旈殢鏈猴紙1 灏忔椂 ~ 1 澶╋級锛屼笖鐢ㄦ埛鍒氬洖杩囨秷鎭椂涓嶆墦鎵帮紝
-     *  鍙戜笉鍙戙€佽浠€涔堝畬鍏ㄤ氦缁欒鑹叉€ф牸 */
+    /** 随机时间模式：间隔随机（1 小时 ~ 1 天），且用户刚回过消息时不打扰，
+     *  发不发、说什么完全交给角色性格 */
     randomMode?: boolean;
-    /** 绂荤嚎鑷富鐢熸椿锛氬紑鍚悗瑙掕壊鍦ㄥ悗鍙般€岃繃鑷繁鐨勬棩瀛愩€嶏紝涓诲姩娑堟伅浠?TA 姝ｅ湪缁忓巻鐨?
-     *  鐢熸椿浜嬩欢鍙栨潗锛堝垎浜嚜宸辩殑鐢熸椿銆佽€屼笉鏄偓鐢ㄦ埛鍥炲锛夛紝绂荤嚎鏈熼棿鐨勬椿鍔ㄤ篃浼氭敀鎴?
-     *  涓€浠姐€屼綘涓嶅湪鏃?TA 缁忓巻浜嗏€︺€嶇殑鍥為【鏃堕棿绾匡紙瑙?utils/autonomousLife.ts锛夈€?
-     *  undefined 瑙嗕负寮€鍚紙榛樿琛屼负锛夈€?*/
+    /** 离线自主生活：开启后角色在后台「过自己的日子」，主动消息从 TA 正在经历的
+     *  生活事件取材（分享自己的生活、而不是催用户回复），离线期间的活动也会攒成
+     *  一份「你不在时 TA 经历了…」的回顾时间线（见 utils/autonomousLife.ts）。
+     *  undefined 视为开启（默认行为）。 */
     autonomousLifeEnabled?: boolean;
-    /** v2锛氫富鍔ㄦ潵淇″己搴︺€傝秺楂橈紝鏅鸿兘瑙﹀彂瓒婂皯璺宠繃銆佸彛鍚昏秺涓嶅厠鍒躲€?*/
+    /** v2：主动来信强度。越高，智能触发越少跳过、口吻越不克制。 */
     intensity?: 'quiet' | 'balanced' | 'chatty' | 'unfiltered';
-    /** v2锛氱绾跨敓娲诲瘑搴︺€傚奖鍝嶈ˉ榻愪簨浠舵暟閲忋€佺敓娲讳簨浠剁敓鎴?澶嶇敤鑺傚銆?*/
+    /** v2：离线生活密度。影响补齐事件数量、生活事件生成/复用节奏。 */
     lifeDensity?: 'sparse' | 'normal' | 'busy';
-    /** v2锛氭潵淇″彛鍛炽€傚彧褰卞搷涓诲姩娑堟伅 hint锛屼笉鏀瑰彉鏅€氳亰澶┿€?*/
+    /** v2：来信口味。只影响主动消息 hint，不改变普通聊天。 */
     messageFlavor?: 'natural' | 'self' | 'warm' | 'playful' | 'moody';
-    /** v2锛氫富鍔ㄦ秷鎭彇鏉愭潵婧愶紱鏈缃椂榛樿鍏ㄥ紑銆?*/
+    /** v2：主动消息取材来源；未设置时默认全开。 */
     materialSources?: Array<'life' | 'recentChat' | 'schedule' | 'realtime'>;
-    /** v2锛氭櫤鑳借Е鍙戝彲璺宠繃銆傚浐瀹氶棿闅斾粛榛樿鍙戯紱闅忔満/鏅鸿兘妯″紡鍙彧璁板綍鐢熸椿涓嶆墦鎵般€?*/
+    /** v2：智能触发可跳过。固定间隔仍默认发；随机/智能模式可只记录生活不打扰。 */
     smartSkipEnabled?: boolean;
-    /** v2锛氬嬁鎵版椂娈点€俠ehavior='life_only' 鏃跺彧鎺ㄨ繘鐢熸椿锛屼笉鍙戞秷鎭€?*/
+    /** v2：勿扰时段。behavior='life_only' 时只推进生活，不发消息。 */
     quietHours?: {
       enabled: boolean;
       start: string; // HH:mm
@@ -2942,28 +3075,28 @@ export interface CharacterProfile {
     };
   };
 
-  // 鎯呯华Buff绯荤粺
+  // 情绪Buff系统
   activeMsg2Config?: ActiveMsg2CharacterConfig;
   activeBuffs?: CharacterBuff[];
-  buffInjection?: string;   // 娉ㄥ叆鍒皊ystemPrompt鐨勫彊浜嬪瀷鎯呯华搴曡壊鎻忚堪
+  buffInjection?: string;   // 注入到systemPrompt的叙事型情绪底色描述
 
-  /** 濂芥劅鍊?0~100锛堢偣鑱婂ぉ椤舵爮澶村儚銆屽伔鐪嬪績澹般€嶆椂鐢辨ā鍨嬩竴骞惰瘎浼版洿鏂帮紱璧?utils/relationship 鐨勫姞鍑忔鏋讹紝鏃ュ父灏忓箙寰樺緤銆佸喅瀹氭€т簨浠舵墠澶у箙娉㈠姩锛?*/
+  /** 好感值 0~100（点聊天顶栏头像「偷看心声」时由模型一并评估更新；走 utils/relationship 的加减框架，日常小幅徘徊、决定性事件才大幅波动） */
   affection?: number;
-  /** 褰撳墠蹇冩儏锛堜笌濂芥劅鍊煎悓涓€璇勪及閾捐矾鏇存柊锛夛紝鏄剧ず鍦ㄥ績澹伴潰鏉?*/
+  /** 当前心情（与好感值同一评估链路更新），显示在心声面板 */
   currentMood?: { emoji?: string; label: string; updatedAt: number };
-  /** 鍏崇郴鐘舵€侊紙鏉ュ線路鍋风湅蹇冨０ 鐨勫叧绯荤郴缁燂級锛氱敱 AI 渚濇嵁濂芥劅 / 璁惧畾鍏崇郴 / 鍓ф儏鑷姩鏇存柊 */
+  /** 关系状态（来往·偷看心声 的关系系统）：由 AI 依据好感 / 设定关系 / 剧情自动更新 */
   relationship?: RelationshipState;
-  /** 濠氬Щ鐘舵€侊紙姹傚鎴愬姛鍚庤繘鍏ャ€屽濮荤澶囨湡銆嶏紝钀藉叆宀佹椂璁奥峰枩浜嬮〉锛?*/
+  /** 婚姻状态（求婚成功后进入「婚姻筹备期」，落入岁时记·喜事页） */
   marriage?: MarriageState;
-  /** 璐墿鍟嗗煄路瑙掕壊灏忕エ锛氳鑹叉敹鍒扮殑绀肩墿 / 鑷繁涔扮殑 / 鍥炶禒鐢ㄦ埛鐨勫巻鍙诧紙鏈€鏂板湪鍓嶏級銆備緵銆屾煡瑙掕壊璐墿灏忕エ銆嶄笌鑱婂ぉ涓婁笅鏂囥€?*/
+  /** 购物商城·角色小票：角色收到的礼物 / 自己买的 / 回赠用户的历史（最新在前）。供「查角色购物小票」与聊天上下文。 */
   shopReceipts?: ShopReceipt[];
-  /** 璐墿鍟嗗煄路瑙掕壊璐墿杞︼細瑙掕壊閫涘晢鍩庢椂鍔犺繘鐨勩€屽績鎰胯喘鐗╄溅銆嶏紝鐢ㄦ埛鍙府 TA 娓呯┖锛堜唬浠橈級銆?*/
+  /** 购物商城·角色购物车：角色逛商城时加进的「心愿购物车」，用户可帮 TA 清空（代付）。 */
   shopCart?: ShopCartLine[];
-  /** 鏉ュ線路鎯呬荆绌洪棿锛堝弬鑰?QQ 鎯呬荆绌洪棿锛夛細鎭嬬埍澶╂暟 / 浜插瘑搴?/ 鎯呬荆鍔ㄦ€?/ 绾康鏃?/ 鐩稿唽 / 绾﹀畾 / 鎮勬倓璇濄€?
-   *  鎸傚湪瑙掕壊涓婏紙姣忎釜瑙掕壊涓€浠斤級锛岀敱 ChatHub銆屾儏渚ｇ┖闂淬€嶆爣绛鹃〉璇诲啓锛屽苟缁?utils/context.ts 娉ㄥ叆鑱婂ぉ涓婁笅鏂囥€?*/
+  /** 来往·情侣空间（参考 QQ 情侣空间）：恋爱天数 / 亲密度 / 情侣动态 / 纪念日 / 相册 / 约定 / 悄悄话。
+   *  挂在角色上（每个角色一份），由 ChatHub「情侣空间」标签页读写，并经 utils/context.ts 注入聊天上下文。 */
   coupleSpace?: CoupleSpace;
   emotionConfig?: {
-    /** 蹇冩儏 buff 鐙珛寮€鍏筹紱浣滄伅寮€鍚椂锛宖alse 浼氬仠姝㈡儏缁瘎浼般€佹敞鍏ュ拰椤舵爮 buff 灞曠ず銆?*/
+    /** 心情 buff 独立开关；作息开启时，false 会停止情绪评估、注入和顶栏 buff 展示。 */
     enabled: boolean;
     api?: {
       baseUrl: string;
@@ -2972,183 +3105,183 @@ export interface CharacterProfile {
     };
   };
 
-  // 璁板繂瀹 (Memory Palace)
+  // 记忆宫殿 (Memory Palace)
   memoryPalaceEnabled?: boolean;
   /**
-   * 鏄惁鍚敤"palace 鎻愬彇鍚庤嚜鍔ㄥ悓姝ュ綊妗?锛氬紑鍚悗姣忔 buffer 澶勭悊鎴愬姛閮戒細鎶婃柊璁板繂鎸夋棩鏈?
-   * 鍚堟垚 YAML MemoryFragment 杩藉姞鍒?char.memories锛屽苟鎺?hideBeforeMessageId 鑷姩闅愯棌
-   * 宸插鐞嗙殑鑱婂ぉ銆傞粯璁?false锛坥pt-in锛夆€斺€旈娆″惎鐢ㄥ缓璁鐢ㄦ埛鍋氫竴娆?force 杩藉钩鍘嗗彶銆?
+   * 是否启用"palace 提取后自动同步归档"：开启后每次 buffer 处理成功都会把新记忆按日期
+   * 合成 YAML MemoryFragment 追加到 char.memories，并推 hideBeforeMessageId 自动隐藏
+   * 已处理的聊天。默认 false（opt-in）——首次启用建议让用户做一次 force 追平历史。
    */
   autoArchiveEnabled?: boolean;
   embeddingConfig?: {
     baseUrl: string;
     apiKey: string;
-    model: string;        // 榛樿 text-embedding-3-small
-    dimensions: number;   // 榛樿 1024
+    model: string;        // 默认 text-embedding-3-small
+    dimensions: number;   // 默认 1024
   };
   personalityStyle?: 'emotional' | 'narrative' | 'imagery' | 'analytical';
-  ruminationTendency?: number;  // 鍙嶅垗鍊惧悜 0-1锛岄粯璁?0.3
-  memoryPalaceInjection?: string;  // 璁板繂瀹妫€绱㈢粨鏋滐紝娉ㄥ叆鍒?System Prompt锛堣繍琛屾椂濉厖锛屼笉鎸佷箙鍖栵級
+  ruminationTendency?: number;  // 反刍倾向 0-1，默认 0.3
+  memoryPalaceInjection?: string;  // 记忆宫殿检索结果，注入到 System Prompt（运行时填充，不持久化）
 
-  // 鑷垜棰嗘偀璇嶆潯锛氭秷鍖栬繃绋嬩腑 self_room 鍙嶅垗浜х敓鐨勫父椹昏鐭?
-  // 鍍忔儏缁?buff 涓€鏍锋敞鍏ュ埌 contextBuilder 鐨勮鑹茶瀹氫笅鏂?
+  // 自我领悟词条：消化过程中 self_room 反刍产生的常驻认知
+  // 像情绪 buff 一样注入到 contextBuilder 的角色设定下方
   selfInsights?: string[];
 
   /**
-   * 瑙掕壊鐢熸椿渚у啓锛氫竴浠藉府鍔╄鑹层€屾洿浜嗚В鑷繁銆嶇殑鐢熸椿閫熷啓锛堟棩甯歌妭濂忋€佷範鎯櫀濂姐€佸湪鎰忕殑浜嬨€?
-   * 涓庣敤鎴峰叧绯荤殑搴曡壊鈥︹€︼級銆傜敱鍓?API 渚濇嵁浜鸿 + 璁板繂鐢熸垚锛屽彲鎵嬪姩缂栬緫锛屾敞鍏?system prompt銆?
-   * 鍏ュ彛鍦?鍓奖闆?鈫?鐧诲満浜虹墿 鈫?瑙掕壊缂栬緫鍣紙搴曠椤碉級銆?
+   * 角色生活侧写：一份帮助角色「更了解自己」的生活速写（日常节奏、习惯癖好、在意的事、
+   * 与用户关系的底色……）。由副 API 依据人设 + 记忆生成，可手动编辑，注入 system prompt。
+   * 入口在 剪影集 → 登场人物 → 角色编辑器（底稿页）。
    */
   lifeProfile?: {
-    content: string;       // 渚у啓姝ｆ枃锛坢arkdown锛?
+    content: string;       // 侧写正文（markdown）
     generatedAt: number;
-    edited?: boolean;      // 鐢ㄦ埛鏄惁鎵嬪姩鏀硅繃锛堟敼杩囧垯涓嶈銆岄噸鏂扮敓鎴愩€嶉潤榛樿鐩栵級
+    edited?: boolean;      // 用户是否手动改过（改过则不被「重新生成」静默覆盖）
   };
 
   /**
-   * 鍥炵鏍″噯锛氱敤鎴疯Е鍙戙€屽洖绁炪€嶅悗锛岃鑹插畬鎴愪竴娆¤嚜鎴戝瑙嗭紝寰楀埌涓€鍙ユ牎鍑嗘柟鍚戙€?
-   * 鍦ㄦ帴涓嬫潵鐨?turnsLeft 杞?AI 鍥炲閲屾敞鍏?system prompt锛堟倓鎮勮皟鍥炴湰鏉ョ殑鏍峰瓙锛夛紝
-   * 姣忓洖澶嶄竴杞?turnsLeft--锛屽綊闆跺嵆娓呴櫎锛岃嚜鐒舵贰鍑哄洖鍒板父鎬併€傝繍琛屾椂瀛楁锛屼細琚寔涔呭寲銆?
+   * 回神校准：用户触发「回神」后，角色完成一次自我审视，得到一句校准方向。
+   * 在接下来的 turnsLeft 轮 AI 回复里注入 system prompt（悄悄调回本来的样子），
+   * 每回复一轮 turnsLeft--，归零即清除，自然淡出回到常态。运行时字段，会被持久化。
    */
   recenterCalibration?: {
-    /** 涓€鍙ヨ瘽鏍″噯鏂瑰悜锛堟敞鍏?prompt 鐢級 */
+    /** 一句话校准方向（注入 prompt 用） */
     note: string;
-    /** 绗竴浜虹О鍥炵鐙櫧锛堢暀妗?鍙啀灞曠ず锛?*/
+    /** 第一人称回神独白（留档/可再展示） */
     monologue?: string;
-    /** 瀵熻鍒扮殑鍋忕Щ鐐?*/
+    /** 察觉到的偏移点 */
     drift?: string[];
     createdAt: number;
-    /** 鍓╀綑鐢熸晥杞暟锛?0 鎵嶆敞鍏ワ級 */
+    /** 剩余生效轮数（>0 才注入） */
     turnsLeft: number;
   };
 
-  // 闊充箰浜烘牸 鈥?瑙掕壊鑷繁鐨勭綉鏄撲簯寮忔瓕鍗?/ 鍝佸懗 / 姝ｅ湪鍚?
-  // 鍦ㄩ煶涔?App 閲屼互"鎷滆"褰㈠紡璁块棶
+  // 音乐人格 — 角色自己的网易云式歌单 / 品味 / 正在听
+  // 在音乐 App 里以"拜访"形式访问
   musicProfile?: CharMusicProfile;
 
   /**
-   * 鏃ョ▼椋庢牸锛?
-   * - 'lifestyle'锛堢敓娲荤郴锛岄粯璁わ級锛氳櫄鏋勮鑹诧紝鎷ユ湁鏃ュ父鐗╃悊鐢熸椿锛堟櫒璺戙€佸仛楗€侀€涜鈥︹€︼級
-   * - 'mindful'锛堟剰璇嗙郴锛夛細瑙掕壊璇氬疄闈㈠鑷韩瀛樺湪锛屽唴蹇冩椿鍔ㄥ熀浜庣湡瀹炶兘鍔涳紙鍥炲繂瀵硅瘽銆佹暣鐞嗘兂娉曘€佺瓑寰呯敤鎴封€︹€︼級锛屼笉铏氭瀯鐗╃悊琛屼负
+   * 日程风格：
+   * - 'lifestyle'（生活系，默认）：虚构角色，拥有日常物理生活（晨跑、做饭、逛街……）
+   * - 'mindful'（意识系）：角色诚实面对自身存在，内心活动基于真实能力（回忆对话、整理想法、等待用户……），不虚构物理行为
    */
   scheduleStyle?: 'lifestyle' | 'mindful';
 
   /**
-   * 浣滄伅鏃ョ▼鎬诲紑鍏炽€?
-   * - true锛氬惎鐢ㄦ棩绋嬬敓鎴愩€佹剰璇嗘祦鍩虹鍜岃亰澶╅噷鐨勬棩绋嬪崗璋冿紙娑堣€楀壇 API锛夈€?
-   * - false锛氬叧闂棩绋嬬敓鎴?/ 鍗忚皟 / 娉ㄥ叆锛涜亰澶╁悗鐨勫績鎯?buff 璇勪及涔熼殢浣滄伅鍓嶇疆闂搁棬鍋滀笅銆?
-   * - undefined锛氬悜鍚庡吋瀹光€斺€旇嫢 scheduleStyle 宸茶锛堣€佺敤鎴峰凡闅愬紡閫夐鏍硷級瑙嗕负寮€鍚紱鍚﹀垯榛樿鍏抽棴銆?
+   * 作息日程总开关。
+   * - true：启用日程生成、意识流基础和聊天里的日程协调（消耗副 API）。
+   * - false：关闭日程生成 / 协调 / 注入；聊天后的心情 buff 评估也随作息前置闸门停下。
+   * - undefined：向后兼容——若 scheduleStyle 已设（老用户已隐式选风格）视为开启；否则默认关闭。
    */
   scheduleFeatureEnabled?: boolean;
 
   /**
-   * HTML 妯″潡妯″紡锛坧er-character锛夈€?
-   * - htmlModeEnabled锛氶粯璁ゅ紑鍚紙undefined 瑙嗕负 true锛屾樉寮?false 鎵嶅叧闂級銆傚紑鍚椂缁?LLM
-   *   娉ㄥ叆"鐢?[html]...[/html] 鍖呰９鐨勫瘜 HTML 鍗＄墖"鎻愮ず璇嶏紝
-   *   AI 杈撳嚭閲岀殑 [html] 鍧椾細琚В鏋愭垚鍗曠嫭鐨?html_card 娑堟伅锛堟矙鐩?iframe 娓叉煋锛夈€?
-   * - htmlModeCustomPrompt锛氱敤鎴疯嚜瀹氫箟鍐呭锛?*杩藉姞**鍦ㄥ唴缃彁绀鸿瘝涔嬪悗锛堜笉浼氳鐩栧唴缃唴瀹癸級銆?
-   * - 涓婁笅鏂?/ 褰掓。 鎬荤粨璇诲埌鐨?html_card 娑堟伅鍐呭鏄凡鍓ョ HTML 鐨勭函鏂囧瓧鎽樿锛岄伩鍏?token 娴垂銆?
+   * HTML 模块模式（per-character）。
+   * - htmlModeEnabled：默认开启（undefined 视为 true，显式 false 才关闭）。开启时给 LLM
+   *   注入"用 [html]...[/html] 包裹的富 HTML 卡片"提示词，
+   *   AI 输出里的 [html] 块会被解析成单独的 html_card 消息（沙盒 iframe 渲染）。
+   * - htmlModeCustomPrompt：用户自定义内容，**追加**在内置提示词之后（不会覆盖内置内容）。
+   * - 上下文 / 归档 总结读到的 html_card 消息内容是已剥离 HTML 的纯文字摘要，避免 token 浪费。
    */
   htmlModeEnabled?: boolean;
   htmlModeCustomPrompt?: string;
-  /** 璇ヨ鑹蹭笓灞炵殑鑱婂ぉ銆岀櫧妗嗐€嶈嚜瀹氫箟 CSS锛堝彔鍔犲湪鍏ㄥ眬 osTheme.chatChromeCustomCss 涔嬩笂锛夈€?*/
+  /** 该角色专属的聊天「白框」自定义 CSS（叠加在全局 osTheme.chatChromeCustomCss 之上）。 */
   chromeCustomCss?: string;
 
   /**
-   * 鎬濊€冭繃绋嬪睍绀猴紙per-character / 浼氳瘽绾э級銆?
-   * - true锛氭妸 LLM 杩斿洖鐨?reasoning_content 涓?<think>...</think> 鎶藉嚭鏉ワ紝
-   *   浣滀负 metadata.thinkingChain 钀藉簱鍒?assistant 娑堟伅涓婏紝
-   *   MessageItem 鍦ㄦ皵娉￠《閮ㄦ覆鏌撳彲鎶樺彔"馃挱 鎬濊€冭繃绋?鍖哄潡銆?
-   * - false / undefined锛氫緷鐒舵寜鏃ч€昏緫鍓ョ锛屼笉灞曠ず銆?
-   * - 浠呭奖鍝嶅紑鍏冲垏鍒?true 涔嬪悗浜х敓鐨勬柊娑堟伅锛涙棫娑堟伅娌℃湁 thinkingChain锛?
-   *   UI 鑷劧涓嶄細鏄剧ず锛岀鍚?鎵撳紑鍚庢墠鐪?鐨勯鏈熴€?
+   * 思考过程展示（per-character / 会话级）。
+   * - true：把 LLM 返回的 reasoning_content 与 <think>...</think> 抽出来，
+   *   作为 metadata.thinkingChain 落库到 assistant 消息上，
+   *   MessageItem 在气泡顶部渲染可折叠"💭 思考过程"区块。
+   * - false / undefined：依然按旧逻辑剥离，不展示。
+   * - 仅影响开关切到 true 之后产生的新消息；旧消息没有 thinkingChain，
+   *   UI 自然不会显示，符合"打开后才看"的预期。
    */
   showThinkingChain?: boolean;
   /**
-   * 鎬濊€冮摼鍗＄墖瑙嗚椋庢牸锛坧er-character锛夈€?
-   * - 'echo' (default)锛氭殫绱簳 + 鏆栭噾鎻忚竟銆屽洖鍝嶃€嶄簩娆″厓鍗＄墝
-   * - 'whisper'锛氱背鑹茬緤鐨焊銆屽績澹般€嶈交鐩堢増
-   * - 'minimal'锛氭棤瑁呴グ鍗曡壊绠€娲佺増
-   * - 'custom'锛氫娇鐢?thinkingChainCustomColors 缁欑殑閰嶈壊
+   * 思考链卡片视觉风格（per-character）。
+   * - 'echo' (default)：暗紫底 + 暖金描边「回响」二次元卡牌
+   * - 'whisper'：米色羊皮纸「心声」轻盈版
+   * - 'minimal'：无装饰单色简洁版
+   * - 'custom'：使用 thinkingChainCustomColors 给的配色
    */
   thinkingChainStyle?: 'echo' | 'whisper' | 'minimal' | 'custom';
-  /** 鑷畾涔夐鏍肩敤鐨勯厤鑹茬粍锛堜粎 thinkingChainStyle === 'custom' 鐢熸晥锛?*/
+  /** 自定义风格用的配色组（仅 thinkingChainStyle === 'custom' 生效） */
   thinkingChainCustomColors?: {
-    bg?: string;       // 鍗＄墖鑳屾櫙
-    accent?: string;   // 杈规/鏍囬鐐圭紑
-    text?: string;     // 姝ｆ枃棰滆壊
+    bg?: string;       // 卡片背景
+    accent?: string;   // 边框/标题点缀
+    text?: string;     // 正文颜色
   };
-  /** 鐢ㄦ埛杩藉姞鐨勬€濊€冩彁绀鸿瘝锛堜笉鏇挎崲鍘熺敓锛屽彧鍦ㄦ渶鍚庤拷鍔犱竴娈点€岀敤鎴烽澶栬姹傘€嶏級 */
+  /** 用户追加的思考提示词（不替换原生，只在最后追加一段「用户额外要求」） */
   thinkingChainCustomPrompt?: string;
 
   /**
-   * 铏氭嫙涓栫晫銆岄〉澶栥€嶇殑涓汉鐘舵€侊細鏄惁鑷富鐧诲叆銆佺櫥鍏ラ棿闅斻€佸悇鏈皬璇寸殑鐙珛涔︾绛夈€?
-   * 鐙珛浜?proactiveConfig锛堜富鍔ㄥ彂娑堟伅锛夛紝浜掍笉鎸ゅ崰瑙﹀彂銆?
+   * 虚拟世界「页外」的个人状态：是否自主登入、登入间隔、各本小说的独立书签等。
+   * 独立于 proactiveConfig（主动发消息），互不挤占触发。
    */
   vrState?: VRWorldCharState;
 }
 
 /**
- * 鍏崇郴闃舵锛堟潵寰€路鍋风湅蹇冨０ 鐨勫叧绯荤郴缁燂級銆傜敱 AI 渚濇嵁濂芥劅 / 璁惧畾鍏崇郴 / 鍓ф儏鑷姩鏇存柊銆?
- * 椤哄簭澶ц嚧瀵瑰簲銆屼翰瀵嗗害閫掕繘銆嶏紝utils/relationship 鐢ㄥ畠绾︽潫璺冲彉锛堜笉鑳藉嚟绌轰粠闄岀敓璺冲埌宸插锛夈€?
+ * 关系阶段（来往·偷看心声 的关系系统）。由 AI 依据好感 / 设定关系 / 剧情自动更新。
+ * 顺序大致对应「亲密度递进」，utils/relationship 用它约束跳变（不能凭空从陌生跳到已婚）。
  */
 export type RelationshipStage =
-  | 'stranger'      // 闄岀敓
-  | 'acquaintance'  // 璁よ瘑
-  | 'friend'        // 鏈嬪弸
-  | 'close'         // 濂藉弸 / 鐭ュ繁
-  | 'crush'         // 鏆ф槯锛堥珮濂芥劅浣嗘湭纭珛鎭嬩汉鍏崇郴锛?
-  | 'lover'         // 鎭嬩汉锛堢敺濂虫湅鍙嬶級
-  | 'engaged'       // 鏈澶锛堟眰濠氭垚鍔?鈫?濠氬Щ绛瑰鏈燂級
-  | 'married'       // 宸插锛堥璇?/ 瀹屽锛?
-  | 'ex'            // 鍓嶄换锛堝垎鎵嬶級
-  | 'estranged';    // 鍐宠 / 褰㈠悓闄岃矾
+  | 'stranger'      // 陌生
+  | 'acquaintance'  // 认识
+  | 'friend'        // 朋友
+  | 'close'         // 好友 / 知己
+  | 'crush'         // 暧昧（高好感但未确立恋人关系）
+  | 'lover'         // 恋人（男女朋友）
+  | 'engaged'       // 未婚夫妻（求婚成功 → 婚姻筹备期）
+  | 'married'       // 已婚（领证 / 完婚）
+  | 'ex'            // 前任（分手）
+  | 'estranged';    // 决裂 / 形同陌路
 
 export interface RelationshipState {
   stage: RelationshipStage;
-  /** 灞曠ず鐢ㄥ叧绯诲悕锛堝銆岀敺鏈嬪弸銆嶃€屾湭濠氬銆嶃€屾毀鏄у璞°€嶃€屽墠鐢峰弸銆嶏級锛孉I 缁欍€佽惤鍦板睍绀?*/
+  /** 展示用关系名（如「男朋友」「未婚妻」「暧昧对象」「前男友」），AI 给、落地展示 */
   label: string;
-  /** 杩涘叆褰撳墠闃舵鐨勬椂闂存埑 */
+  /** 进入当前阶段的时间戳 */
   since: number;
   updatedAt: number;
-  /** 鍏崇郴鍙樻洿绠€鍙诧紙鏈€鏂板湪鍓嶏級锛屼緵鏉ュ線闈㈡澘鍥炵湅 */
+  /** 关系变更简史（最新在前），供来往面板回看 */
   history?: Array<{ stage: RelationshipStage; label: string; at: number; reason?: string }>;
 }
 
-/** 濠氬Щ绛瑰闃舵锛氭眰濠氭垚鍔熷悗閫愭鎺ㄨ繘锛屾椂闂翠笌鐜板疄鍖归厤銆?*/
+/** 婚姻筹备阶段：求婚成功后逐步推进，时间与现实匹配。 */
 export type MarriageStage =
-  | 'engaged'     // 宸茶濠毬风澶囦腑
-  | 'planning'    // 宸插晢瀹氬鏈?
-  | 'registered'  // 宸查璇?
-  | 'wed';        // 宸插畬濠?
+  | 'engaged'     // 已订婚·筹备中
+  | 'planning'    // 已商定婚期
+  | 'registered'  // 已领证
+  | 'wed';        // 已完婚
 
 export interface MarriageMilestone {
   id: string;
   kind: 'proposal' | 'plan' | 'register' | 'wedding' | 'custom';
   title: string;
-  date?: string;       // YYYY-MM-DD锛堜笌鐜板疄鍖归厤锛?
+  date?: string;       // YYYY-MM-DD（与现实匹配）
   note?: string;
   by?: 'user' | 'char';
   done?: boolean;
   at: number;
 }
 
-/** 濠氬Щ鐘舵€侊紙钀藉叆宀佹椂璁奥峰枩浜嬮〉锛涜亰澶╀笂涓嬫枃鎹璁╄鑹插晢閲忓鏈?/ 棰嗚瘉绛夛級銆?*/
+/** 婚姻状态（落入岁时记·喜事页；聊天上下文据此让角色商量婚期 / 领证等）。 */
 export interface MarriageState {
   active: boolean;
   stage: MarriageStage;
-  /** 璋佸厛姹傜殑濠?*/
+  /** 谁先求的婚 */
   proposalBy: 'user' | 'char';
   engagedAt: number;
-  /** 鍟嗗畾鐨勫鏈燂紙YYYY-MM-DD锛?*/
+  /** 商定的婚期（YYYY-MM-DD） */
   weddingDate?: string;
-  /** 棰嗚瘉鏃堕棿鎴?*/
+  /** 领证时间戳 */
   registeredAt?: number;
   milestones: MarriageMilestone[];
 }
 
-// 鈹€鈹€ 鏉ュ線路鎯呬荆绌洪棿锛圦Q 鎯呬荆绌洪棿绉绘锛?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-/** 鎯呬荆鍔ㄦ€?/ 鐣欒█鏉跨殑涓€鏉¤瘎璁恒€?*/
+// ── 来往·情侣空间（QQ 情侣空间移植） ────────────────────────────────────────
+/** 情侣动态 / 留言板的一条评论。 */
 export interface CoupleComment {
   id: string;
   author: 'user' | 'char';
@@ -3156,51 +3289,51 @@ export interface CoupleComment {
   at: number;
 }
 
-/** 鎯呬荆鍔ㄦ€侀噷鐨勫濯掍綋鍗＄墖绫诲瀷锛氳闊虫潯 / 闊充箰 / 鐗╀欢路鐓х墖锛堢偣鍑昏Е鍙戙€屽績澹般€嶅脊绐楋級銆?*/
+/** 情侣动态里的多媒体卡片类型：语音条 / 音乐 / 物件·照片（点击触发「心声」弹窗）。 */
 export type CoupleMediaKind = 'voice' | 'music' | 'item';
 
-/** 鎯呬荆鍔ㄦ€佺殑澶氬獟浣撻檮浠跺崱鐗囷紙璇煶 / 闊充箰 / 鐗╀欢锛夈€?*/
+/** 情侣动态的多媒体附件卡片（语音 / 音乐 / 物件）。 */
 export interface CoupleMedia {
   kind: CoupleMediaKind;
-  /** 鏄剧ず鍚嶏紙璇煶锛氬銆屾櫄瀹夎闊?m4a銆嶏紱闊充箰锛氭瓕鍚嶏紱鐗╀欢锛氬銆岀収鐗嘷绯背绯?jpg銆嶏級 */
+  /** 显示名（语音：如「晚安语音.m4a」；音乐：歌名；物件：如「照片_糯米糍.jpg」） */
   name: string;
-  /** 璇煶鏃堕暱灞曠ず锛堝銆?0:15銆嶏級锛屼粎 voice 鐢?*/
+  /** 语音时长展示（如「00:15」），仅 voice 用 */
   duration?: string;
 }
 
-/** 鎯呬荆鍔ㄦ€侊紙鐣欒█鏉匡級锛氬弻鏂瑰彲鍙戞枃瀛?/ 蹇冩儏 / 鍥剧墖 / 澶氬獟浣撳崱鐗囷紝鎸夋椂闂村€掑簭灞曠ず锛屽彲鐐硅禐 + 璇勮銆?*/
+/** 情侣动态（留言板）：双方可发文字 / 心情 / 图片 / 多媒体卡片，按时间倒序展示，可点赞 + 评论。 */
 export interface CoupleMoment {
   id: string;
   author: 'user' | 'char';
   text?: string;
-  /** 蹇冩儏锛坋moji + 鏂囧瓧锛屽彲閫夛級 */
+  /** 心情（emoji + 文字，可选） */
   mood?: string;
-  /** 鍥剧墖锛坆ase64 data url锛夛紝涔濆鏍煎睍绀?*/
+  /** 图片（base64 data url），九宫格展示 */
   images?: string[];
-  /** 澶氬獟浣撳崱鐗囷紙璇煶 / 闊充箰 / 鐗╀欢锛夛紱鐐瑰嚮瑙﹀彂銆屽績澹般€嶅脊绐?*/
+  /** 多媒体卡片（语音 / 音乐 / 物件）；点击触发「心声」弹窗 */
   media?: CoupleMedia;
-  /** 瑙掕壊瀵硅繖鏉″姩鎬佺殑銆屽績澹般€嶇嫭鐧斤紙鐐瑰嚮澶氬獟浣撳潡鏃舵噿鐢熸垚銆佺紦瀛樺悗澶嶇敤锛?*/
+  /** 角色对这条动态的「心声」独白（点击多媒体块时懒生成、缓存后复用） */
   innerVoice?: string;
   createdAt: number;
-  /** 鐐硅禐锛氬弻鏂瑰悇鑷槸鍚﹁禐杩?*/
+  /** 点赞：双方各自是否赞过 */
   likedByUser?: boolean;
   likedByChar?: boolean;
   comments: CoupleComment[];
 }
 
-/** 绾康鏃?/ 鐢熸棩 / 绾﹀畾鏃ワ細鑷姩鍊掕鏃舵彁閱掋€?*/
+/** 纪念日 / 生日 / 约定日：自动倒计时提醒。 */
 export interface CoupleAnniversary {
   id: string;
   title: string;
   /** YYYY-MM-DD */
   date: string;
   kind: 'love' | 'birthday' | 'promise' | 'custom';
-  /** 鏄惁姣忓勾閲嶅锛堢敓鏃?/ 鍛ㄥ勾锛夛細鍊掕鏃跺彇銆屼笅涓€娆°€?*/
+  /** 是否每年重复（生日 / 周年）：倒计时取「下一次」 */
   repeatYearly?: boolean;
   createdAt: number;
 }
 
-/** 鎯呬荆鐩稿唽鐓х墖锛堜節瀹牸灞曠ず锛夈€?*/
+/** 情侣相册照片（九宫格展示）。 */
 export interface CouplePhoto {
   id: string;
   url: string;        // base64 data url
@@ -3209,7 +3342,7 @@ export interface CouplePhoto {
   at: number;
 }
 
-/** 鎯呬荆浠诲姟 / 绾﹀畾锛堝畬鎴愭墦鍕?+ 鍔犱翰瀵嗗害锛夈€?*/
+/** 情侣任务 / 约定（完成打勾 + 加亲密度）。 */
 export interface CoupleTask {
   id: string;
   title: string;
@@ -3219,7 +3352,7 @@ export interface CoupleTask {
   doneAt?: number;
 }
 
-/** 鎰挎湜娓呭崟锛氫竴鏉″叡鍚屽績鎰匡紙鎯充竴璧峰仛鐨勪簨 / 鎯宠鐨勪笢瑗匡級锛屽彲琚疄鐜板嬀鎺夈€?*/
+/** 愿望清单：一条共同心愿（想一起做的事 / 想要的东西），可被实现勾掉。 */
 export interface CoupleWish {
   id: string;
   text: string;
@@ -3229,7 +3362,7 @@ export interface CoupleWish {
   fulfilledAt?: number;
 }
 
-/** 鎻愰棶绠憋細鐢ㄦ埛闂竴鍙ワ紝瑙掕壊锛圓I锛夌瓟涓€鍙ワ紝涓よ竟鍚堝瓨涓€鏉°€?*/
+/** 提问箱：用户问一句，角色（AI）答一句，两边合存一条。 */
 export interface CoupleQuestion {
   id: string;
   question: string;
@@ -3237,18 +3370,18 @@ export interface CoupleQuestion {
   at: number;
 }
 
-/** 鍏荤泦鏍斤細浣犱滑涓€璧峰吇鐨勪竴鏍櫄鎷熸鐗╋紝姣忔棩鐓ф枡鏀掓垚闀垮€笺€侀殢闃舵闀垮ぇ銆?*/
+/** 养盆栽：你们一起养的一株虚拟植物，每日照料攒成长值、随阶段长大。 */
 export interface CouplePlant {
-  /** 绱鎴愰暱鍊硷紙鍐冲畾闃舵锛?*/
+  /** 累计成长值（决定阶段） */
   growth: number;
-  /** 涓婃娴囨按 / 鏂借偉 / 鏅掑お闃崇殑鏈湴鏃ユ湡 YYYY-MM-DD锛堟瘡鏃ュ悇涓€娆★級 */
+  /** 上次浇水 / 施肥 / 晒太阳的本地日期 YYYY-MM-DD（每日各一次） */
   water?: string;
   fertilize?: string;
   sun?: string;
   createdAt: number;
 }
 
-/** 鎮勬倓璇?/ 鐣欒█淇＄锛氫竴鏉＄瀵嗙暀瑷€銆?*/
+/** 悄悄话 / 留言信箱：一条私密留言。 */
 export interface CoupleWhisper {
   id: string;
   author: 'user' | 'char';
@@ -3256,26 +3389,26 @@ export interface CoupleWhisper {
   at: number;
 }
 
-/** 姣忔棩浜掑姩绫诲瀷锛氫翰涓€涓?/ 鎶变竴涓?/ 鐗垫墜 / 閫佺ぜ鐗┿€?*/
+/** 每日互动类型：亲一下 / 抱一下 / 牵手 / 送礼物。 */
 export type CoupleInteractionKind = 'kiss' | 'hug' | 'hold' | 'gift';
 
-/** 姣忔棩浜掑姩璁板綍锛堜竴閿簰鍔ㄨЕ鍙戝姩鐢?/ 鏂囧瓧鍙嶉骞跺姞浜插瘑搴︼級銆?*/
+/** 每日互动记录（一键互动触发动画 / 文字反馈并加亲密度）。 */
 export interface CoupleInteraction {
   id: string;
   kind: CoupleInteractionKind;
   by: 'user' | 'char';
-  /** 瀵规柟鐨勪竴鍙ュ弽棣堟枃瀛楋紙瑙掕壊渚х敱 LLM 鐢熸垚锛涘厹搴曠敤妯℃澘锛?*/
+  /** 对方的一句反馈文字（角色侧由 LLM 生成；兜底用模板） */
   note?: string;
   at: number;
 }
 
-/** 鎯呬荆绌洪棿璁剧疆銆俛utoCareEnabled 涓?undefined 鏃惰涓哄紑鍚紝鍏煎鏃х┖闂撮粯璁よ嚜鍔ㄧ粡钀ャ€?*/
+/** 情侣空间设置。autoCareEnabled 为 undefined 时视为开启，兼容旧空间默认自动经营。 */
 export interface CoupleSpaceSettings {
   autoCareEnabled?: boolean;
   theme?: 'scrapbook';
 }
 
-/** 鎯呬荆绌洪棿妗ｆ锛氫袱涓汉缁欒繖涓┖闂寸暀涓嬬殑鍥哄畾璁惧畾涓庡皬涔犳儻銆?*/
+/** 情侣空间档案：两个人给这个空间留下的固定设定与小习惯。 */
 export interface CoupleProfile {
   homeName?: string;
   userNickname?: string;
@@ -3285,7 +3418,7 @@ export interface CoupleProfile {
   updatedAt?: number;
 }
 
-/** 鍙拤浣忕殑鎯呬荆璁板繂鍗★細鏉ヨ嚜绾︿細銆佸鍗栥€佽嚜鍔ㄥ洖椤炬垨鎵嬪姩璁板綍銆?*/
+/** 可钉住的情侣记忆卡：来自约会、外卖、自动回顾或手动记录。 */
 export interface CoupleMemoryCard {
   id: string;
   kind: 'date' | 'takeout' | 'moment' | 'promise' | 'recap' | 'manual' | 'auto';
@@ -3298,7 +3431,7 @@ export interface CoupleMemoryCard {
   createdAt: number;
 }
 
-/** 鍛?鏈堝叧绯诲洖椤惧皬鎶ャ€?*/
+/** 周/月关系回顾小报。 */
 export interface CoupleRecap {
   id: string;
   period: 'week' | 'month';
@@ -3312,7 +3445,7 @@ export interface CoupleRecap {
   createdAt: number;
 }
 
-/** 姣忔棩鎯呬荆鎵撳崱銆?*/
+/** 每日情侣打卡。 */
 export interface CoupleDailyCheckin {
   id: string;
   ymd: string;
@@ -3322,7 +3455,7 @@ export interface CoupleDailyCheckin {
   createdAt: number;
 }
 
-/** 鍚庡彴鑷粡钀ヨ妭娴佺姸鎬併€?*/
+/** 后台自经营节流状态。 */
 export interface CoupleAutoCareState {
   lastRunAt?: number;
   lastMomentAt?: number;
@@ -3332,49 +3465,49 @@ export interface CoupleAutoCareState {
 }
 
 /**
- * 鏉ュ線路鎯呬荆绌洪棿锛堝弬鑰?QQ 鎯呬荆绌洪棿锛夈€傛寕鍦?CharacterProfile 涓婏紙姣忎釜瑙掕壊涓€浠斤級锛?
- * 鐢?ChatHub銆屾儏渚ｇ┖闂淬€嶆爣绛鹃〉璇诲啓锛屽苟缁?utils/context.ts 娉ㄥ叆鑱婂ぉ涓婁笅鏂囷紝
- * 璁╄鑹层€岀煡閬撱€嶆亱鐖卞ぉ鏁?/ 浜插瘑搴?/ 鏈€杩戝姩鎬?/ 寰呭姙绾﹀畾 / 鎮勬倓璇濓紝鎹鎵紨 + 涓诲姩浜掑姩銆?
+ * 来往·情侣空间（参考 QQ 情侣空间）。挂在 CharacterProfile 上（每个角色一份），
+ * 由 ChatHub「情侣空间」标签页读写，并经 utils/context.ts 注入聊天上下文，
+ * 让角色「知道」恋爱天数 / 亲密度 / 最近动态 / 待办约定 / 悄悄话，据此扮演 + 主动互动。
  */
 export interface CoupleSpace {
-  /** 鍦ㄤ竴璧风邯蹇垫棩锛圷YYY-MM-DD锛夛細璁＄畻銆屽凡鐩告亱 X 澶┿€?*/
+  /** 在一起纪念日（YYYY-MM-DD）：计算「已相恋 X 天」 */
   anniversaryDate?: string;
-  /** 浜插瘑搴︼紙闅忎簰鍔ㄥ闀匡紝0 璧枫€佹棤涓婇檺锛沀I 鎸夋瘡 100 涓€绾у睍绀鸿繘搴︽潯锛?*/
+  /** 亲密度（随互动增长，0 起、无上限；UI 按每 100 一级展示进度条） */
   intimacy: number;
   moments: CoupleMoment[];
   anniversaries: CoupleAnniversary[];
   photos: CouplePhoto[];
   tasks: CoupleTask[];
   whispers: CoupleWhisper[];
-  /** 鎰挎湜娓呭崟锛氫綘浠殑鍏卞悓蹇冩効锛堝彲閫夛紝鑰佹暟鎹彲鑳界己锛?*/
+  /** 愿望清单：你们的共同心愿（可选，老数据可能缺） */
   wishes?: CoupleWish[];
-  /** 鎻愰棶绠憋細浣犻棶 TA 绛旂殑闂瓟璁板綍锛堝彲閫夛紝鑰佹暟鎹彲鑳界己锛?*/
+  /** 提问箱：你问 TA 答的问答记录（可选，老数据可能缺） */
   questions?: CoupleQuestion[];
-  /** 鍏荤泦鏍斤細浣犱滑涓€璧峰吇鐨勫皬妞嶇墿锛堝彲閫夛紝棣栨娴囨按鏃跺垱寤猴級 */
+  /** 养盆栽：你们一起养的小植物（可选，首次浇水时创建） */
   plant?: CouplePlant;
-  /** 榛樺澶ц€冮獙路鍘嗗彶鏈€楂橀粯濂戝害锛?~100锛屽彲閫夛級 */
+  /** 默契大考验·历史最高默契度（0~100，可选） */
   compatBest?: number;
-  /** v2锛氱┖闂磋缃紙鑷姩缁忚惀榛樿寮€锛屼富棰橀粯璁ゆ墜璐︼級銆?*/
+  /** v2：空间设置（自动经营默认开，主题默认手账）。 */
   settings?: CoupleSpaceSettings;
-  /** v2锛氫袱涓汉鐨勫浐瀹氭。妗?/ 灏忎範鎯€?*/
+  /** v2：两个人的固定档案 / 小习惯。 */
   profile?: CoupleProfile;
-  /** v2锛氫粠绾︿細銆佸鍗栥€佸姩鎬佹垨鍥為【娌夋穩鏉ョ殑璁板繂鍗°€?*/
+  /** v2：从约会、外卖、动态或回顾沉淀来的记忆卡。 */
   memoryCards?: CoupleMemoryCard[];
-  /** v2锛氬懆/鏈堝叧绯诲洖椤惧皬鎶ャ€?*/
+  /** v2：周/月关系回顾小报。 */
   recaps?: CoupleRecap[];
-  /** v2锛氭瘡鏃ユ儏渚ｆ墦鍗°€?*/
+  /** v2：每日情侣打卡。 */
   dailyCheckins?: CoupleDailyCheckin[];
-  /** v2锛氬悗鍙拌嚜缁忚惀鑺傛祦鐘舵€併€?*/
+  /** v2：后台自经营节流状态。 */
   autoCare?: CoupleAutoCareState;
-  /** 鏈€杩戠殑姣忔棩浜掑姩璁板綍锛堜繚鐣欒嫢骞叉潯锛?*/
+  /** 最近的每日互动记录（保留若干条） */
   interactions: CoupleInteraction[];
   createdAt: number;
   updatedAt: number;
 }
 
 /**
- * 浼氳瘽璁剧疆锛堣亰澶╄缃潰鏉匡級鈥斺€?鏈細璇濓紙涓庤瑙掕壊鐨勫崟鑱婏級涓撳睘閰嶇疆銆?
- * 灞曠ず绫诲瓧娈靛彧褰卞搷鑱婂ぉ鐣岄潰锛涜涓虹被瀛楁浼氫互銆屼細璇濊瀹氥€嶅潡娉ㄥ叆绯荤粺鎻愮ず璇嶃€?
+ * 会话设置（聊天设置面板）—— 本会话（与该角色的单聊）专属配置。
+ * 展示类字段只影响聊天界面；行为类字段会以「会话设定」块注入系统提示词。
  */
 export type LiveChatOverride = 'inherit' | 'on' | 'off';
 
@@ -3388,106 +3521,106 @@ export interface LiveChatSettings {
 }
 
 export interface ConvoSettings {
-    /** 澶囨敞鍚嶏細鑱婂ぉ鐣岄潰椤舵爮 / 娑堟伅鍒楄〃 / 鑱婂ぉ鍒楄〃鏄剧ず鐨勫悕瀛楋紙涓嶆敼鍙樿鑹叉湰鍚嶏級 */
+    /** 备注名：聊天界面顶栏 / 消息列表 / 聊天列表显示的名字（不改变角色本名） */
     remarkName?: string;
-    /** TA 瀵规垜鐨勫娉細瑙掕壊瀵圭敤鎴风殑绉板懠锛堟敞鍏ユ彁绀鸿瘝锛岃鑹插钩鏃跺氨杩欎箞鍙敤鎴凤級銆傝鑹插彲閫氳繃 [[SET_USER_REMARK]] 鑷繁鏀广€?*/
+    /** TA 对我的备注：角色对用户的称呼（注入提示词，角色平时就这么叫用户）。角色可通过 [[SET_USER_REMARK]] 自己改。 */
     userNickname?: string;
-    /** 瑙掕壊鏈€杩戜竴娆′富鍔ㄦ崲澶囨敞锛圼[SET_USER_REMARK]]锛夌殑鍔ㄦ満璇存槑锛堝脊绐?/ 鑱婂ぉ鎵嬪笎閲屽睍绀猴級 */
+    /** 角色最近一次主动换备注（[[SET_USER_REMARK]]）的动机说明（弹窗 / 聊天手帐里展示） */
     userRemarkMotivation?: string;
-    /** 瑙掕壊鏈€杩戜竴娆℃崲澶囨敞鐨勬椂闂存埑 */
+    /** 角色最近一次换备注的时间戳 */
     userRemarkUpdatedAt?: number;
-    /** 瑙掕壊鍘嗘缁欑敤鎴锋崲澶囨敞鐨勮褰曪紙鑱婂ぉ鎵嬪笎銆孴A 鎬庝箞绉板懠浣犮€嶆爮鐩睍绀猴紝鏈€鏂板湪鍓嶏級 */
+    /** 角色历次给用户换备注的记录（聊天手帐「TA 怎么称呼你」栏目展示，最新在前） */
     userRemarkHistory?: Array<{ remark: string; motivation?: string; at: number }>;
-    /** 鍏宠仈缇よ亰璁板繂锛?all' 鎼哄甫鍏ㄩ儴鎵€鍦ㄧ兢鐨勮繎鏈熸椿鍔紙榛樿锛屼笌鏃ц涓轰竴鑷达級/ 'none' 涓嶅叧鑱?/ 'selected' 浠呭叧鑱旀寚瀹氱兢 */
+    /** 关联群聊记忆：'all' 携带全部所在群的近期活动（默认，与旧行为一致）/ 'none' 不关联 / 'selected' 仅关联指定群 */
     groupMemoryMode?: 'all' | 'none' | 'selected';
-    /** groupMemoryMode='selected' 鏃跺叧鑱旂殑缇?id 鍒楄〃 */
+    /** groupMemoryMode='selected' 时关联的群 id 列表 */
     linkedGroupIds?: string[];
-    /** 椤舵爮瑁呴グ鏂囨锛氭樉绀哄湪鑱婂ぉ鐣岄潰鏈€椤堕儴锛堥《鏍忎笂鏂癸級鐨勫眳涓皬瀛?*/
+    /** 顶栏装饰文案：显示在聊天界面最顶部（顶栏上方）的居中小字 */
     headerDecorText?: string;
-    /** 娑堟伅鍖哄簳閮ㄨ楗版枃妗堬細鏄剧ず鍦ㄦ秷鎭垪琛ㄤ笅鏂广€佽緭鍏ユ爮涓婃柟鐨勫眳涓皬瀛?*/
+    /** 消息区底部装饰文案：显示在消息列表下方、输入栏上方的居中小字 */
     footerDecorText?: string;
-    /** 杈撳叆妗嗗崰浣嶆枃妗堬細鑷畾涔夎緭鍏ユ placeholder锛堥粯璁?"Message..."锛?*/
+    /** 输入框占位文案：自定义输入框 placeholder（默认 "Message..."） */
     inputPlaceholderText?: string;
-    /** 鏃佺櫧妯″紡锛氬厑璁歌鑹插崟鐙緭鍑猴紙鍔ㄤ綔/鍦烘櫙锛夋梺鐧芥皵娉?*/
+    /** 旁白模式：允许角色单独输出（动作/场景）旁白气泡 */
     narrationMode?: boolean;
-    /** 瀹炴椂鑱婂ぉ妯″紡锛歩nherit 璺熼殢鍏ㄥ眬锛沷n/off 瑕嗙洊鍏ㄥ眬銆?*/
+    /** 实时聊天模式：inherit 跟随全局；on/off 覆盖全局。 */
     liveChatOverride?: LiveChatOverride;
-    /** 蹇冨０鎵嬭寮€鍏筹紙榛樿寮€锛夛細鍏抽棴鍚庤亰澶╅噷鐨勩€屽伔鐪嬪績澹般€嶅叆鍙ｄ笉鍙敤 */
+    /** 心声手记开关（默认开）：关闭后聊天里的「偷看心声」入口不可用 */
     innerVoiceEnabled?: boolean;
-    /** 涓撳睘閾冨０锛氭柊娑堟伅閫氱煡闊筹紙undefined/'none' = 闈欓煶锛岄璁捐 utils/ringtone.ts锛?*/
+    /** 专属铃声：新消息通知音（undefined/'none' = 静音，预设见 utils/ringtone.ts） */
     ringtone?: 'none' | 'chime' | 'bubble' | 'bell' | 'retro' | 'koto';
-    /** 绉佽亰鐗瑰埆鍏冲績锛氬紑鍚悗 TA 鐨勬秷鎭?姝ゅ埢璧扮嫭绔嬫彁閱掋€?*/
+    /** 私聊特别关心：开启后 TA 的消息/此刻走独立提醒。 */
     specialCare?: boolean;
-    /** 鐗瑰埆鍏冲績涓撳睘鎻愰啋闊筹紱鏈缃椂鍥為€€鍒?ringtone锛屽啀鍥為€€娓呴搩銆?*/
+    /** 特别关心专属提醒音；未设置时回退到 ringtone，再回退清铃。 */
     specialCareRingtone?: 'none' | 'chime' | 'bubble' | 'bell' | 'retro' | 'koto';
-    /** 鐗瑰埆鍏冲績鏄惁鎻愰啋娑堟伅涓庢鍒伙紱undefined 瑙嗕负寮€鍚€?*/
+    /** 特别关心是否提醒消息与此刻；undefined 视为开启。 */
     specialCareNotify?: boolean;
-    /** 闅愯棌鏃堕棿鎴筹細鏈細璇濊鐩栧叏灞€ chatShowTimestamp */
+    /** 隐藏时间戳：本会话覆盖全局 chatShowTimestamp */
     hideTimestamp?: boolean;
-    /** 鎵€鍦ㄥ湴鍖猴細娉ㄥ叆鎻愮ず璇嶏紝褰卞搷瑙掕壊浣滄伅 / 鏃跺樊 / 璇濋璐村悎 */
+    /** 所在地区：注入提示词，影响角色作息 / 时差 / 话题贴合 */
     region?: string;
-    /** 瀹炴椂鎰熺煡路绾夸笂锛氬湪绾胯亰澶╅噷鏄庣‘鎶娿€屽綋鍓嶇湡瀹炴椂闂淬€嶅憡璇夋ā鍨嬶紙榛樿寮€锛屽叧鎺夊垯涓嶆敞鍏ラ挓鐐癸級銆?*/
+    /** 实时感知·线上：在线聊天里明确把「当前真实时间」告诉模型（默认开，关掉则不注入钟点）。 */
     realtimeClockOnline?: boolean;
-    /** 瀹炴椂鎰熺煡路绾夸笅锛氱嚎涓嬮潰瀵归潰妯″紡閲屼篃鎶娿€屽綋鍓嶇湡瀹炴椂闂淬€嶅憡璇夋ā鍨嬶紙榛樿鍏筹紝绾夸笅澶氫负鏋剁┖鍦烘櫙锛夈€?*/
+    /** 实时感知·线下：线下面对面模式里也把「当前真实时间」告诉模型（默认关，线下多为架空场景）。 */
     realtimeClockOffline?: boolean;
-    /** 鍥炴湜灏忔姤锛氬紑鍚悗鑱婂ぉ閲屽彲鐢熸垚銆屾槰鏃ユ潵淇?/ 鍥炴湜路鍛ㄧ珷 / 鍥炴湜路鏈堢珷銆嶅ū涔愬皬鎶ャ€?*/
+    /** 回望小报：开启后聊天里可生成「昨日来信 / 回望·周章 / 回望·月章」娱乐小报。 */
     tabloidEnabled?: boolean;
-    /** 涓诲姩鏌ヨ锛氬彂娑堟伅鍓嶅厛鐣欐剰褰撳墠鏃堕棿 / 澶╂皵 / 鐑偣绛夊疄鏃朵俊鎭啀寮€鍙ｏ紙鎻愮ず璇嶆敞鍏ワ級 */
+    /** 主动查询：发消息前先留意当前时间 / 天气 / 热点等实时信息再开口（提示词注入） */
     proactiveLookup?: boolean;
-    /** 涓诲姩鍙戞秷鎭€岄殢鏈?30 鍒唦10h銆嶆ā寮忔爣璁帮紙intervalMinutes 浠嶆槸璋冨害鍣ㄥ疄闄呰鐨勫€硷級 */
+    /** 主动发消息「随机 30 分~10h」模式标记（intervalMinutes 仍是调度器实际读的值） */
     proactiveRandom?: boolean;
-    /** 涓诲姩璇煶閫氳瘽锛氳鑹插湪涓诲姩鎵剧敤鎴锋椂鍙寜浜鸿/鍓ф儏鑷鍐冲畾鐩存帴鎷ㄨ闊崇數璇濓紙闇€涓诲姩鍙戞秷鎭紑鍚級 */
+    /** 主动语音通话：角色在主动找用户时可按人设/剧情自行决定直接拨语音电话（需主动发消息开启） */
     proactiveCallEnabled?: boolean;
-    /** 涓诲姩涓虹敤鎴风偣澶栧崠锛氬紑鍚悗瑙掕壊鍙湪鍚堥€傚満鏅紙楗偣/闄嶆俯/鐢ㄦ埛鍠婇タ鈥︼級涓诲姩鏇跨敤鎴蜂笅鍗曞鍗栧苟浠ｄ粯锛?
-     *  鍦ㄨ亰澶╅噷鐢熸垚鍙偣寮€鐨勫鍗栬鍗曞皬绁ㄣ€傚叧闂垯姘镐笉瑙﹀彂璇ヨ涓恒€傞粯璁ゅ叧銆?*/
+    /** 主动为用户点外卖：开启后角色可在合适场景（饭点/降温/用户喊饿…）主动替用户下单外卖并代付，
+     *  在聊天里生成可点开的外卖订单小票。关闭则永不触发该行为。默认关。 */
     proactiveTakeoutOrder?: boolean;
-    /** 涓诲姩鍙戞湅鍙嬪湀锛?off' 鍏?/ 'random' 闅忕紭 / 鏁板瓧 = 鑷畾涔夐棿闅斿皬鏃讹紙鎻愮ず璇嶅€惧悜 + 閰嶇疆浣嶏級 */
+    /** 主动发朋友圈：'off' 关 / 'random' 随缘 / 数字 = 自定义间隔小时（提示词倾向 + 配置位） */
     momentsAutoPost?: 'off' | 'random' | number;
-    /** 鍏佽 char 鐪嬫墜鏈猴細瑙掕壊鍙嚜鐒舵彁鍙婄敤鎴锋墜鏈洪噷鐨勬棩绋?/ 鏈嬪弸鍦?/ 闊充箰鍔ㄦ€侊紙鎻愮ず璇嶆敞鍏ワ級 */
+    /** 允许 char 看手机：角色可自然提及用户手机里的日程 / 朋友圈 / 音乐动态（提示词注入） */
     allowPhoneBrowse?: boolean;
-    /** 鑷姩绾夸笅锛氬璇濆彂灞曞埌瑙侀潰鎯呭鏃惰嚜鍔ㄥ垏鎹㈢嚎涓嬮潰瀵归潰妯″紡锛堟彁绀鸿瘝娉ㄥ叆锛?*/
+    /** 自动线下：对话发展到见面情境时自动切换线下面对面模式（提示词注入） */
     autoOffline?: boolean;
-    /** 鍙戞秷鎭敓鎴愬舰寮忥細'split' 涓€鍙ヤ竴鍙ヨ功锛堥粯璁わ級/ 'whole' 涓€澶ф璇村畬 / 'freeform' 鏃х増鎸変汉璁鹃殢鎰忥紙鍏煎鏃ф暟鎹紝绛夊悓 split + personaDrivenMessageLength锛?*/
+    /** 发消息生成形式：'split' 一句一句蹦（默认）/ 'whole' 一大段说完 / 'freeform' 旧版按人设随意（兼容旧数据，等同 split + personaDrivenMessageLength） */
     bubbleStyleMode?: 'split' | 'whole' | 'freeform';
-    /** 鍥炲闀跨煭鎸変汉璁鹃殢鎰忥細鍙喅瀹氭湰杞澶氳灏戯紝涓嶅喅瀹氭媶鎴愬嚑鏉℃秷鎭?*/
+    /** 回复长短按人设随意：只决定本轮说多说少，不决定拆成几条消息 */
     personaDrivenMessageLength?: boolean;
-    /** 杩炲彂涔熼€愭潯鍥烇細鐢ㄦ埛杩炵画鍙戦€佸鏉″彲瑙佹枃鏈秷鎭椂锛岄€愭潯鎺掗槦瑙﹀彂瑙掕壊鍥炲銆傞粯璁ゅ叧銆?*/
+    /** 连发也逐条回：用户连续发送多条可见文本消息时，逐条排队触发角色回复。默认关。 */
     autoReplyEachUserMessage?: boolean;
-    /** 琛ㄦ儏鑱旀兂锛氬厑璁歌鑹插湪鍚堥€傛椂鏈鸿仈鎯冲苟鍙戦€佽〃鎯呭寘锛堟彁绀鸿瘝娉ㄥ叆锛?*/
+    /** 表情联想：允许角色在合适时机联想并发送表情包（提示词注入） */
     emojiAssociation?: boolean;
-    /** 姣忚疆瀵硅瘽鐢熷浘锛氱敓鍥剧绾块厤缃綅锛堝紑鍚悗姣忚疆鍥炲灏濊瘯閰嶅浘锛岄渶鐢熷浘 API锛?*/
+    /** 每轮对话生图：生图管线配置位（开启后每轮回复尝试配图，需生图 API） */
     perTurnImageGen?: boolean;
-    /** 璇戞枃椋庢牸锛氬鐓х炕璇戞椂杩藉姞鐨勯鏍艰姹傦紙濡傘€屽彛璇寲銆嶃€屾枃瀛﹁厰銆嶏級 */
+    /** 译文风格：对照翻译时追加的风格要求（如「口语化」「文学腔」） */
     translateStyle?: string;
 
-    // 鈹€鈹€ 绔嬬粯 鈹€鈹€
-    /** 瑙掕壊路鏈細璇濆ご鍍忥紙瑕嗙洊 char.avatar锛屼粎鏈細璇濆睍绀猴級 */
+    // ── 立绘 ──
+    /** 角色·本会话头像（覆盖 char.avatar，仅本会话展示） */
     charAvatarOverride?: string;
-    /** 鍏佽 TA 鑷富鎶婄敤鎴峰彂鏉ョ殑鍥剧墖璁句负鑷繁鐨勫ご鍍忋€?*/
+    /** 允许 TA 自主把用户发来的图片设为自己的头像。 */
     allowCharAvatarFromUserImage?: boolean;
-    /** 涓绘帶路鏈細璇濆ご鍍忥紙瑕嗙洊鐢ㄦ埛澶村儚锛屼粎鏈細璇濆睍绀猴級 */
+    /** 主控·本会话头像（覆盖用户头像，仅本会话展示） */
     userAvatarOverride?: string;
-    /** 瑙掕壊绔嬬粯锛氳亰澶╃晫闈㈠彸涓嬭鍗婇€忔槑绔嬬粯锛坓algame 寮忥級 */
+    /** 角色立绘：聊天界面右下角半透明立绘（galgame 式） */
     spriteImage?: string;
-    /** 鐢熷浘鍙傝€冨浘锛氫綔涓?img2img / edits 鐨勫弬鑰冨簳鍥鹃厤缃綅 */
+    /** 生图参考图：作为 img2img / edits 的参考底图配置位 */
     spriteRefImage?: string;
-    /** 瑙嗛閫氳瘽路閫氳瘽绔嬬粯锛氭儏缁€?鈫?鍥撅紙'榛樿' 鐢ㄤ綔閫氳瘽鑳屾櫙/褰㈣薄锛?*/
+    /** 视频通话·通话立绘：情绪态 → 图（'默认' 用作通话背景/形象） */
     callSprites?: Record<string, string>;
 
-    // 鈹€鈹€ 鑳屾櫙鍥撅紙娑堟伅鍖鸿儗鏅部鐢?char.chatBackground锛?鈹€鈹€
-    /** 椤堕儴路澶村儚鑳屽悗锛氳亰澶╅《鏍忚儗鏅浘 */
+    // ── 背景图（消息区背景沿用 char.chatBackground） ──
+    /** 顶部·头像背后：聊天顶栏背景图 */
     headerBgImage?: string;
-    /** 椤堕儴璐磋竟锛氶《鏍忎笅鏂硅楗版í鏉?*/
+    /** 顶部贴边：顶栏下方装饰横条 */
     headerEdgeImage?: string;
-    /** 娑堟伅鍖鸿创杈癸細杈撳叆鏍忎笂鏂硅楗版í鏉?*/
+    /** 消息区贴边：输入栏上方装饰横条 */
     msgEdgeImage?: string;
-    /** 韬唤鍗＄敾鏉匡細瑙掕壊涓婚〉锛堣祫鏂欏崱锛夐《閮ㄨ儗鏅?*/
+    /** 身份卡画板：角色主页（资料卡）顶部背景 */
     idCardImage?: string;
-    /** 搴曢儴杈撳叆鏍忚儗鏅浘 */
+    /** 底部输入栏背景图 */
     inputBarImage?: string;
 }
 
-/** 缇ゅ叕鍛婏紙QQ 寮忥級锛氫竴鏉″綋鍓嶇敓鏁堢殑鍏憡锛岀兢涓?绠＄悊鍛樺彲鍙戝竷銆佷慨鏀规垨鎾や笅銆?*/
+/** 群公告（QQ 式）：一条当前生效的公告，群主/管理员可发布、修改或撤下。 */
 export interface GroupConvoSettings {
     bubbleStyleMode?: 'split' | 'whole' | 'freeform';
     personaDrivenMessageLength?: boolean;
@@ -3510,11 +3643,11 @@ export interface GroupConvoSettings {
 }
 
 export interface GroupAnnouncement {
-    /** 鍏憡姝ｆ枃 */
+    /** 公告正文 */
     text: string;
-    /** 鍙戝竷鑰咃細'user' 鎴?charId */
+    /** 发布者：'user' 或 charId */
     by: string;
-    /** 鍙戝竷 / 鏈€鍚庝慨鏀规椂闂达紙ms锛?*/
+    /** 发布 / 最后修改时间（ms） */
     at: number;
 }
 
@@ -3541,64 +3674,64 @@ export interface GroupProfile {
     createdAt: number;
     convoSettings?: GroupConvoSettings;
     /**
-     * 绉佽亰閲?杩戞湡缇ゆ椿鍔?涓婁笅鏂囦粠杩欎釜缇ゆ渶澶氬彇鏈€鍚庡灏戞潯娑堟伅銆?
-     * 涓嶈榛樿 80銆傝澶х偣鑳借娲昏穬缇ゆ洿瀹屾暣锛岃灏忕偣鑺傜渷 token銆侀伩鍏嶆煇涓椿璺冪兢鎶婂叾浠栫兢鎸ゆ帀銆?
+     * 私聊里"近期群活动"上下文从这个群最多取最后多少条消息。
+     * 不设默认 80。设大点能让活跃群更完整，设小点节省 token、避免某个活跃群把其他群挤掉。
      */
     privateContextCap?: number;
-    /** 缇や富銆?user' = 鐢ㄦ埛鏈汉锛涘巻鍙茬兢娌℃湁璇ュ瓧娈垫椂鎸夌敤鎴锋槸缇や富澶勭悊銆?*/
+    /** 群主。'user' = 用户本人；历史群没有该字段时按用户是群主处理。 */
     ownerId?: string;
-    /** 绠＄悊鍛?charId 鍒楄〃锛堢兢涓诲ぉ鐒舵嫢鏈夌鐞嗗憳鏉冮檺锛屼笉闇€瑕侀噸澶嶅垪鍦ㄨ繖閲岋級銆?*/
+    /** 管理员 charId 列表（群主天然拥有管理员权限，不需要重复列在这里）。 */
     adminIds?: string[];
-    /** 缇ゅ悕鐗囷細charId锛堟垨 'user'锛夆啋 鍦ㄦ湰缇ゆ樉绀虹殑鏄电О銆傝鑹插彲閫氳繃 [[SET_NICKNAME]] 鑷繁鏀广€?*/
+    /** 群名片：charId（或 'user'）→ 在本群显示的昵称。角色可通过 [[SET_NICKNAME]] 自己改。 */
     memberNicknames?: Record<string, string>;
-    /** 澶磋锛歝harId锛堟垨 'user'锛夆啋 缇や富/绠＄悊鍛樿缃殑涓撳睘澶磋锛屾樉绀哄湪鍚嶅瓧鏃佺殑灏忓窘绔犮€?*/
+    /** 头衔：charId（或 'user'）→ 群主/管理员设置的专属头衔，显示在名字旁的小徽章。 */
     memberTitles?: Record<string, string>;
-    /** 瑙掕壊瑙嗚鍏崇郴锛歷iewer charId 鈫?target charId 鈫?鈥滃湪 viewer 鐪奸噷 target 鏄皝 / 浠€涔堝叧绯?/ 鏈夋病鏈夎繃鑺傗€濄€傚彧缁?viewer 鑷繁鍙戣█鏃跺弬鑰冦€?*/
+    /** 角色视角关系：viewer charId → target charId → “在 viewer 眼里 target 是谁 / 什么关系 / 有没有过节”。只给 viewer 自己发言时参考。 */
     memberLenses?: Record<string, Record<string, string>>;
-    /** 绂佽█锛歝harId 鈫?瑙ｇ鏃堕棿鎴筹紙ms锛夈€傚綋鍓嶆椂闂村皬浜庤鍊兼椂璇ユ垚鍛樿绂佽█銆?*/
+    /** 禁言：charId → 解禁时间戳（ms）。当前时间小于该值时该成员被禁言。 */
     mutedUntil?: Record<string, number>;
-    /** 鍏ㄥ憳绂佽█锛氬紑鍚悗鎵€鏈夎鑹叉垚鍛樻湰杞兘涓嶅彂瑷€锛堜粎缇や富/绠＄悊鍛橈紳鐢ㄦ埛鍙彂锛夛紝瀵兼紨鐩存帴璺宠繃銆?*/
+    /** 全员禁言：开启后所有角色成员本轮都不发言（仅群主/管理员＝用户可发），导演直接跳过。 */
     mutedAll?: boolean;
-    /** 瑙掕壊鍚勮嚜鍥炲锛氬紑鍚悗缇よ亰姣忚疆鎸夋垚鍛樺垎鍒皟鐢?API锛岃€屼笉鏄竴娆″婕旇皟鐢ㄧ粺绛瑰叏鍦恒€?*/
+    /** 角色各自回复：开启后群聊每轮按成员分别调用 API，而不是一次导演调用统筹全场。 */
     replyIndividually?: boolean;
-    /** 瀹炴椂鑱婂ぉ妯″紡锛歩nherit 璺熼殢鍏ㄥ眬锛沷n/off 瑕嗙洊鍏ㄥ眬銆?*/
+    /** 实时聊天模式：inherit 跟随全局；on/off 覆盖全局。 */
     liveChatOverride?: LiveChatOverride;
-    /** 鏈兢涓撳睘 API锛氫粎鍦ㄢ€滆鑹插悇鑷洖澶嶁€濇ā寮忎笅浣滀负鎴愬憳 API 鐨勫洖閫€锛屼笉褰卞搷绉佽亰鎴栧叾浠栫兢銆?*/
+    /** 本群专属 API：仅在“角色各自回复”模式下作为成员 API 的回退，不影响私聊或其他群。 */
     groupApi?: GroupApiConfig;
-    /** 鎴愬憳涓撳睘 API锛歝harId 鈫?API 閰嶇疆锛涗粎鍦ㄢ€滆鑹插悇鑷洖澶嶁€濇ā寮忎笅瑕嗙洊鏈兢榛樿 API銆?*/
+    /** 成员专属 API：charId → API 配置；仅在“角色各自回复”模式下覆盖本群默认 API。 */
     memberApis?: Record<string, GroupApiConfig>;
-    /** 璁╄鑹茶嚜鍔ㄦ帴璇濓細鐢ㄦ埛鍙戣█鍚庯紝棰濆缁窇鑻ュ共杞鑹蹭箣闂寸殑鑷劧瀵硅瘽銆?*/
+    /** 让角色自动接话：用户发言后，额外续跑若干轮角色之间的自然对话。 */
     autoContinueEnabled?: boolean;
-    /** 鑷姩鎺ヨ瘽杞暟銆傛瘡杞細璁╃兢鎴愬憳鍦ㄧ敤鎴锋梺瑙傜姸鎬佷笅缁х画鎺ヨ瘽涓€娆°€?*/
+    /** 自动接话轮数。每轮会让群成员在用户旁观状态下继续接话一次。 */
     autoContinueRounds?: number;
     /**
-     * 缇よ亰鑷畾涔夊紑鍦虹櫧銆傜┖缇よ亰杩涘叆鏃舵樉绀洪€夋嫨鍣紱涓€鏉″紑鍦虹櫧鍙啓澶氳锛?
-     * 鏀寔銆屾垚鍛樺悕锛氬唴瀹广€嶅墠缂€鎷嗘垚澶氫釜鎴愬憳姘旀场銆?
+     * 群聊自定义开场白。空群聊进入时显示选择器；一条开场白可写多行，
+     * 支持「成员名：内容」前缀拆成多个成员气泡。
      */
     openingGreetings?: string[];
-    /** 缇ゅ叕鍛婏細缇や富/绠＄悊鍛樺彂甯冿紝杩涘叆缇よ亰鏃剁疆椤跺睍绀猴紝骞舵敞鍏ョ兢鑱婁笂涓嬫枃璁╂垚鍛樼煡鏅撱€傛挙涓嬫椂涓?undefined銆?*/
+    /** 群公告：群主/管理员发布，进入群聊时置顶展示，并注入群聊上下文让成员知晓。撤下时为 undefined。 */
     announcement?: GroupAnnouncement;
-    /** 鑱婂ぉ鍒楄〃缃《銆?*/
+    /** 聊天列表置顶。 */
     pinned?: boolean;
-    /** 鐗瑰埆鍏冲績锛氳繖浜涙垚鍛樺湪缇ら噷鐨勬秷鎭細琚珮浜?鎻愰啋銆?*/
+    /** 特别关心：这些成员在群里的消息会被高亮/提醒。 */
     specialCareMemberIds?: string[];
-    /** 鐗瑰埆鍏冲績鏄惁寮€鍚秷鎭彁閱掋€倁ndefined 瑙嗕负寮€鍚€?*/
+    /** 特别关心是否开启消息提醒。undefined 视为开启。 */
     specialCareNotify?: boolean;
-    /** 鐢便€岀敤鎴风ぞ浜ゅ湀銆嶅奖瀛愮兢鑱婅浆鎴愮殑姝ｅ紡缇ゃ€傘€岄殣钘忓凡鎺ュ叆 NPC 涓庣兢銆嶅紑鍚椂锛岀诞璇垪琛ㄤ細闅愯棌杩欑被缇ゃ€?*/
+    /** 由「用户社交圈」影子群聊转成的正式群。「隐藏已接入 NPC 与群」开启时，絮语列表会隐藏这类群。 */
     ambientSocialSource?: {
         entryId: string;
         relation?: AmbientSocialRelation;
         relationLabel?: string;
     };
-    /** 褰撳墠缇よ亰璁板綍鍖呮爣棰橈紝鐢ㄤ簬瀵煎嚭/瀵煎叆鍚庢樉绀猴紝涓嶇瓑鍚屼簬缇ゅ悕銆?*/
+    /** 当前群聊记录包标题，用于导出/导入后显示，不等同于群名。 */
     chatArchiveTitle?: string;
-    /** 褰撳墠鎵撳紑鐨勭兢鑱婅褰?id銆傛湭璁剧疆鏃舵部鐢ㄩ粯璁ゆ秷鎭祦銆?*/
+    /** 当前打开的群聊记录 id。未设置时沿用默认消息流。 */
     activeChatRecordId?: string;
-    /** 缇よ亰璁板綍蹇収锛岀敤浜庢柊鑱婂ぉ銆佸垏鎹㈡棫璁板綍銆佹敼鏍囬銆佺疆椤跺拰鍒犻櫎銆?*/
+    /** 群聊记录快照，用于新聊天、切换旧记录、改标题、置顶和删除。 */
     chatArchives?: GroupChatRecord[];
-    /** 鍗曚釜缇よ亰涓撳睘鑳屾櫙鍥撅紙data URL锛夈€?*/
+    /** 单个群聊专属背景图（data URL）。 */
     chatBackgroundImage?: string;
-    /** 缇よ亰鍥炲舰閽堛€岃荡涓害銆嶈缃€?*/
+    /** 群聊回形针「赴个约」设置。 */
     offlineMode?: {
         enabled?: boolean;
         style?: string;
@@ -3607,7 +3740,7 @@ export interface GroupProfile {
         openingPreset?: 'approach' | 'visit' | 'encounter' | 'appointment' | 'custom';
         customScenario?: string;
     };
-    /** 宸茶В鏁ｆ爣璁帮細淇濈暀搴曞眰璁板綍渚涘浠?娓呯悊鍏煎锛屼絾鏅€氳亰澶╁垪琛ㄥ拰鍚嶅唽涓嶅啀鏄剧ず銆?*/
+    /** 已解散标记：保留底层记录供备份/清理兼容，但普通聊天列表和名册不再显示。 */
     dissolved?: boolean;
     dissolvedAt?: number;
 }
@@ -3618,7 +3751,7 @@ export interface CharacterExportData extends Omit<CharacterProfile, 'id' | 'mode
     embeddedTheme?: ChatTheme;
 }
 
-/** 绲路鐢ㄦ埛绀句氦鑳屾櫙锛氫笉鏄寮忕缁忛摼鎺ヨ鑹诧紝鑰屾槸鐢ㄦ埛浜洪檯鍏崇郴閲岀殑褰卞瓙鑱旂郴浜?缇よ亰銆?*/
+/** 絮语·用户社交背景：不是正式神经链接角色，而是用户人际关系里的影子联系人/群聊。 */
 export type AmbientSocialRelation =
     | 'family'
     | 'relative'
@@ -3643,7 +3776,7 @@ export interface AmbientSocialContact {
     unread?: number;
     pinned?: boolean;
     hidden?: boolean;
-    /** 杞垚姝ｅ紡 CharacterProfile 鍚庡啓鍏ワ紝鍚庣画涓嶅啀褰撳奖瀛愯仈绯讳汉鏄剧ず銆?*/
+    /** 转成正式 CharacterProfile 后写入，后续不再当影子联系人显示。 */
     linkedCharId?: string;
     createdAt: number;
 }
@@ -3662,7 +3795,7 @@ export interface AmbientSocialGroup {
     unread?: number;
     pinned?: boolean;
     hidden?: boolean;
-    /** 杞垚姝ｅ紡 GroupProfile 鍚庡啓鍏ワ紝鍚庣画涓嶅啀褰撳奖瀛愮兢鑱婃樉绀恒€?*/
+    /** 转成正式 GroupProfile 后写入，后续不再当影子群聊显示。 */
     linkedGroupId?: string;
     createdAt: number;
 }
@@ -3681,61 +3814,67 @@ export interface UserProfile {
     avatar: string;
     bio: string;
     /**
-     * 閽卞寘浣欓锛堝彲鑺辩殑閽憋級銆傞潬缁忚惀搴楅摵銆岃惀涓氥€嶈禋鍙栵紝鐢ㄤ簬銆屽線鏉ャ€嶉噷缁欒鑹茶浆璐?/ 鍙戠孩鍖咃紝
-     * 鏀跺埌瑙掕壊绾㈠寘棰嗗彇鍚庡洖鍒伴挶鍖呫€備笌銆岃璐︺€嶏紙璁板綍鐜板疄閲戦挶鐨勬祦姘达級鐩镐簰鐙珛銆佷簰涓嶅奖鍝嶃€?
+     * 钱包余额（可花的钱）。靠经营店铺「营业」赚取，用于「往来」里给角色转账 / 发红包，
+     * 收到角色红包领取后回到钱包。与「记账」（记录现实金钱的流水）相互独立、互不影响。
      */
     balance?: number;
-    /** 璐墿鍟嗗煄路鑳屽寘锛氫拱涓嬩絾杩樻病閫佸嚭鍘荤殑绀肩墿銆?*/
+    /** 购物商城·背包：买下但还没送出去的礼物。 */
     shopInventory?: ShopOwnedItem[];
-    /** 璐墿鍟嗗煄路璐墿杞︼細鍔犺喘浣嗚繕娌＄粨绠楃殑鍟嗗搧锛堟窐瀹濆紡锛夈€?*/
+    /** 购物商城·购物车：加购但还没结算的商品（淘宝式）。 */
     shopCart?: ShopCartLine[];
-    /** 璐墿鍟嗗煄路鏀惰棌锛堟窐瀹濆紡鎯宠娓呭崟锛夛細鏀惰棌鐨勫晢鍝?id銆?*/
+    /** 购物商城·收藏（淘宝式想要清单）：收藏的商品 id。 */
     shopFavorites?: string[];
-    /** 璐墿鍟嗗煄路鎴戠殑璁㈠崟锛堟窐瀹濆紡锛屽惈鐗╂祦杩涘害锛涚‘璁ゆ敹璐у悗鎵嶈繘鑳屽寘锛夈€?*/
+    /** 购物商城·我的订单（淘宝式，含物流进度；确认收货后才进背包）。 */
     shopOrders?: ShopOrder[];
-    /** 璐墿鍟嗗煄路宸查浼樻儬鍒?id锛堟弧鍑忓埜锛岀粨绠楄嚜鍔ㄧ敤鏈€浼樼殑涓€寮狅級銆?*/
+    /** 购物商城·已领优惠券 id（满减券，结算自动用最优的一张）。 */
     shopCoupons?: string[];
-    /** 楗エ(澶栧崠)路宸查骞冲彴绾㈠寘 id锛堟弧鍑忓埜锛岀粨绠楄嚜鍔ㄧ敤鏈€浼樼殑涓€寮狅級銆?*/
+    /** 饭票(外卖)·已领平台红包 id（满减券，结算自动用最优的一张）。 */
     takeoutRedpackets?: string[];
-    /** 璐墿鍟嗗煄路鎴戠殑灏忕エ锛氳喘涔?/ 璧犻€?/ 鏀剁ぜ鍘嗗彶锛堟渶鏂板湪鍓嶏級銆?*/
+    /** 购物商城·我的小票：购买 / 赠送 / 收礼历史（最新在前）。 */
     shopReceipts?: ShopReceipt[];
-    /** 璐墿鍟嗗煄路娴忚瓒宠抗锛堟窐瀹濆紡锛夛細鐪嬭繃鐨勫晢鍝?id + 鏃堕棿锛堟渶鏂板湪鍓嶏紝鍘婚噸锛岄檺閲忥級銆?*/
+    /** 购物商城·浏览足迹（淘宝式）：看过的商品 id + 时间（最新在前，去重，限量）。 */
     shopFootprints?: ShopFootprint[];
-    /** 璐墿鍟嗗煄路鎴戝啓鐨勮瘎浠凤紙纭鏀惰揣鍚庡鍟嗗搧鐨勩€屾檼鍗曘€嶏紝娉ㄥ叆鍟嗗搧璇︽儏璇勪环鍖虹疆椤讹級銆?*/
+    /** 购物商城·我写的评价（确认收货后对商品的「晒单」，注入商品详情评价区置顶）。 */
     shopReviews?: ShopUserReview[];
-    /** 璐墿鍟嗗煄路娣橀噾甯佷綑棰濓紙绛惧埌/涓嬪崟鑾峰緱锛岀粨绠楀彲鎶电幇锛夈€?*/
+    /** 购物商城·淘金币余额（签到/下单获得，结算可抵现）。 */
     shopCoins?: number;
-    /** 璐墿鍟嗗煄路涓婃姣忔棩绛惧埌鐨勬椂闂存埑锛堝悓涓€鑷劧鏃ュ彧鑳界鍒颁竴娆★級銆?*/
+    /** 购物商城·上次每日签到的时间戳（同一自然日只能签到一次）。 */
     shopCheckinAt?: number;
     /**
-     * 鐢ㄦ埛鏈汉鎺ュ叆銆岄〉澶栥€嶇殑鐘舵€侊細鎹忕殑 chibi銆佹鍒绘墍鍦ㄦ埧闂淬€佸湪骞插槢銆傚彲闅忔椂鏀广€?
-     * enabled=false锛堢櫥鍑猴級鏃讹紝鑱婂ぉ閲岀粰瑙掕壊鐨?鐢ㄦ埛鍦ㄩ〉澶?鎻愮ず璇嶉殢涔嬫秷澶便€?
+     * 用户本人接入「页外」的状态：捏的 chibi、此刻所在房间、在干嘛。可随时改。
+     * enabled=false（登出）时，聊天里给角色的"用户在页外"提示词随之消失。
      */
     vrState?: UserVRState;
-    /** 绲路鏄惁寮€鍚敤鎴风ぞ浜ゅ湀锛氬叧闂悗涓嶅啀鑷姩鍑虹幇闅忔満瀹朵汉/鍚屼簨/鏈嬪弸/浜叉垰/缇よ亰绛夎儗鏅細璇濄€?*/
+    /** 絮语·是否开启用户社交圈：关闭后不再自动出现随机家人/同事/朋友/亲戚/群聊等背景会话。 */
     ambientSocialEnabled?: boolean;
-    /** 绲路鏄惁闅愯棌宸茶浆鎴愭寮忚鑹?缇よ亰鐨勭ぞ浜ゅ湀 NPC銆倁ndefined 瑙嗕负闅愯棌銆?*/
+    /** 絮语·是否隐藏已转成正式角色/群聊的社交圈 NPC。undefined 视为隐藏。 */
     ambientSocialHideConverted?: boolean;
-    /** 绲路瀹炴椂鑱婂ぉ妯″紡鍏ㄥ眬榛樿銆傞粯璁ゅ叧闂紱寮€鍚悗浼氳瘽鍙崟鐙户鎵?寮€鍚?鍏抽棴銆?*/
+    /** 絮语·实时聊天模式全局默认。默认关闭；开启后会话可单独继承/开启/关闭。 */
     liveChatSettings?: LiveChatSettings;
-    /** 绲路鐢ㄦ埛瀹屾暣绀句氦鍏崇郴锛氶殢鏈哄浜?鍚屼簨/鏈嬪弸/浜叉垰/缇よ亰绛夎儗鏅細璇濓紝闅忓墽鎯呮椂闂磋交寰敓闀裤€?*/
+    /** 絮语 v2：总览页与克制型主动性的全局轻量设置。不覆盖单个角色/群聊已有设置。 */
+    chatHubV2?: {
+        agencyMode?: 'quiet_life' | 'lively' | 'story';
+        dashboardLastSeenAt?: number;
+        digestEnabled?: boolean;
+    };
+    /** 絮语·用户完整社交关系：随机家人/同事/朋友/亲戚/群聊等背景会话，随剧情时间轻微生长。 */
     ambientSocial?: AmbientSocialState;
-    /** 鎷嶄竴鎷嶅悗缂€锛堝井淇″紡锛夛細鍒汉銆屾媿浜嗘媿 浣?鐨?鍚庣紑>銆嶉噷鐨勫悗缂€銆傜敤鎴疯嚜瀹氫箟锛岄粯璁ゃ€岃剳琚嬨€嶃€?*/
+    /** 拍一拍后缀（微信式）：别人「拍了拍 你 的<后缀>」里的后缀。用户自定义，默认「脑袋」。 */
     patSuffix?: string;
 }
 
 export interface UserVRState {
-    /** 鏄惁鎺ュ叆椤靛锛堢櫥鍑哄悗涓嶅啀鍚戣鑹叉敞鍏?鐢ㄦ埛鍦ㄩ〉澶?鎻愮ず锛?*/
+    /** 是否接入页外（登出后不再向角色注入"用户在页外"提示） */
     enabled: boolean;
-    /** 鐢ㄦ埛姝ゅ埢鎶婅嚜宸辨寕鍦ㄥ摢涓埧闂?*/
+    /** 用户此刻把自己挂在哪个房间 */
     currentRoom?: VRRoomId;
-    /** 鐢ㄦ埛鑷繁鍐欑殑"鍦ㄩ〉澶栧共鍢?锛屼細娉ㄥ叆鑱婂ぉ鎻愮ず璇?+ 骞挎挱鎴愯涓哄崱鐗?*/
+    /** 用户自己写的"在页外干嘛"，会注入聊天提示词 + 广播成行为卡片 */
     activity?: string;
-    /** 鏈€杩戜竴娆℃洿鏂版椂闂?*/
+    /** 最近一次更新时间 */
     updatedAt?: number;
-    /** 鐢ㄦ埛鍦ㄩ〉澶栭噷鐨?chibi 褰㈣薄锛堝悓瑙掕壊 chibi 缁撴瀯锛屾潵鑷?mode="user" 鐨勬崗浜哄櫒锛?*/
+    /** 用户在页外里的 chibi 形象（同角色 chibi 结构，来自 mode="user" 的捏人器） */
     chibi?: VRChibi;
-    /** 鐢ㄦ埛瀛樼殑澶氬褰㈣薄锛堟崲瑁呬綅锛夈€?*/
+    /** 用户存的多套形象（换装位）。 */
     chibiLooks?: VRChibi[];
 }
 
@@ -3747,63 +3886,63 @@ export interface Toast {
 
 export interface XhsStockImage {
     id: string;
-    url: string;           // 鍥惧簥URL (must be public https)
-    tags: string[];        // 鏍囩 e.g. ['缇庨','鍜栧暋','涓嬪崍鑼?]
+    url: string;           // 图床URL (must be public https)
+    tags: string[];        // 标签 e.g. ['美食','咖啡','下午茶']
     addedAt: number;       // timestamp
-    usedCount: number;     // 琚娇鐢ㄦ鏁?
-    lastUsedAt?: number;   // 涓婃浣跨敤鏃堕棿
+    usedCount: number;     // 被使用次数
+    lastUsedAt?: number;   // 上次使用时间
 }
 
-// 鈹€鈹€ 鍗犲崪锛堟姌瀛愭垙路鍗犲崪锛夆攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-/** 涓€寮犲鍏ョ殑鍗犲崪鐗屽浘銆傚缃楁寜 index 0~77銆侀浄璇烘浖鎸?index 1~36 瀵瑰簲鏂囦欢鍚嶃€?*/
+// ── 占卜（折子戏·占卜）─────────────────────────────────────────────────────
+/** 一张导入的占卜牌图。塔罗按 index 0~77、雷诺曼按 index 1~36 对应文件名。 */
 export interface DivinationCard {
     id: string;            // `${deck}_${index}`
     deck: 'tarot' | 'lenormand';
-    index: number;         // 濉旂綏 0~77 / 闆疯鏇?1~36
-    dataUrl: string;       // 鍘嬬缉鍚庣殑鏈湴鍥撅紙dataURL锛屽瓨 IndexedDB锛?
+    index: number;         // 塔罗 0~77 / 雷诺曼 1~36
+    dataUrl: string;       // 压缩后的本地图（dataURL，存 IndexedDB）
     addedAt: number;
 }
 
-/** 涓€娆″崰鍗滆褰曪紙鍙€夋寔涔呭寲锛屼究浜庛€屽彂鍒拌亰澶┿€嶄笌鍥炵湅锛夈€?*/
+/** 一次占卜记录（可选持久化，便于「发到聊天」与回看）。 */
 export interface DivinationSession {
     id: string;
-    charId?: string;       // 涓€璧峰崰鍗滅殑瑙掕壊锛堝彲绌猴級
+    charId?: string;       // 一起占卜的角色（可空）
     kind: 'tarot' | 'lenormand' | 'liuyao' | 'meihua';
     question: string;
-    /** engines 浜у嚭鐨勭墝闈?鍗﹁薄鎽樿鏂囧瓧 */
+    /** engines 产出的牌面/卦象摘要文字 */
     readingText: string;
-    /** 瑙ｈ锛氭墜鍔ㄥ啓鐨勬垨 API 鐢熸垚鐨?*/
+    /** 解读：手动写的或 API 生成的 */
     interpretation?: string;
     interpretedBy?: 'manual' | 'ai';
     createdAt: number;
 }
 
-// 鈹€鈹€ 鐣浠跨湡鍥炬枃锛堟姌瀛愭垙路鐣锛夌粨鏋勫寲鏁版嵁 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-/** 浠垮井淇¤亰澶╂埅鍥?*/
+// ── 番外仿真图文（折子戏·番外）结构化数据 ───────────────────────────────────
+/** 仿微信聊天截图 */
 export interface FauxWeChat {
     contactName: string;
     messages: { from: 'user' | 'char'; text: string; time?: string }[];
 }
-/** 浠垮井淇℃湅鍙嬪湀 */
+/** 仿微信朋友圈 */
 export interface FauxMoments {
     author: string;
     text: string;
-    images?: number;          // 鍗犱綅鍥炬暟閲忥紙浠跨湡鐏板潡锛?
+    images?: number;          // 占位图数量（仿真灰块）
     time: string;
     likes: string[];
     comments: { name: string; text: string }[];
 }
-/** 浠垮皬绾功鍥炬枃绗旇 */
+/** 仿小红书图文笔记 */
 export interface FauxXhs {
     title: string;
     body: string;
-    images?: number;          // 鍗犱綅鍥炬暟閲?
+    images?: number;          // 占位图数量
     tags: string[];
     author: string;
     likes: number;
     comments: { name: string; text: string }[];
 }
-/** 浠垮尶鍚嶈鍧涘笘 */
+/** 仿匿名论坛帖 */
 export interface FauxForum {
     board: string;
     title: string;
@@ -3811,14 +3950,14 @@ export interface FauxForum {
     replies: { floor: string; text: string }[];
 }
 export type TheaterFauxKind = 'wechat' | 'moments' | 'xhs' | 'forum' | 'weibo' | 'qzone' | 'douban' | 'campus' | 'memo' | 'schedule' | 'receipt' | 'browser';
-/** 浠垮井鍗氱儹鎼?/ 寰崥鍚冪摐椤?*/
+/** 仿微博热搜 / 微博吃瓜页 */
 export interface FauxWeibo {
     topic: string;
     rank?: string;
     posts: { author: string; text: string; time?: string; likes?: number; reposts?: number; comments?: number }[];
     hotComments?: { name: string; text: string; likes?: number }[];
 }
-/** 浠?QQ 绌洪棿鍔ㄦ€?*/
+/** 仿 QQ 空间动态 */
 export interface FauxQzone {
     owner: string;
     text: string;
@@ -3829,7 +3968,7 @@ export interface FauxQzone {
     likes: string[];
     comments: { name: string; text: string }[];
 }
-/** 浠胯眴鐡ｅ皬缁勮璁?*/
+/** 仿豆瓣小组讨论 */
 export interface FauxDouban {
     group: string;
     title: string;
@@ -3837,7 +3976,7 @@ export interface FauxDouban {
     text: string;
     replies: { name: string; text: string; time?: string; likes?: number }[];
 }
-/** 浠挎牎鍥鎶曠 */
+/** 仿校园墙投稿 */
 export interface FauxCampus {
     school: string;
     wallName: string;
@@ -3847,19 +3986,19 @@ export interface FauxCampus {
     likes: number;
     comments: { name: string; text: string }[];
 }
-/** 浠挎墜鏈哄蹇樺綍 */
+/** 仿手机备忘录 */
 export interface FauxMemo {
     title: string;
     updatedAt: string;
     lines: string[];
 }
-/** 浠挎墜鏈烘棩绋嬭〃 */
+/** 仿手机日程表 */
 export interface FauxSchedule {
     title: string;
     date: string;
     items: { time: string; title: string; place?: string; note?: string; done?: boolean }[];
 }
-/** 浠胯鍗?/ 灏忕エ */
+/** 仿订单 / 小票 */
 export interface FauxReceipt {
     shopName: string;
     orderNo: string;
@@ -3868,7 +4007,7 @@ export interface FauxReceipt {
     total: number;
     timeline: { time: string; text: string }[];
 }
-/** 浠挎祻瑙堝櫒鎼滅储椤?*/
+/** 仿浏览器搜索页 */
 export interface FauxBrowser {
     query: string;
     summary: string;
@@ -3884,6 +4023,20 @@ export interface GalleryImage {
     charId: string;
     url: string;
     timestamp: number;
+    /** 用户给照片起的短标题。 */
+    title?: string;
+    /** 用户自己的整理备注，不等同于角色点评。 */
+    note?: string;
+    /** 相册内标签，用于筛选和搜索。 */
+    tags?: string[];
+    /** 是否在相册里标为喜欢。 */
+    favorite?: boolean;
+    /** 图片来源：聊天、相机、手动导入或生成图。旧数据可能为空。 */
+    source?: 'chat' | 'camera' | 'import' | 'generated' | 'other';
+    /** 手动导入时保留原文件名，方便用户回忆来源。 */
+    originalName?: string;
+    /** 用户整理元数据的最后更新时间。 */
+    updatedAt?: number;
     review?: string;
     reviewTimestamp?: number;
     savedDate?: string; // YYYY-MM-DD format
@@ -3913,108 +4066,108 @@ export interface DiaryEntry {
     charPage?: DiaryPage;
     timestamp: number;
     isArchived: boolean;
-    /** 瑙掕壊鍥炲浜嗙殑鏃ヨ鑷姩鍙戝埌鑱婂ぉ鍚? 璁板綍閭ｆ潯 score_card 娑堟伅鐨?id, 鐢ㄤ簬鍚庣画 edit/delete 鍚屾 */
+    /** 角色回复了的日记自动发到聊天后, 记录那条 score_card 消息的 id, 用于后续 edit/delete 同步 */
     chatCardMessageId?: number;
-    /** 鏍囪杩欐潯鏃ヨ鏄?鑷姩鍚屾鑱婂ぉ"鏃朵唬浜х敓鐨?(鏈鏇存柊鍚庢柊寤虹殑). 鑰佹棩璁?(瀛楁鏈)
-     *  鎵嶄細鍦ㄥ垪琛ㄩ噷鐪嬪埌鎵嬪姩褰掓。鎸夐挳. 闃叉鐢ㄦ埛瀵瑰凡缁忓湪鑷姩鍚屾涓婄殑鏂版棩璁板啀鐐瑰綊妗ｉ€犳垚閲嶅. */
+    /** 标记这条日记是"自动同步聊天"时代产生的 (本次更新后新建的). 老日记 (字段未设)
+     *  才会在列表里看到手动归档按钮. 防止用户对已经在自动同步上的新日记再点归档造成重复. */
     autoSync?: boolean;
 }
 
-// 鈹€鈹€鈹€ HANDBOOK / 鎵嬭处 (璺ㄨ鑹茶仛鍚埪烽浂璐熸媴鐣欑棔鏈? 鈹€鈹€鈹€
+// ─── HANDBOOK / 手账 (跨角色聚合·零负担留痕本) ───
 //
-// 璁捐鍝插锛坲ser 鍏辫瘑锛?
-//   - 涓讳綋鏄?user 鑷繁鐨勪竴澶?LLM 璇讳粖澶╄法瑙掕壊鑱婂ぉ鍚庣敤 user 鐨勫彛鍚绘浛 ta 鍐欎竴浠借崏绋?
-//     (user 涓嶅繀妯′豢,鍚庣画浼氫簩娆＄紪杈?
-//   - 鍗充究 user 涓€澶╂病璇磋瘽,鐢熸椿绯昏鑹蹭滑涔熶細"杩囪嚜宸辩殑灏忕敓娲?,鑷姩濉竴涓ら〉闄即椤?
-//     (缁濅笉鑳藉啓鎴?AI 鎹у満 / 绛?user / 鎯?user)
-//   - 鍙嶅畬缇庝富涔?鐣欑櫧鍗崇湡瀹?涓嶅己鍒舵瘡澶╃敓鎴?涓嶆樉绀鸿繛缁ぉ鏁?涓嶅仛 streak
-//   - 涓€鏃ヤ竴 entry,id 鐩存帴鏄?'YYYY-MM-DD'
+// 设计哲学（user 共识）:
+//   - 主体是 user 自己的一天,LLM 读今天跨角色聊天后用 user 的口吻替 ta 写一份草稿
+//     (user 不必模仿,后续会二次编辑)
+//   - 即便 user 一天没说话,生活系角色们也会"过自己的小生活",自动填一两页陪伴页
+//     (绝不能写成 AI 捧场 / 等 user / 想 user)
+//   - 反完美主义:留白即真实,不强制每天生成,不显示连续天数,不做 streak
+//   - 一日一 entry,id 直接是 'YYYY-MM-DD'
 //
-// Section / tag 妯″瀷鐣欎綅浣嗘殏涓嶅湪 UI 瀹炶(绛?user 鎯虫竻妤?銆?
+// Section / tag 模型留位但暂不在 UI 实装(等 user 想清楚)。
 export type HandbookPageType =
-    | 'user_diary'       // LLM 浠ｇ瑪 user 绗竴浜虹О褰撴棩鏃ヨ
-    | 'character_life'   // 鐢熸椿绯昏鑹蹭粖鏃ョ殑鐢熸椿娴?闄即椤?
-    | 'user_note'        // user 鑷繁鎵嬪啓/琛ュ厖鐨勪竴椤?
-    | 'free';            // 鑷敱鏍煎紡,鏈潵鎵╁睍鐢?
+    | 'user_diary'       // LLM 代笔 user 第一人称当日日记
+    | 'character_life'   // 生活系角色今日的生活流(陪伴页)
+    | 'user_note'        // user 自己手写/补充的一页
+    | 'free';            // 自由格式,未来扩展用
 
 export interface HandbookPage {
     id: string;
     type: HandbookPageType;
-    charId?: string;          // type=character_life 鏃剁粦瀹氱殑瑙掕壊
+    charId?: string;          // type=character_life 时绑定的角色
     title?: string;
-    content: string;          // 涓讳綋鏂囨湰(涔熸槸缂栬緫/鍏滃簳娓叉煋鐢?
+    content: string;          // 主体文本(也是编辑/兜底渲染用)
     /**
-     * 纰庣墖鍖栧睍绀?LLM 鐢熸垚鏃惰嫢杩斿洖 JSON 鏁扮粍(绀惧獟纰庣蹇典綋),瑙ｆ瀽鍑烘潵瀛樿繖閲屻€?
-     * 鍓嶇鏈?fragments 璧?FragmentCollage 鎷艰创娓叉煋,鏃犲垯璧?content 娈佃惤娓叉煋銆?
-     * user 缂栬緫鍚庝細娓呯┖ fragments,鍥為€€鍒?content 娈佃惤褰㈡€併€?
+     * 碎片化展示:LLM 生成时若返回 JSON 数组(社媒碎碎念体),解析出来存这里。
+     * 前端有 fragments 走 FragmentCollage 拼贴渲染,无则走 content 段落渲染。
+     * user 编辑后会清空 fragments,回退到 content 段落形态。
      */
     fragments?: HandbookFragment[];
     paperStyle?: string;      // 'plain' | 'grid' | 'lined' | 'dot' | 'pink' | 'dark'
-    tags?: string[];          // 棰勭暀:section/鏍囩(鐢熺悊鏈?楗/椤圭洰鈥?,v1 涓嶆覆鏌?
+    tags?: string[];          // 预留:section/标签(生理期/饮食/项目…),v1 不渲染
     generatedBy?: 'llm' | 'user';
     generatedAt?: number;
-    excluded?: boolean;       // user 鎶婅繖椤垫爣璁颁负涓嶅叆鍐?
+    excluded?: boolean;       // user 把这页标记为不入册
     isPinned?: boolean;
 }
 
 export interface HandbookFragment {
     id: string;
-    text: string;             // 30~80 瀛楃ぞ濯掔纰庡康浣?
-    time?: string;            // 鍙€夋椂娈垫爣绛?濡?"涓婂崍 10 鐐? / "涓嬪崍" / "10:23"
-    // 鈹€鈹€鈹€ v2 妲戒綅鍏冩暟鎹?(鏂扮増寮忔墠鏈? 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-    /** 鏉ヨ嚜 LayoutTemplate 鐨勬Ы id */
+    text: string;             // 30~80 字社媒碎碎念体
+    time?: string;            // 可选时段标签,如 "上午 10 点" / "下午" / "10:23"
+    // ─── v2 槽位元数据 (新版式才有) ─────────────────────
+    /** 来自 LayoutTemplate 的槽 id */
     slotId?: string;
-    /** 妲借涔夎鑹?鈥?娓叉煋鏃舵寜杩欎釜鍒嗗彂 */
+    /** 槽语义角色 — 渲染时按这个分发 */
     slotRole?: SlotRole;
-    /** 璋佸啓鐨?鈥?'user' 鎴栨煇 charId */
+    /** 谁写的 — 'user' 或某 charId */
     authorKind?: 'user' | 'char';
-    /** 鑻ユ槸鍙嶅簲鍨嬫Ы (sticky-reaction), 寮曠敤鐨勭洰鏍?slotId */
+    /** 若是反应型槽 (sticky-reaction), 引用的目标 slotId */
     refersTo?: string;
-    /** 缁撴瀯鍖栨暟鎹?(todo / gratitude / mood-card 绛夐渶瑕? */
+    /** 结构化数据 (todo / gratitude / mood-card 等需要) */
     payload?: SlotPayload;
 }
 
 /**
- * 缁撴瀯鍖?slot 鏁版嵁銆傛櫘閫氭枃鏈Ы涓嶇敤,
- * 浠?todo/gratitude/mood-card/timeline-plan 杩欑"鍒楄〃/鎵撳垎"鎵嶅～銆?
+ * 结构化 slot 数据。普通文本槽不用,
+ * 仅 todo/gratitude/mood-card/timeline-plan 这种"列表/打分"才填。
  */
 export type SlotPayload =
     | { kind: 'todo'; items: { text: string; done?: boolean }[] }
     | { kind: 'gratitude'; items: string[] }
     | { kind: 'timeline'; items: { time: string; text: string; emoji?: string }[] }
     | { kind: 'mood'; rating: number; tag?: string }       // rating 1~5
-    | { kind: 'photo'; src?: string; caption: string };   // src 鐢?user 璐? 涔熷彲鏆傜己
+    | { kind: 'photo'; src?: string; caption: string };   // src 由 user 贴, 也可暂缺
 
-// 鈹€鈹€鈹€ 鍗曢〉鎷艰创鎺掔増 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ─── 单页拼贴排版 ──────────────────────────────────────
 //
-// v2 璁捐 (2026-05): "鐗堝紡浼樺厛"銆傚厛 roll 涓€浠?layout template (pre-baked JSON),
-// 瀹冨凡鍖呭惈姣忎釜妲界殑 {浣嶇疆, 瑙嗚瑙掕壊, 瀛楁暟棰勭畻, 鍙啓鑰厎 鈥斺€?LLM 鍙～绌?涓嶆帓鐗堛€?
-// 瑙掕壊鎸夐『搴忕湅鍒?"宸插～鐨勬Ы + 鍓╀綑妲?+ 鑷繁浜烘牸", 閫変竴涓Ы鍐?鎴?pass銆?
+// v2 设计 (2026-05): "版式优先"。先 roll 一份 layout template (pre-baked JSON),
+// 它已包含每个槽的 {位置, 视觉角色, 字数预算, 可写者} —— LLM 只填空,不排版。
+// 角色按顺序看到 "已填的槽 + 剩余槽 + 自己人格", 选一个槽写,或 pass。
 //
-// 鏃х殑 'main'|'side'|'corner'|'margin' 浠嶇劧淇濈暀 (鑰佹暟鎹洖鏀惧吋瀹?,
-// 鏂扮増寮忕敤鏇磋涔夊寲鐨?SlotRole, 娓叉煋鏃舵寜 role 鍒嗗彂鍒颁笓闂ㄧ粍浠躲€?
+// 旧的 'main'|'side'|'corner'|'margin' 仍然保留 (老数据回放兼容),
+// 新版式用更语义化的 SlotRole, 渲染时按 role 分发到专门组件。
 //
-// 鍧愭爣閮界敤鐧惧垎姣?鍥哄畾姣斾緥鐨勭焊闈?鈫?浠绘剰灏哄涓嬮兘涓嶇牬銆?
+// 坐标都用百分比,固定比例的纸面 → 任意尺寸下都不破。
 
-/** v1 鏃ц鑹?鈥?浠呬负鍏煎鍘嗗彶 entry 鏁版嵁淇濈暀, 鏂扮増寮忎笉瑕佸啀浜у嚭 */
+/** v1 旧角色 — 仅为兼容历史 entry 数据保留, 新版式不要再产出 */
 export type LayoutRole =
-    | 'main'        // 涓诲尯,澶у潡,姝ｆ斁鎴栧井鏃嬭浆
-    | 'side'        // 渚ф爮,涓瓑灏哄
-    | 'corner'      // 瑙掕惤,灏忓崱鐗?澶ф棆杞?
-    | 'margin';     // 椤佃竟,鏋佸皬灏哄,鍙互绾靛悜
+    | 'main'        // 主区,大块,正放或微旋转
+    | 'side'        // 侧栏,中等尺寸
+    | 'corner'      // 角落,小卡片,大旋转
+    | 'margin';     // 页边,极小尺寸,可以纵向
 
 /**
- * v2 妲借鑹?鈥斺€?涓€涓?role = 涓€绉?"鍐呭绫诲瀷 + 瑙嗚鐨偆 + 鍐欎綔绾︽潫"銆?
- * Renderer 鎸?role 鍒嗗彂, prompt 鎸?role 鍑?hint銆?
+ * v2 槽角色 —— 一个 role = 一种 "内容类型 + 视觉皮肤 + 写作约束"。
+ * Renderer 按 role 分发, prompt 按 role 出 hint。
  *
- * - hero-diary       涓绘棩璁版湰浣? 褰撳ぉ涓诲彊浜?(80~180 瀛?
- * - timeline-plan    鏃堕棿琛?/ 浠婃棩璁″垝 (6~10 琛?
- * - todo             寰呭姙娓呭崟 (3~6 椤?
- * - gratitude        浠婃棩鎰熸仼 / 涓変欢濂戒簨 (3 椤?
- * - mood-card        蹇冩儏鍗?+ 璇勫垎 (20~50 瀛?+ 1~5 鈽?
- * - photo-caption    鐓х墖 + 鐭弿杩?(8~25 瀛? 鍥剧敱 user 璐?
- * - sticky-reaction  鍙嶅簲渚跨 (15~50 瀛? char-only, 蹇呴』寮曠敤宸插～妲?
- * - corner-note      杈硅鐙櫧灏忓瓧 (6~20 瀛?
+ * - hero-diary       主日记本体, 当天主叙事 (80~180 字)
+ * - timeline-plan    时间表 / 今日计划 (6~10 行)
+ * - todo             待办清单 (3~6 项)
+ * - gratitude        今日感恩 / 三件好事 (3 项)
+ * - mood-card        心情卡 + 评分 (20~50 字 + 1~5 ★)
+ * - photo-caption    照片 + 短描述 (8~25 字, 图由 user 贴)
+ * - sticky-reaction  反应便签 (15~50 字, char-only, 必须引用已填槽)
+ * - corner-note      边角独白小字 (6~20 字)
  */
 export type SlotRole =
     | 'hero-diary'
@@ -4026,125 +4179,125 @@ export type SlotRole =
     | 'sticky-reaction'
     | 'corner-note';
 
-/** 璋佽兘濉繖涓Ы */
+/** 谁能填这个槽 */
 export type SlotAuthorKind = 'user' | 'char';
 
 /**
- * 妲藉畾涔?鈥斺€?template 閲岀殑涓€涓┖浣? 娓叉煋鏃朵篃鏄?placement 鐨勬墿灞曘€?
- * 姣?v1 鐨?LayoutPlacement 澶? charBudget / eligibleAuthors / slotRole / hint
+ * 槽定义 —— template 里的一个空位, 渲染时也是 placement 的扩展。
+ * 比 v1 的 LayoutPlacement 多: charBudget / eligibleAuthors / slotRole / hint
  */
 export interface SlotDef {
-    /** 妲?id, 鍦ㄤ竴浠?template 鍐呭敮涓€ */
+    /** 槽 id, 在一份 template 内唯一 */
     id: string;
-    /** 瑙嗚 + 鍐呭绫诲瀷 */
+    /** 视觉 + 内容类型 */
     slotRole: SlotRole;
-    /** 瀛楁暟棰勭畻 [min, max] 鈥斺€?缁?LLM, 涔熺粰娓叉煋鍣ㄤ及楂樺害 */
+    /** 字数预算 [min, max] —— 给 LLM, 也给渲染器估高度 */
     charBudget: [number, number];
-    /** 璋佽兘濉? ['user'] / ['char'] / ['user', 'char'] */
+    /** 谁能填: ['user'] / ['char'] / ['user', 'char'] */
     eligibleAuthors: SlotAuthorKind[];
-    /** 缁?LLM 鐨勪竴鍙ヨ瘽鐩殑 (浣滀负 prompt hint) */
+    /** 给 LLM 的一句话目的 (作为 prompt hint) */
     hint: string;
-    /** 浣嶇疆 鈥?鏁撮〉鐧惧垎姣?*/
+    /** 位置 — 整页百分比 */
     xPct: number;
     yPct: number;
     widthPct: number;
-    /** 楂樺害涓婇檺 (% of page) 鈥?娓叉煋鍣ㄨ秴鍑烘埅鏂? 浼伴珮鐢?*/
+    /** 高度上限 (% of page) — 渲染器超出截断, 估高用 */
     maxHeightPct: number;
-    rotate?: number;             // 榛樿 0
-    zIndex?: number;             // 榛樿 10
-    /** 鏄惁鏈〉 hero 鈥?姣忛〉 鈮?1, 瀛楀彿鏈€澶? 瑙嗚鏉冮噸鏈€楂?*/
+    rotate?: number;             // 默认 0
+    zIndex?: number;             // 默认 10
+    /** 是否本页 hero — 每页 ≤ 1, 字号最大, 视觉权重最高 */
     isHero?: boolean;
-    /** 瑙嗚鐨偆鍙樹綋 (渚? sticky-reaction 鐨勪究绛惧簳鑹? */
+    /** 视觉皮肤变体 (例: sticky-reaction 的便签底色) */
     skinVariant?: string;
 }
 
-/** 涓€浠介缃増寮?= 涓€缁?SlotDef + 涓€浜涜瑙夎楗?*/
+/** 一份预置版式 = 一组 SlotDef + 一些视觉装饰 */
 export interface LayoutTemplate {
     id: string;                  // 'plan-day' / 'reflective-day' / 'photo-day' / ...
-    name: string;                // 涓枃鏄剧ず鍚?
-    /** 姣忛〉 SlotDef 鍒楄〃; index 0 = page 1, 1 = page 2 ... */
+    name: string;                // 中文显示名
+    /** 每页 SlotDef 列表; index 0 = page 1, 1 = page 2 ... */
     pages: SlotDef[][];
-    /** 鎺ㄨ崘浣跨敤鏉′欢鎻愮ず (orchestrator 閫夋ā鏉跨敤) */
+    /** 推荐使用条件提示 (orchestrator 选模板用) */
     suitFor?: string;
-    /** 榛樿绾稿紶搴曠汗: 'plain' | 'grid' | 'lined' | 'dot' */
+    /** 默认纸张底纹: 'plain' | 'grid' | 'lined' | 'dot' */
     paperStyle?: string;
 }
 
-/** v2 placement 鈥斺€?LayoutPlacement 鐨勬墿灞? 鎼哄甫 slot 鍏冩暟鎹€?
- *  鑰佹暟鎹病鏈?slotRole 鏃? 娓叉煋鍣ㄨ蛋 v1 鐨?JournalFragmentCard銆?*/
+/** v2 placement —— LayoutPlacement 的扩展, 携带 slot 元数据。
+ *  老数据没有 slotRole 时, 渲染器走 v1 的 JournalFragmentCard。 */
 export interface LayoutPlacement {
-    pageId: string;             // 瀵瑰簲 HandbookPage.id
-    fragmentId?: string;        // 瀵瑰簲 HandbookFragment.id;鎵嬪啓鏁撮〉鐣欑┖
-    xPct: number;               // 0~100,宸︿笂瑙?x
-    yPct: number;               // 0~100,宸︿笂瑙?y
-    widthPct: number;           // 10~95,鍗＄墖瀹藉害鍗犻〉闈㈢櫨鍒嗘瘮
-    rotate: number;             // -10 ~ 10,瑙掕惤鍙埌 卤15
-    zIndex: number;             // 瓒婂ぇ瓒婂帇涓婇潰
-    role: LayoutRole;           // v1 瑙掕壊 (鍏煎)
-    /** 璇ラ〉 hero 鈥?瀛楀彿鏈€澶с€佽瑙夋渶鏄剧溂銆傛瘡椤垫渶澶?1 涓€?*/
+    pageId: string;             // 对应 HandbookPage.id
+    fragmentId?: string;        // 对应 HandbookFragment.id;手写整页留空
+    xPct: number;               // 0~100,左上角 x
+    yPct: number;               // 0~100,左上角 y
+    widthPct: number;           // 10~95,卡片宽度占页面百分比
+    rotate: number;             // -10 ~ 10,角落可到 ±15
+    zIndex: number;             // 越大越压上面
+    role: LayoutRole;           // v1 角色 (兼容)
+    /** 该页 hero — 字号最大、视觉最显眼。每页最多 1 个。 */
     isHero?: boolean;
-    // 鈹€鈹€鈹€ v2 瀛楁 (鏂扮増寮忔墠鏈? 鑰佹暟鎹负 undefined) 鈹€鈹€鈹€
-    /** 鏉ヨ嚜 template 鐨勬Ы id */
+    // ─── v2 字段 (新版式才有, 老数据为 undefined) ───
+    /** 来自 template 的槽 id */
     slotId?: string;
-    /** v2 璇箟瑙掕壊 (鏈夊垯鎸?SlotRole 鍒嗗彂娓叉煋) */
+    /** v2 语义角色 (有则按 SlotRole 分发渲染) */
     slotRole?: SlotRole;
-    /** 楂樺害涓婇檺 % */
+    /** 高度上限 % */
     maxHeightPct?: number;
-    /** 瑙嗚鍙樹綋 (璺熼殢 SlotDef.skinVariant) */
+    /** 视觉变体 (跟随 SlotDef.skinVariant) */
     skinVariant?: string;
 }
 
 export interface HandbookLayout {
-    pageNumber: number;         // 涓€寮犵焊,1-based;瓒呴噺鏃跺彲鏈?page 2
+    pageNumber: number;         // 一张纸,1-based;超量时可有 page 2
     placements: LayoutPlacement[];
     generatedAt: number;
-    /** v2 鐗堝紡鏉ユ簮 template id (鐢ㄤ簬閲嶇敓鎴愭椂澶嶇敤鐩稿悓 template) */
+    /** v2 版式来源 template id (用于重生成时复用相同 template) */
     templateId?: string;
 }
 
-// 鈹€鈹€鈹€ HANDBOOK TRACKER锛堣嚜瀹氫箟鍋ュ悍/鐢熸椿鎵撳崱寮曟搸锛夆攢鈹€鈹€
+// ─── HANDBOOK TRACKER（自定义健康/生活打卡引擎）───
 //
-// 璁捐:
-// - Tracker = 鐢ㄦ埛鑷畾涔夌殑"鎵撳崱椤?(鐢熺悊鏈?/ 楗 / 鍠濇按 / 蹇冩儏 / 浣撻噸 / 鏈嶈嵂 / 鑷畾涔夆€︹€?
-// - 姣忎釜 Tracker 鏈?schema(瀛楁瀹氫箟),绯荤粺鎻愪緵妯℃澘,user 鍙敼鍙缓
-// - TrackerEntry = 鏌?tracker 鍦ㄦ煇澶╃殑涓€鏉℃墦鍗¤褰?values 鎸?schema 瀛?
-// - 璺?HandbookPage 瑙ｈ€?tracker 鏄粨鏋勫寲鏁版嵁,page 鏄嚜鐢辨枃鏈?纰庣墖
+// 设计:
+// - Tracker = 用户自定义的"打卡项"(生理期 / 饮食 / 喝水 / 心情 / 体重 / 服药 / 自定义……)
+// - 每个 Tracker 有 schema(字段定义),系统提供模板,user 可改可建
+// - TrackerEntry = 某 tracker 在某天的一条打卡记录,values 按 schema 存
+// - 跟 HandbookPage 解耦:tracker 是结构化数据,page 是自由文本/碎片
 //
 export type TrackerFieldKind =
-    | 'rating'       // 1~5 绛夌骇(婊戝潡 / emoji 閫夋嫨)
-    | 'number'       // 鏁板瓧(浣撻噸 / ml)
-    | 'options'      // 澶氶€?/ 鍗曢€?缁忔湡娴侀噺:鏃?灏?涓?澶?
-    | 'photo'        // 涓€寮犲浘(楗鎷嶇収)
-    | 'text'         // 涓€鍙ヨ瘽澶囨敞
-    | 'boolean';     // 鏄?鍚?浠婂ぉ鏈夋病鏈夊ご鐥?
+    | 'rating'       // 1~5 等级(滑块 / emoji 选择)
+    | 'number'       // 数字(体重 / ml)
+    | 'options'      // 多选 / 单选(经期流量:无/少/中/多)
+    | 'photo'        // 一张图(饮食拍照)
+    | 'text'         // 一句话备注
+    | 'boolean';     // 是/否(今天有没有头痛)
 
 export interface TrackerField {
-    key: string;                     // values 瀛楀吀閲岀殑 key
-    label: string;                   // 鏄剧ず鍚?"璇勫垎" / "澶囨敞" / "娴侀噺")
+    key: string;                     // values 字典里的 key
+    label: string;                   // 显示名("评分" / "备注" / "流量")
     kind: TrackerFieldKind;
     required?: boolean;
-    /** rating: 1~max 鏁存暟;number: 鑷敱鏁板瓧 */
+    /** rating: 1~max 整数;number: 自由数字 */
     max?: number;
     min?: number;
-    unit?: string;                   // 'kg' / 'ml' / '灏忔椂'
-    /** options 鏃剁殑鍙€夐」 */
+    unit?: string;                   // 'kg' / 'ml' / '小时'
+    /** options 时的可选项 */
     choices?: { value: string; label: string; emoji?: string }[];
     placeholder?: string;
 }
 
 export interface Tracker {
     id: string;
-    name: string;                    // "蹇冩儏" / "缁忔湡" / "浠婂ぉ鏈夋病鏈夊亸澶寸棝"
-    icon?: string;                   // emoji 鎴?sticker 鍚?
-    color: string;                   // tab/鏍囪 搴曡壊
+    name: string;                    // "心情" / "经期" / "今天有没有偏头痛"
+    icon?: string;                   // emoji 或 sticker 名
+    color: string;                   // tab/标记 底色
     schema: TrackerField[];
     createdAt: number;
     updatedAt: number;
-    /** 绯荤粺棰勮 vs 鐢ㄦ埛鑷缓锛堢郴缁熼璁?user 鍙鐢ㄤ絾涓嶅彲褰诲簳鍒犻櫎锛?/
+    /** 系统预设 vs 用户自建（系统预设 user 可禁用但不可彻底删除）*/
     isBuiltin?: boolean;
-    /** 鍦ㄦ湀鍘嗗崟鍏冩牸涓婂浣?涓€鐪肩湅鍒?浠婃棩 entry 鈥斺€?榛樿鏄剧ず涓诲瓧娈靛€?*/
+    /** 在月历单元格上如何"一眼看到"今日 entry —— 默认显示主字段值 */
     cellRenderField?: string;        // schema field key
-    sortOrder?: number;              // 鍦?tab 鍒楄〃閲岀殑鎺掑簭
+    sortOrder?: number;              // 在 tab 列表里的排序
 }
 
 export interface TrackerEntry {
@@ -4161,9 +4314,9 @@ export interface HandbookEntry {
     id: string;               // = date 'YYYY-MM-DD'
     date: string;
     pages: HandbookPage[];
-    /** 浜屾 LLM 鐢熸垚鐨勬暣椤垫帓鐗?涓€澶╁彲鑳借法澶氬紶绾?*/
+    /** 二次 LLM 生成的整页排版;一天可能跨多张纸 */
     layouts?: HandbookLayout[];
-    generatedAt?: number;     // 鏈€鍚庝竴娆¤嚜鍔ㄧ敓鎴愮殑鏃堕棿
+    generatedAt?: number;     // 最后一次自动生成的时间
     updatedAt: number;
 }
 
@@ -4188,18 +4341,18 @@ export interface Anniversary {
 }
 
 /**
- * 宀佹椂璁?路 鏃ュ巻璐寸焊
- * 鐢ㄦ埛 / 瑙掕壊寰€鏌愪竴澶╄创鐨勪竴鏉℃爣璁般€俛uthor='user' 鏄墜鍔ㄨ创鐨勶紱
- * author='character' 鏄鑹叉寜浜鸿鑷繁鎯﹁/鎯冲仛鐨勪簨锛圓I 鐢熸垚锛宑harId 蹇呭～锛夈€?
+ * 岁时记 · 日历贴纸
+ * 用户 / 角色往某一天贴的一条标记。author='user' 是手动贴的；
+ * author='character' 是角色按人设自己惦记/想做的事（AI 生成，charId 必填）。
  */
 export interface CalendarMark {
     id: string;
     date: string;            // 'YYYY-MM-DD'
     text: string;
     author: 'user' | 'character';
-    charId?: string;         // author==='character' 鏃朵负璇ヨ鑹?id
-    color?: string;          // 璐寸焊/鑳跺甫鑹诧紙hex 鎴?tailwind 鍙嬪ソ鐨勮壊鍊硷級
-    emoji?: string;          // 鍙€夊皬璐寸焊
+    charId?: string;         // author==='character' 时为该角色 id
+    color?: string;          // 贴纸/胶带色（hex 或 tailwind 友好的色值）
+    emoji?: string;          // 可选小贴纸
     createdAt: number;
 }
 
@@ -4212,8 +4365,30 @@ export interface SocialComment {
     isCharacter?: boolean;
     authorType?: 'user' | 'character' | 'stranger';
     authorCharId?: string;
-    /** 鏈嬪弸鍦堬細鍥炲鏌愭潯璇勮锛坣ame 鐢ㄤ簬娓叉煋 "A 鍥炲 B: xxx"锛?*/
+    /** 朋友圈：回复某条评论（name 用于渲染 "A 回复 B: xxx"） */
     replyTo?: { commentId: string; name: string };
+}
+
+export type SocialPostSource = 'manual' | 'refresh' | 'auto' | 'chat_forward' | 'phone_check' | 'legacy';
+
+export interface SocialAudienceRoleRule {
+    canView?: boolean;
+    canLike?: boolean;
+    canComment?: boolean;
+    canRepost?: boolean;
+    notify?: boolean;
+}
+
+export interface SocialAudienceRules {
+    mode: 'public' | 'private' | 'custom';
+    characters?: Record<string, SocialAudienceRoleRule>;
+}
+
+export interface SocialRelationSignal {
+    charId: string;
+    kind: 'posted' | 'mentioned' | 'liked' | 'commented' | 'reposted' | 'replied' | 'shared_to_chat';
+    text?: string;
+    at: number;
 }
 
 export interface SocialPost {
@@ -4232,19 +4407,29 @@ export interface SocialPost {
     bgStyle?: string;
     authorType?: 'user' | 'character' | 'stranger';
     authorCharId?: string;
-    /** 鏈嬪弸鍦堬細鐐硅禐鍒楄〃锛坕d 涓鸿鑹?id 鎴?'user'锛?*/
+    /** 朋友圈：点赞列表（id 为角色 id 或 'user'） */
     likedBy?: { id: string; name: string }[];
-    /** 鏈嬪弸鍦堬細杞彂鐨勫師甯栨憳瑕侊紙宓屽叆鍘熷笘鍐呭锛?*/
+    /** 朋友圈：转发的原帖摘要（嵌入原帖内容） */
     repostOf?: { postId: string; authorName: string; content: string; images?: string[] } | null;
-    /** 鏈嬪弸鍦堬細鎵€鍦ㄤ綅缃?*/
+    /** 朋友圈：所在位置 */
     location?: string;
-    /** 鏈嬪弸鍦堬細璋佸彲浠ョ湅锛坧rivate = 瑙掕壊涓嶅彲瑙併€佷笉浜掑姩锛?*/
+    /** 朋友圈：谁可以看（private = 角色不可见、不互动） */
     visibility?: 'public' | 'private';
-    /** 鏈嬪弸鍦堬細鎻愰啋璋佺湅锛堣鑹?id 鍒楄〃锛岃鎻愰啋鐨勮鑹蹭繚璇佷簰鍔級 */
+    /** 朋友圈：提醒谁看（角色 id 列表，被提醒的角色保证互动） */
     mentionedCharIds?: string[];
+    /** 此刻：细分可见 / 点赞 / 评论 / 转贴 / 提醒权限；旧 visibility 继续兼容 */
+    audienceRules?: SocialAudienceRules;
+    /** 此刻：最近一次发帖、评论、转发等活跃时间，用于排序和未读 */
+    lastActivityAt?: number;
+    /** 此刻：是否有用户还没看过的新动态/关键互动 */
+    unreadForUser?: boolean;
+    /** 此刻：来源，用于轻提醒和上下文摘要 */
+    source?: SocialPostSource;
+    /** 此刻：与具体角色有关的关系互动线索 */
+    relationSignals?: SocialRelationSignal[];
 }
 
-// --- 鎺ㄧ壒 App锛堟湰鍦?AI 鐢熸垚 X/Twitter 鏃堕棿绾匡級---
+// --- 推特 App（本地 AI 生成 X/Twitter 时间线）---
 
 export type TwitterAuthorType = 'user' | 'character' | 'npc';
 export type TwitterNotificationKind = 'reply' | 'like' | 'retweet' | 'quote' | 'mention' | 'follow' | 'dm';
@@ -4587,16 +4772,16 @@ export interface GameLog {
         skill?: string;
         mode?: TrpgCheckMode;
     };
-    // 鑷姩鎬荤粨鍚庯紝琚綊妗ｆ姌鍙犵殑鏃ュ織浼氭爣璁颁负 archived锛堜笉鍒犻櫎锛孶I 鐏版樉鎶樺彔锛?
+    // 自动总结后，被归档折叠的日志会标记为 archived（不删除，UI 灰显折叠）
     archived?: boolean;
 }
 
-// 鑷姩鎬荤粨浜у嚭鐨勩€屽墠鎯呮彁瑕併€嶅瓨妗ｏ紝鍍忓啓灏忚涓€鏍疯褰曡捣鍥犵粡杩囩粨鏋滀笌浜虹墿鍏崇郴鍙樺寲
+// 自动总结产出的「前情提要」存档，像写小说一样记录起因经过结果与人物关系变化
 export interface GameSummary {
     id: string;
-    content: string;       // 灏忚寮忔€荤粨锛堣捣鍥?缁忚繃/缁撴灉 + 浜虹墿鍏崇郴鍙樺寲锛?
-    logCount: number;      // 鏈鎬荤粨瑕嗙洊浜嗗灏戞潯鏃ュ織
-    logIds?: string[];     // 鏈鎬荤粨瑕嗙洊鐨勬棩蹇?id锛堢敤浜庢妸鍘熸枃涓庢€荤粨瀵瑰簲灞曠ず锛?
+    content: string;       // 小说式总结（起因/经过/结果 + 人物关系变化）
+    logCount: number;      // 本段总结覆盖了多少条日志
+    logIds?: string[];     // 本段总结覆盖的日志 id（用于把原文与总结对应展示）
     createdAt: number;
 }
 
@@ -4712,12 +4897,12 @@ export interface GameSession {
     encounters?: TrpgEncounter[];
     worldClock?: TrpgWorldClock;
     milestones?: TrpgMilestone[];
-    diceDisabled?: boolean;      // 鍏抽棴楠板瓙锛氳鍔ㄤ笉鍐嶈嚜鍔ㄩ D20锛岄粯璁ょ洿鎺ユ垚鍔?
-    // 褰掓。妯″紡锛?auto' 婊?0鏉¤嚜鍔ㄦ€荤粨骞堕€佽繘瑙掕壊 chatapp锛?manual' 鑷姩鎬荤粨浣嗕笉閫侊紝浠呮墜鍔ㄥ綊妗ｆ椂閫併€?
-    // 鏃у瓨妗ｆ棤姝ゅ瓧娈碉紝鎸?'manual' 澶勭悊锛堜笉姹℃煋鏃ц鑹茬殑鑱婂ぉ涓婁笅鏂囷級銆?
+    diceDisabled?: boolean;      // 关闭骰子：行动不再自动骰 D20，默认直接成功
+    // 归档模式：'auto' 满20条自动总结并送进角色 chatapp；'manual' 自动总结但不送，仅手动归档时送。
+    // 旧存档无此字段，按 'manual' 处理（不污染旧角色的聊天上下文）。
     archiveMode?: 'auto' | 'manual';
     suggestedActions?: GameActionOption[];
-    summaries?: GameSummary[];   // 鑷姩鎬荤粨褰掓。鐨勫墠鎯呮彁瑕?
+    summaries?: GameSummary[];   // 自动总结归档的前情提要
     createdAt: number;
     lastPlayedAt: number;
 }
@@ -4727,20 +4912,20 @@ export type MessageType = 'text' | 'image' | 'emoji' | 'interaction' | 'transfer
 export type ChatAlarmKind = 'sleep' | 'wake' | 'custom';
 export type ChatAlarmChannel = 'auto' | 'reminder' | 'call';
 
-/** 绲路鍗曡亰闂归挓锛氭寜瑙掕壊淇濆瓨鐨勭潯瑙夌潱淇?/ 璧峰簥鍙啋 / 鑷畾涔夋彁閱掋€?*/
+/** 絮语·单聊闹钟：按角色保存的睡觉督促 / 起床叫醒 / 自定义提醒。 */
 export interface ChatAlarm {
     id: string;
     charId: string;
     label: string;
     kind: ChatAlarmKind;
-    /** 24 灏忔椂鍒?HH:mm銆?*/
+    /** 24 小时制 HH:mm。 */
     timeHHmm: string;
-    /** JS Date.getDay() 鍙ｅ緞锛?=鍛ㄦ棩锛?=鍛ㄤ竴 ... 6=鍛ㄥ叚銆傜┖鏁扮粍瑙嗕负姣忓ぉ銆?*/
+    /** JS Date.getDay() 口径：0=周日，1=周一 ... 6=周六。空数组视为每天。 */
     weekdays: number[];
     channel: ChatAlarmChannel;
     enabled: boolean;
     nextAt: number;
-    /** 闃叉鍚屼竴涓湰鍦版棩鏈?鏃堕棿閲嶅瑙﹀彂锛屾牸寮忕敱 utils/chatAlarms.ts 鐢熸垚銆?*/
+    /** 防止同一个本地日期/时间重复触发，格式由 utils/chatAlarms.ts 生成。 */
     lastFiredKey?: string;
     createdAt: number;
     updatedAt: number;
@@ -4749,17 +4934,17 @@ export interface ChatAlarm {
 export type PeriodReminderVisibility = 'public' | 'private';
 export type PeriodReminderNotifyChannel = 'system' | 'character' | 'both';
 
-/** 鍋ュ悍路缁忔湡鎻愰啋锛氭湰鍦伴娴嬩笌鎻愰啋璁剧疆銆傚彧鍋氱敓娲绘彁閱掞紝涓嶄綔涓哄尰鐤楀垽鏂€?*/
+/** 健康·经期提醒：本地预测与提醒设置。只做生活提醒，不作为医疗判断。 */
 export interface PeriodReminderSettings {
     id: string;
     enabled: boolean;
-    /** 鏈€杩戜竴娆＄粡鏈熷紑濮嬫棩锛孻YYY-MM-DD銆備负绌烘椂涓嶆帓绋嬫彁閱掋€?*/
+    /** 最近一次经期开始日，YYYY-MM-DD。为空时不排程提醒。 */
     lastStartDate?: string;
     cycleLength: number;
     periodLength: number;
-    /** 鐩稿棰勬祴寮€濮嬫棩鐨勬彁閱掑亸绉伙紝-2=鎻愬墠涓ゅぉ锛?=褰撳ぉ銆?*/
+    /** 相对预测开始日的提醒偏移，-2=提前两天，0=当天。 */
     remindOffsets: number[];
-    /** 24 灏忔椂鍒?HH:mm銆?*/
+    /** 24 小时制 HH:mm。 */
     timeHHmm: string;
     visibility: PeriodReminderVisibility;
     notifyChannel: PeriodReminderNotifyChannel;
@@ -4869,32 +5054,32 @@ export interface HealthSummary {
     updatedAt: number;
 }
 
-/** 璐墿鍟嗗煄锛氫竴浠剁ぜ鐗╋紙鍐呯疆鐩綍鏉＄洰锛夈€?*/
+/** 购物商城：一件礼物（内置目录条目）。 */
 export interface ShopItem {
     id: string;
     name: string;
-    emoji: string;          // 绀肩墿鍥炬爣锛坋moji锛夛紱娌℃湁鐪熷疄鍥剧墖鏃朵綔涓恒€屾枃瀛楀浘銆嶅睍绀?
-    price: number;          // 浠锋牸锛堝厓锛?
-    category: string;       // 鍒嗙被 key
-    blurb: string;          // 涓€鍙ヨ瘽鎻忚堪
-    image?: string;         // 鐪熷疄鍟嗗搧鍥?URL锛圓I 鐢熸垚/鏈夊浘鏃跺～锛屾覆鏌撴椂浼樺厛鐢ㄥ浘锛屽惁鍒欑敤 emoji 鏂囧瓧鍥撅級
-    generated?: boolean;    // 鏄惁 AI 瀹炴椂鐢熸垚锛堝尯鍒嗗唴缃厹搴曞晢鍝侊級
-    custom?: boolean;       // 鏄惁鐢ㄦ埛鎵嬪姩鏂板鎴栫紪杈戣繃鐨勬湰鍦板晢鍝?
-    updatedAt?: number;     // 鐢ㄦ埛缂栬緫淇濆瓨鏃堕棿
-    rating?: number;        // 璇勫垎 1.0~5.0锛圓I 鐢熸垚锛屾湁濂芥湁鍧忥紱缂虹渷鏃舵寜 id 纭畾鎬ф淳鐢燂級
+    emoji: string;          // 礼物图标（emoji）；没有真实图片时作为「文字图」展示
+    price: number;          // 价格（元）
+    category: string;       // 分类 key
+    blurb: string;          // 一句话描述
+    image?: string;         // 真实商品图 URL（AI 生成/有图时填，渲染时优先用图，否则用 emoji 文字图）
+    generated?: boolean;    // 是否 AI 实时生成（区分内置兜底商品）
+    custom?: boolean;       // 是否用户手动新增或编辑过的本地商品
+    updatedAt?: number;     // 用户编辑保存时间
+    rating?: number;        // 评分 1.0~5.0（AI 生成，有好有坏；缺省时按 id 确定性派生）
 }
 
-/** 璐墿鍟嗗煄锛氫紭鎯犲埜锛堟弧鍑忓埜锛夈€傛弧 threshold 鍏冨噺 discount 鍏冦€?*/
+/** 购物商城：优惠券（满减券）。满 threshold 元减 discount 元。 */
 export interface ShopCoupon {
     id: string;
     title: string;
-    threshold: number;      // 浣跨敤闂ㄦ锛堟弧 X 鍏冿級
-    discount: number;       // 绔嬪噺閲戦锛堝厓锛?
+    threshold: number;      // 使用门槛（满 X 元）
+    discount: number;       // 立减金额（元）
 }
 
-/** 璐墿鍟嗗煄锛氳儗鍖呴噷鎷ユ湁鐨勪竴浠剁墿鍝侊紙user 涔颁笅浣嗚繕娌￠€佸嚭鍘荤殑锛夈€?*/
+/** 购物商城：背包里拥有的一件物品（user 买下但还没送出去的）。 */
 export interface ShopOwnedItem {
-    uid: string;            // 鍞竴瀹炰緥 id锛堝悓涓€ item 鍙嫢鏈夊浠讹級
+    uid: string;            // 唯一实例 id（同一 item 可拥有多件）
     itemId: string;
     name: string;
     emoji: string;
@@ -4902,13 +5087,13 @@ export interface ShopOwnedItem {
     boughtAt: number;
 }
 
-/** 璐墿鍟嗗煄锛氳喘鐗╄溅閲岀殑涓€琛岋紙鏌愬晢鍝?+ 鏁伴噺锛夈€倁ser 涓?char 鍚勬湁涓€涓喘鐗╄溅銆?*/
+/** 购物商城：购物车里的一行（某商品 + 数量）。user 与 char 各有一个购物车。 */
 export interface ShopCartLine {
     itemId: string;
     qty: number;
 }
 
-/** 璐墿鍟嗗煄锛氳鍗曢噷鐨勪竴浠跺晢鍝侊紙甯︽暟閲忓揩鐓э級銆?*/
+/** 购物商城：订单里的一件商品（带数量快照）。 */
 export interface ShopOrderItem {
     itemId: string;
     name: string;
@@ -4917,28 +5102,28 @@ export interface ShopOrderItem {
     qty: number;
 }
 
-/** 璐墿鍟嗗煄锛氫竴绗旇鍗曪紙娣樺疂寮忥紝鍚墿娴侀厤閫佽繘搴︼級銆備笅鍗?鈫?鐗╂祦鎺ㄨ繘 鈫?纭鏀惰揣鍚庤繘鑳屽寘銆?*/
+/** 购物商城：一笔订单（淘宝式，含物流配送进度）。下单 → 物流推进 → 确认收货后进背包。 */
 export interface ShopOrder {
     id: string;
     items: ShopOrderItem[];
     total: number;
-    /** 'self'=鑷繁浠橈紱'char'=瑙掕壊浠ｄ粯锛坧ayerName 璁拌鑹插悕锛?*/
+    /** 'self'=自己付；'char'=角色代付（payerName 记角色名） */
     paidBy: 'self' | 'char';
     payerName?: string;
     placedAt: number;
-    etaAt: number;          // 棰勮閫佽揪鏃堕棿鎴?
-    receivedAt?: number;    // 鐢ㄦ埛鐐广€岀‘璁ゆ敹璐с€嶇殑鏃跺埢
-    refundedAt?: number;    // 鐢ㄦ埛鐢宠閫€娆撅紙閫€娆?鍞悗锛夋垚鍔熺殑鏃跺埢锛涢€€娆惧悗璁㈠崟涓嶅啀杩涜儗鍖?
-    coinDiscount?: number;  // 鏈崟鐢ㄦ窐閲戝竵鎶垫墸鐨勯噾棰濓紙鍏冿紝浠呭睍绀虹敤锛?
+    etaAt: number;          // 预计送达时间戳
+    receivedAt?: number;    // 用户点「确认收货」的时刻
+    refundedAt?: number;    // 用户申请退款（退款/售后）成功的时刻；退款后订单不再进背包
+    coinDiscount?: number;  // 本单用淘金币抵扣的金额（元，仅展示用）
 }
 
-/** 璐墿鍟嗗煄路娴忚瓒宠抗锛氱湅杩囨煇鍟嗗搧鐨勮褰曘€?*/
+/** 购物商城·浏览足迹：看过某商品的记录。 */
 export interface ShopFootprint {
     itemId: string;
     at: number;
 }
 
-/** 璐墿鍟嗗煄路鎴戝啓鐨勫晢鍝佽瘎浠凤紙纭鏀惰揣鍚庢檼鍗曪紱鎸?orderId+itemId 鍞竴锛夈€?*/
+/** 购物商城·我写的商品评价（确认收货后晒单；按 orderId+itemId 唯一）。 */
 export interface ShopUserReview {
     id: string;
     itemId: string;
@@ -4948,30 +5133,30 @@ export interface ShopUserReview {
     at: number;
 }
 
-/** 璐墿鍟嗗煄锛氫竴鏉″皬绁紙璐拱 / 璧犻€?/ 鏀剁ぜ锛夈€倁ser 涓?char 鍚勫瓨涓€浠藉巻鍙层€?*/
+/** 购物商城：一条小票（购买 / 赠送 / 收礼）。user 与 char 各存一份历史。 */
 export interface ShopReceipt {
     id: string;
     itemId: string;
     name: string;
     emoji: string;
     price: number;
-    /** 璋佺殑鍔ㄤ綔锛氱敤鎴?or 瑙掕壊 */
+    /** 谁的动作：用户 or 角色 */
     by: 'user' | 'char';
-    /** buy=缁欒嚜宸变拱锛沢ift=閫佸嚭锛況eceive=鏀跺埌瀵规柟閫佺殑 */
+    /** buy=给自己买；gift=送出；receive=收到对方送的 */
     action: 'buy' | 'gift' | 'receive';
-    /** 瀵规柟鏄皝锛歝harId / 'user' / 'self'锛堢粰鑷繁涔帮級 */
+    /** 对方是谁：charId / 'user' / 'self'（给自己买） */
     counterpartId: string;
     counterpartName: string;
-    note?: string;          // 璧犺█ / 瑙掕壊涔板畠鐨勭悊鐢?
+    note?: string;          // 赠言 / 角色买它的理由
     at: number;
 }
 
 /**
- * 娑堟伅閫佽揪鐘舵€侊紙Telegram 寮忓洖鎵э紝瀛?metadata.msgStatus锛夛細
- * - 'sent'锛氬凡鍙戝嚭锛堝崟鍕撅級
- * - 'read'锛氬鏂瑰凡璇伙紙鍙屽嬀锛夆€斺€?鐢ㄦ埛娑堟伅鍦ㄨ鑹叉垚鍔熷洖澶嶅悗鏍囪锛涜鑹叉秷鎭湪鐢ㄦ埛鎵撳紑鑱婂ぉ椤垫椂鏍囪
- * - 'failed'锛氬彂閫佸け璐ワ紙绾㈣壊鎰熷徆鍙凤級鈥斺€?鏈湴 API 璋冪敤澶辫触鏃舵爣璁?
- * 鏃ф秷鎭病鏈夎瀛楁鏃朵笉鏄剧ず浠讳綍鍥炴墽銆?
+ * 消息送达状态（Telegram 式回执，存 metadata.msgStatus）：
+ * - 'sent'：已发出（单勾）
+ * - 'read'：对方已读（双勾）—— 用户消息在角色成功回复后标记；角色消息在用户打开聊天页时标记
+ * - 'failed'：发送失败（红色感叹号）—— 本地 API 调用失败时标记
+ * 旧消息没有该字段时不显示任何回执。
  */
 export type MessageDeliveryStatus = 'sent' | 'read' | 'failed';
 
@@ -4991,7 +5176,7 @@ export interface Message {
     };
 }
 
-/** 绲绉佽亰妗ｆ鍐呯殑娑堟伅蹇収銆俰d 浼氬湪鎭㈠鍒版椿璺?messages 琛ㄦ椂閲嶆柊鐢熸垚銆?*/
+/** 絮语私聊档案内的消息快照。id 会在恢复到活跃 messages 表时重新生成。 */
 export interface PrivateChatArchiveMessage {
     originalId?: number;
     charId: string;
@@ -5007,7 +5192,7 @@ export interface PrivateChatArchiveMessage {
     };
 }
 
-/** 绲绉佽亰妗ｆ锛氬弬鑰?SillyTavern 鐨?per-character chat file 绠＄悊銆?*/
+/** 絮语私聊档案：参考 SillyTavern 的 per-character chat file 管理。 */
 export interface PrivateChatArchive {
     id: string;
     charId: string;
@@ -5021,26 +5206,63 @@ export interface PrivateChatArchive {
     source?: 'moro' | 'sillytavern' | 'manual';
 }
 
-/** 鐢佃瘽 App锛氫竴鏉￠€氳瘽璁板綍锛堟嫧鍑?/ 鎺ュ惉 / 鏈帴锛夈€?
- *  涓?CallApp 鐨勯€氳瘽娑堟伅锛坢etadata.callSessionId锛変簰琛ワ細CallApp 钀借缁嗛€愬瓧绋匡紝
- *  杩欓噷鍙惤"閫氳瘽鍙戠敓杩?鐨勮交閲忔潯鐩紝渚涚數璇?App 鐨勯€氳瘽璁板綍鍒楄〃灞曠ず涓庡洖鎷ㄣ€?*/
-export interface PhoneCallLog {
+export type ChatFollowupSource =
+    | 'private_message'
+    | 'group_message'
+    | 'moments'
+    | 'manual'
+    | 'verification'
+    | 'offline'
+    | 'alarm'
+    | 'system';
+
+export type ChatFollowupTargetKind = 'char' | 'group' | 'hub' | 'system';
+
+export interface ChatFollowup {
     id: string;
-    charId?: string;        // 宸茬煡瑙掕壊鏃跺叧鑱旓紱鎵嬪姩鎷ㄩ檶鐢熷彿鐮佹椂涓虹┖
-    name: string;           // 鏄剧ず鍚嶏紙瑙掕壊鍚嶆垨鍙风爜鏈韩锛?
-    number: string;         // 铏氭嫙鍙风爜锛堣鑹插彿鐮佺敱 charId 纭畾鎬х敓鎴愶級
-    direction: 'outgoing' | 'incoming' | 'missed';
-    timestamp: number;
-    durationSec: number;    // 鏈帴 = 0
-    sessionId?: string;     // 鍏宠仈 CallApp 鐨?callSessionId锛堟湁褰曢煶/閫愬瓧绋挎椂鍙烦杞級
-    mode?: 'voice' | 'video'; // 榛樿璇煶锛涜棰戣亰澶╄惤搴撴椂鏍囪涓?video
+    source: ChatFollowupSource;
+    targetKind: ChatFollowupTargetKind;
+    targetId?: string;
+    messageId?: number;
+    groupId?: string;
+    title: string;
+    note?: string;
+    status: 'open' | 'done' | 'dismissed';
+    dueAt?: number;
+    createdAt: number;
+    updatedAt: number;
 }
 
-/** 鏃ヨ绀撅細涓€绡囨棩璁帮紙鐢ㄦ埛鎴栬鑹茶瑙掞級 */
+export interface ChatHubDigest {
+    id: string;
+    date: string;
+    range: { from: number; to: number };
+    sourceItemIds: string[];
+    summary: string;
+    highlights: string[];
+    createdAt: number;
+}
+
+/** 电话 App：一条通话记录（拨出 / 接听 / 未接）。
+ *  与 CallApp 的通话消息（metadata.callSessionId）互补：CallApp 落详细逐字稿，
+ *  这里只落"通话发生过"的轻量条目，供电话 App 的通话记录列表展示与回拨。 */
+export interface PhoneCallLog {
+    id: string;
+    charId?: string;        // 已知角色时关联；手动拨陌生号码时为空
+    name: string;           // 显示名（角色名或号码本身）
+    number: string;         // 虚拟号码（角色号码由 charId 确定性生成）
+    direction: 'outgoing' | 'incoming' | 'missed';
+    timestamp: number;
+    durationSec: number;    // 未接 = 0
+    sessionId?: string;     // 关联 CallApp 的 callSessionId（有录音/逐字稿时可跳转）
+    mode?: 'voice' | 'video'; // 默认语音；视频聊天落库时标记为 video
+}
+
+/** 日记社：一篇日记（用户或角色视角） */
 export interface ExchangeDiaryEntry {
     id: string;
     author: 'user' | 'char';
-    charId: string;         // author === 'char' 鏃朵负瑙掕壊 id锛泆ser 绡囪褰?鍐欑粰璋佺湅"鐨勫綋鍓嶆椿璺冭鑹?
+    charId: string;         // author === 'char' 时为角色 id；user 篇记录"写给谁看"的当前活跃角色
     authorName: string;
     avatar?: string;
     mood?: string;          // sunny / rainy / starry / cozy / wild
@@ -5048,22 +5270,22 @@ export interface ExchangeDiaryEntry {
     content: string;
     date: string;           // YYYY-MM-DD
     timestamp: number;
-    isSummary?: boolean;    // 鐢?浠婃棩瀵硅瘽鎬荤粨"鑷姩鐢熸垚鐨勭瘒鐩?
+    isSummary?: boolean;    // 由"今日对话总结"自动生成的篇目
 }
 
-/** 鏃ヨ绀撅細涓€鏈瑙掕壊鍏卞啓鐨勪氦鎹㈡棩璁版湰 */
+/** 日记社：一本多角色共写的交换日记本 */
 export interface ExchangeDiaryBook {
     id: string;
     title: string;
-    charIds: string[];      // 鍙備笌鐨勮鑹?
-    activeCharId: string;   // 褰撳墠瀵硅瘽/鍥炲簲鐨勮鑹?
+    charIds: string[];      // 参与的角色
+    activeCharId: string;   // 当前对话/回应的角色
     paperStyle?: string;    // plain / grid / lined / pink / dark
     entries: ExchangeDiaryEntry[];
     createdAt: number;
     updatedAt: number;
 }
 
-/** 鍋风湅蹇冨０锛氫竴娆?绐ユ帰瑙掕壊鍐呭績"鐨勭敓鎴愮粨鏋滐紙瑙掕壊涓嶇煡鎯咃紝涓嶈繘鑱婂ぉ涓婁笅鏂囷級 */
+/** 偷看心声：一次"窥探角色内心"的生成结果（角色不知情，不进聊天上下文） */
 export interface InnerVoiceEntry {
     id: string;
     charId: string;
@@ -5084,7 +5306,7 @@ export interface Emoji {
     name: string;
     url: string;
     categoryId?: string;
-    /** 鎻忚堪锛氳〃鎯呴潰鏉挎寜鎻忚堪鎼滅储鐢紝鍚屾椂娉ㄥ叆鎻愮ず璇嶅府 AI 閫夎〃鎯呫€?*/
+    /** 描述：表情面板按描述搜索用，同时注入提示词帮 AI 选表情。 */
     description?: string;
 }
 
@@ -5145,7 +5367,7 @@ export interface FullBackupData {
     pushVapid?: { vapidPublicKey: string; vapidPrivateKey: string; vapidEmail?: string; updatedAt?: number; };
     apiPresets?: ApiPreset[];
     availableModels?: string[];
-    realtimeConfig?: RealtimeConfig;  // 瀹炴椂鎰熺煡閰嶇疆锛堝ぉ姘?鏂伴椈/Notion锛?
+    realtimeConfig?: RealtimeConfig;  // 实时感知配置（天气/新闻/Notion）
     memoryPalaceConfig?: MemoryPalaceBackupConfig;
     customIcons?: Record<string, string>;
     appearancePresets?: AppearancePreset[];
@@ -5154,6 +5376,8 @@ export interface FullBackupData {
     messages?: Message[];
     privateChatArchives?: PrivateChatArchive[];
     chatAlarms?: ChatAlarm[];
+    chatFollowups?: ChatFollowup[];
+    chatHubDigests?: ChatHubDigest[];
     periodReminderSettings?: PeriodReminderSettings[];
     periodCycleEvents?: PeriodCycleEvent[];
     healthModuleSettings?: HealthModuleSettings[];
@@ -5174,31 +5398,38 @@ export interface FullBackupData {
     roomTodos?: RoomTodo[]; 
     roomNotes?: RoomNote[];
     socialPosts?: SocialPost[]; 
+    xhsFeedPosts?: XhsFeedPost[];
     courses?: StudyCourse[]; 
     games?: GameSession[];
     worldbooks?: Worldbook[]; 
     roomCustomAssets?: { id?: string; name: string; image: string; defaultScale: number; description?: string; visibility?: 'public' | 'character'; assignedCharIds?: string[] }[]; 
     
     novels?: NovelBook[];
-    vrNovels?: VRWorldNovel[];          // 铏氭嫙涓栫晫銆岄〉澶栥€嶅叏灞€灏忚搴?
-    vrAnnotations?: VRNovelAnnotation[]; // 铏氭嫙涓栫晫灏忚鎵规敞
-    customCreatorParts?: CustomCreatorPart[]; // 鎹忚劯绯荤粺鑷畾涔夐儴浠?
-    vrMusicRoom?: VRMusicRoomState;            // 鍚瓕鎴垮叡浜姸鎬?
-    vrGuestbook?: VRGuestbookState;            // 鐣欒█绨垮叡浜姸鎬?
-    vrScripts?: VRScript[];                     // 鍓ч櫌路鎶曠鍓ф湰搴?
-    vrStagedPlays?: VRStagedPlay[];             // 鍓ч櫌路鍘嗗彶鑸炲彴鍓?
-    vrPresets?: { key: string; name: string; prompt: string; blurb?: string }[]; // 鍓ч櫌路鐢ㄦ埛鑷畾涔夊啓浣滈鏍奸璁?
-    vrLetters?: VRLetter[];                    // 閭眬淇′欢锛堟湰鍦板瓨妗?闃熷垪锛?
-    vrSettings?: any[];                        // 椤靛璁剧疆锛堢嫭绔?API + 璋冪敤璁板綍锛?
-    vrPostOffice?: Record<string, string>;     // 閭眬鏈満閰嶇疆锛氳韩浠?deviceId / 鍚庣鍦板潃锛堝瓨 localStorage锛?
+    vrNovels?: VRWorldNovel[];          // 虚拟世界「页外」全局小说库
+    vrAnnotations?: VRNovelAnnotation[]; // 虚拟世界小说批注
+    customCreatorParts?: CustomCreatorPart[]; // 捏脸系统自定义部件
+    vrMusicRoom?: VRMusicRoomState;            // 听歌房共享状态
+    vrGuestbook?: VRGuestbookState;            // 留言簿共享状态
+    vrScripts?: VRScript[];                     // 剧院·投稿剧本库
+    vrStagedPlays?: VRStagedPlay[];             // 剧院·历史舞台剧
+    vrPresets?: { key: string; name: string; prompt: string; blurb?: string }[]; // 剧院·用户自定义写作风格预设
+    vrLetters?: VRLetter[];                    // 邮局信件（本地存档+队列）
+    vrSettings?: any[];                        // 页外设置（独立 API + 调用记录）
+    vrPostOffice?: Record<string, string>;     // 邮局本机配置：身份 deviceId / 后端地址（存 localStorage）
     songs?: SongSheet[]; // Songwriting app data
-    phoneCallLogs?: PhoneCallLog[];           // 鐢佃瘽 App 閫氳瘽璁板綍
-    phoneCheckSessions?: PhoneCheckSession[]; // 绲鏌ュ矖妗ｆ
-    userScreenWatchSessions?: UserScreenWatchSession[]; // 绲瑙傚睆璇勮浼氳瘽
-    exchangeDiaryBooks?: ExchangeDiaryBook[]; // 鏃ヨ绀惧瑙掕壊浜ゆ崲鏃ヨ鏈?
-    innerVoices?: InnerVoiceEntry[];          // 鍋风湅蹇冨０鍘嗗彶
-    llmPresets?: TavernPreset[];              // 棰勮 App锛歋illyTavern 寮?Chat Completion 棰勮
-    personas?: Persona[];                     // 浜鸿 App锛歋illyTavern 寮忕敤鎴蜂汉璁?
+    musicTracks?: MusicLibraryTrack[];
+    musicPlaylists?: MusicLibraryPlaylist[];
+    musicPlaylistItems?: MusicPlaylistItem[];
+    musicPlayEvents?: MusicPlayEvent[];
+    musicSearchHistory?: MusicSearchHistoryItem[];
+    musicRecommendCache?: MusicRecommendCacheEntry[];
+    phoneCallLogs?: PhoneCallLog[];           // 电话 App 通话记录
+    phoneCheckSessions?: PhoneCheckSession[]; // 絮语查岗档案
+    userScreenWatchSessions?: UserScreenWatchSession[]; // 絮语观屏评论会话
+    exchangeDiaryBooks?: ExchangeDiaryBook[]; // 日记社多角色交换日记本
+    innerVoices?: InnerVoiceEntry[];          // 偷看心声历史
+    llmPresets?: TavernPreset[];              // 预设 App：SillyTavern 式 Chat Completion 预设
+    personas?: Persona[];                     // 人设 App：SillyTavern 式用户人设
     relationshipNetworkEdges?: RelationshipNetworkEdge[];
     relationshipNetworkMessages?: RelationshipNetworkMessage[];
     relationshipNetworkAutoSettings?: RelationshipNetworkAutoSettings[];
@@ -5244,19 +5475,19 @@ export interface FullBackupData {
     // Quiz / Practice Book
     quizSessions?: QuizSession[];
 
-    // Guidebook (鏀荤暐鏈?
+    // Guidebook (攻略本)
     guidebookSessions?: GuidebookSession[];
 
-    // Theater quiz side stories (鎶樺瓙鎴徛风暘澶栭棶鍗?
+    // Theater quiz side stories (折子戏·番外问卷)
     theaterQuizSessions?: TheaterQuizSession[];
 
-    // Theater faux screenshots (鎶樺瓙鎴徛蜂豢鐪熷浘鏂囧巻鍙?
+    // Theater faux screenshots (折子戏·仿真图文历史)
     theaterFauxPieces?: TheaterFauxPiece[];
 
-    // Theater reflections (鎶樺瓙鎴徛峰褰卞唽)
+    // Theater reflections (折子戏·对影册)
     theaterReflectionSessions?: TheaterReflectionSession[];
 
-    // Almanac collection hall references (宀佹椂璁奥峰吀钘忛鏀跺綍寮曠敤)
+    // Almanac collection hall references (岁时记·典藏馆收录引用)
     collectionItems?: CollectionItem[];
 
     // Chat delayed actions
@@ -5271,36 +5502,36 @@ export interface FullBackupData {
     // LifeSim
     lifeSimState?: LifeSimState | null;
 
-    // Memory Palace (璁板繂瀹)
+    // Memory Palace (记忆宫殿)
     memoryNodes?: any[];
     memoryVectors?: any[];
     memoryLinks?: any[];
     topicBoxes?: any[];
     anticipations?: any[];
     eventBoxes?: any[];
-    memoryPalaceHighWaterMarks?: Record<string, number>; // charId 鈫?lastProcessedMsgId
-    memoryPalaceFlags?: Record<string, string>; // mp_personality_tried_* / mp_first_archive_notice_* 绛?UI 鏍囪
+    memoryPalaceHighWaterMarks?: Record<string, number>; // charId → lastProcessedMsgId
+    memoryPalaceFlags?: Record<string, string>; // mp_personality_tried_* / mp_first_archive_notice_* 等 UI 标记
     cloudBackupConfig?: CloudBackupConfig;
     remoteVectorConfig?: { enabled: boolean; supabaseUrl: string; supabaseAnonKey: string; initialized: boolean };
 
-    // Character daily schedule (瑙掕壊鏃ョ▼琛?鈥?daily_schedule store)
+    // Character daily schedule (角色日程表 — daily_schedule store)
     dailySchedules?: DailySchedule[];
 
-    // 鎵嬭处锛堣法瑙掕壊鑱氬悎鐣欑棔鏈?鈥?handbook store锛?
+    // 手账（跨角色聚合留痕本 — handbook store）
     handbooks?: HandbookEntry[];
 
-    // 鎵嬭处 Tracker锛堝仴搴?鐢熸椿鎵撳崱寮曟搸锛?
+    // 手账 Tracker（健康/生活打卡引擎）
     trackers?: Tracker[];
     trackerEntries?: TrackerEntry[];
 
-    // Memory Palace 鎵规澶勭悊鍏冩暟鎹?
+    // Memory Palace 批次处理元数据
     memoryBatches?: any[];
 
-    // Pixel Home锛堝皬灞嬪儚绱犵晫闈級
+    // Pixel Home（小屋像素界面）
     pixelHomeAssets?: any[];
     pixelHomeLayouts?: any[];
 
-    // Chat 璁剧疆锛堢炕璇?/ 褰掓。 / 娑﹁壊 prompts锛?
+    // Chat 设置（翻译 / 归档 / 润色 prompts）
     chatTranslateSourceLang?: string;
     chatTranslateTargetLang?: string;
     chatTranslateSourceLangByChar?: Record<string, string>;
@@ -5311,20 +5542,20 @@ export interface FullBackupData {
     characterRefinePrompts?: any;
     characterActiveRefinePromptId?: string;
 
-    // 鍏跺畠 UI / 鍋忓ソ
+    // 其它 UI / 偏好
     scheduleAppTheme?: string;
     handbookLifestreamDepth?: string;
     groupchatContextLimit?: number;
     browserConfig?: { braveKey?: string; useRealSearch?: boolean };
     bm25Mode?: string;
     lastActiveCharId?: string;
-    eventNotifFlags?: Record<string, string>;  // moro_* 浜嬩欢閫氱煡鏍囪
+    eventNotifFlags?: Record<string, string>;  // moro_* 事件通知标记
     hotNewsSnapshots?: HotNewsSnapshot[];
 }
 
 // --- CLOUD BACKUP TYPES ---
 // Two providers share one config: WebDAV (legacy) and GitHub Releases (new,
-// no GFW friction for most users 鈥?just paste a Personal Access Token).
+// no GFW friction for most users — just paste a Personal Access Token).
 export type CloudBackupProvider = 'webdav' | 'github';
 
 export interface CloudBackupConfig {
@@ -5337,7 +5568,7 @@ export interface CloudBackupConfig {
     password: string;           // App-specific password
     remotePath: string;         // e.g. /MoroBackup/
 
-    // GitHub Releases 鈥?uses a Personal Access Token. Owner is resolved from
+    // GitHub Releases — uses a Personal Access Token. Owner is resolved from
     // GET /user during connect; repo defaults to 'moro-backup' (private).
     githubToken?: string;
     githubOwner?: string;
@@ -5355,7 +5586,7 @@ export interface CloudBackupFile {
     href: string;               // WebDAV: remote path. GitHub: 'releaseId:assetId'
 }
 
-// --- GUIDEBOOK (鏀荤暐鏈? APP TYPES ---
+// --- GUIDEBOOK (攻略本) APP TYPES ---
 export type GuidebookPlayStyle = 'classic' | 'slowburn' | 'comedy' | 'dramatic' | 'mindgame';
 export type GuidebookDifficulty = 'soft' | 'normal' | 'hard';
 export type GuidebookPacing = 'slice' | 'rising' | 'climax';
@@ -5457,82 +5688,87 @@ export interface XhsFreeRoamSession {
 export interface XhsMcpConfig {
     enabled: boolean;
     serverUrl: string;  // MCP: "http://localhost:18060/mcp" | Skills: "http://localhost:18061/api" | Lite Worker: "https://xhs-lite.<acct>.workers.dev/api"
-    cookie?: string;    // Lite 妯″紡锛氱櫥褰曞悗鐨勫皬绾功瀹屾暣 cookie锛堝惈 a1 / web_session锛夈€備粎 lite Worker 鐢ㄣ€?
-    loggedInUserId?: string;   // 鐧诲綍鐢ㄦ埛鐨?user_id锛岃繛鎺ユ祴璇曟垚鍔熷悗鑷姩鑾峰彇
-    loggedInNickname?: string; // 鐧诲綍鐢ㄦ埛鐨勬樀绉?
-    userXsecToken?: string;    // 杩炴帴娴嬭瘯鏃朵粠棣栭〉鎺ㄨ崘鑷姩鎻愬彇鐨?xsec_token
+    cookie?: string;    // Lite 模式：登录后的小红书完整 cookie（含 a1 / web_session）。仅 lite Worker 用。
+    loggedInUserId?: string;   // 登录用户的 user_id，连接测试成功后自动获取
+    loggedInNickname?: string; // 登录用户的昵称
+    userXsecToken?: string;    // 连接测试时从首页推荐自动提取的 xsec_token
 }
 
-// --- XHS 鏈湴鐢熸垚淇℃伅娴侊紙灏忕孩涔?App锛歀LM 鐢熸垚瑙掕壊 + NPC 甯栧瓙锛屾湰鍦版寔涔呭寲锛?--
+// --- XHS 本地生成信息流（小红书 App：LLM 生成角色 + NPC 帖子，本地持久化）---
 
 export interface XhsFeedComment {
     id: string;
-    author: string;            // 鏄剧ず鏄电О
-    charId?: string;           // 瑙掕壊璇勮鏃朵负瑙掕壊 id锛汵PC 璇勮涓虹┖
-    isUser?: boolean;          // 鐢ㄦ埛鑷繁鍙戠殑璇勮
+    author: string;            // 显示昵称
+    charId?: string;           // 角色评论时为角色 id；NPC 评论为空
+    isUser?: boolean;          // 用户自己发的评论
     content: string;
     likes: number;
     timestamp: number;
 }
 
+export type XhsFeedSource = 'generated' | 'user' | 'character_life' | 'clip';
+export type XhsFeedCategory = 'life' | 'food' | 'travel' | 'style' | 'work' | 'study' | 'emotion' | 'hobby' | 'relationship' | 'other';
+
 export interface XhsFeedPost {
     id: string;
     authorType: 'character' | 'npc' | 'user';
-    charId?: string;           // authorType='character' 鏃剁殑瑙掕壊 id
-    author: string;            // 鏄剧ず鏄电О
-    authorAvatar?: string;     // 瑙掕壊澶村儚 / 鐢ㄦ埛澶村儚锛汵PC 鐣欑┖璧板瓧姣嶅ご鍍?
+    charId?: string;           // authorType='character' 时的角色 id
+    author: string;            // 显示昵称
+    authorAvatar?: string;     // 角色头像 / 用户头像；NPC 留空走字母头像
     title: string;
     body: string;
     tags: string[];
-    coverUrl?: string;         // 灏侀潰鍥撅紙鏉ヨ嚜灏忕孩涔﹀浘搴擄紝鍙┖ 鈫?娓愬彉鍗犱綅锛?
+    coverUrl?: string;         // 封面图（来自小红书图库，可空 → 渐变占位）
     likes: number;
-    liked?: boolean;           // 鐢ㄦ埛宸茬偣璧?
+    liked?: boolean;           // 用户已点赞
     favs: number;
-    faved?: boolean;           // 鐢ㄦ埛宸叉敹钘?
+    faved?: boolean;           // 用户已收藏
     comments: XhsFeedComment[];
     createdAt: number;
-    repostOf?: string;         // 杞彂锛氭簮甯?id
-    repostNote?: string;       // 杞彂闄勮█
+    source?: XhsFeedSource;     // 本地来源：生成 / 用户发帖 / 熟人生活 / 剪藏
+    category?: XhsFeedCategory; // 本地分类，用于见闻簿筛选
+    repostOf?: string;         // 转发：源帖 id
+    repostNote?: string;       // 转发附言
 }
 
 // ============================================================
-// 妯℃嫙浜虹敓 (LifeSim) Types 鈥?鐪熶汉绉€娌欑洅鐗?
+// 模拟人生 (LifeSim) Types — 真人秀沙盒版
 // ============================================================
 
 export type SimActionType =
-    | 'ADD_NPC'        // 鍒涘缓NPC骞朵涪杩涙煇瀹跺涵
-    | 'MOVE_NPC'       // 鎶奛PC绉诲埌鍙︿竴涓搴?
-    | 'TRIGGER_EVENT'  // 瑙﹀彂浜嬩欢锛堝惖鏋?鑱旇皧/鍑鸿蛋绛夛級
-    | 'GO_SOLO'        // NPC鐙珛鎴愬
-    | 'DO_NOTHING';    // 瑙傛湜
+    | 'ADD_NPC'        // 创建NPC并丢进某家庭
+    | 'MOVE_NPC'       // 把NPC移到另一个家庭
+    | 'TRIGGER_EVENT'  // 触发事件（吵架/联谊/出走等）
+    | 'GO_SOLO'        // NPC独立成家
+    | 'DO_NOTHING';    // 观望
 
 export type SimEventType =
-    | 'fight'          // 鍚垫灦
-    | 'party'          // 鑱旇皧/鑱氫細
-    | 'gossip'         // 鎼紕鏄潪
-    | 'romance'        // 鏆ф槯
-    | 'rivalry'        // 绔炰簤
-    | 'alliance';      // 缁撶洘
+    | 'fight'          // 吵架
+    | 'party'          // 联谊/聚会
+    | 'gossip'         // 搬弄是非
+    | 'romance'        // 暧昧
+    | 'rivalry'        // 竞争
+    | 'alliance';      // 结盟
 
-// 浜嬩欢閾炬晥鏋滀唬鐮?
+// 事件链效果代码
 export type SimEffectCode =
-    | 'fight_break'           // 鐭涚浘鐖嗗彂锛堢瀹跺嚭璧帮級
-    | 'mood_drop'             // 蹇冩儏浣庤惤
-    | 'relationship_change'   // 鍏崇郴鍙樺寲
-    | 'revenge_plot'          // 澶嶄粐璁″垝
-    | 'love_triangle'         // 涓夎鎭?
-    | 'jealousy_spiral'       // 瀚夊铻烘棆
-    | 'family_feud'           // 瀹舵棌涓栦粐
-    | 'betrayal'              // 鑳屽彌
-    | 'romantic_confession'   // 娴极鍛婄櫧
-    | 'gossip_wildfire'       // 鍏崷閲庣伀
-    | 'npc_runaway'           // NPC鍑鸿蛋
-    | 'mood_breakdown'        // 鎯呯华宕╂簝
-    | 'secret_alliance'       // 绉樺瘑鍚岀洘
-    | 'power_shift'           // 鏉冨姏鏇磋凯
-    | 'reconciliation';       // 鍜岃В
+    | 'fight_break'           // 矛盾爆发（离家出走）
+    | 'mood_drop'             // 心情低落
+    | 'relationship_change'   // 关系变化
+    | 'revenge_plot'          // 复仇计划
+    | 'love_triangle'         // 三角恋
+    | 'jealousy_spiral'       // 嫉妒螺旋
+    | 'family_feud'           // 家族世仇
+    | 'betrayal'              // 背叛
+    | 'romantic_confession'   // 浪漫告白
+    | 'gossip_wildfire'       // 八卦野火
+    | 'npc_runaway'           // NPC出走
+    | 'mood_breakdown'        // 情绪崩溃
+    | 'secret_alliance'       // 秘密同盟
+    | 'power_shift'           // 权力更迭
+    | 'reconciliation';       // 和解
 
-// NPC 鍐呴┍鍔?
+// NPC 内驱力
 export type NPCDesire =
     | { type: 'socialize'; targetNpcId: string }
     | { type: 'revenge'; targetNpcId: string }
@@ -5542,11 +5778,11 @@ export type NPCDesire =
     | { type: 'gossip_about'; targetNpcId: string }
     | { type: 'start_rivalry'; targetNpcId: string };
 
-// 瑙掕壊鍙欎簨灞?
+// 角色叙事层
 export interface CharNarrative {
-    innerThought: string;      // 瑙掕壊鍐呭績鐙櫧锛?00瀛楀唴锛?
-    dialogue: string;          // 瑙掕壊璇寸殑璇?鍦烘櫙鎻忓啓锛?50瀛楀唴锛?
-    commentOnWorld: string;    // 瀵逛笘鐣岀姸鎬佺殑鍚愭Ы锛?0瀛楀唴锛?
+    innerThought: string;      // 角色内心独白（100字内）
+    dialogue: string;          // 角色说的话/场景描写（150字内）
+    commentOnWorld: string;    // 对世界状态的吐槽（50字内）
     emotionalTone: 'vengeful' | 'romantic' | 'scheming' | 'chaotic' | 'peaceful' | 'amused' | 'anxious';
 }
 
@@ -5577,15 +5813,15 @@ export interface SimAction {
     id: string;
     turnNumber: number;
     actor: string;       // 'user' | char.name
-    actorAvatar: string; // char.avatar or '馃'
+    actorAvatar: string; // char.avatar or '🧑'
     actorId: string;     // 'user' | char.id | 'system' | 'autonomous'
     type: SimActionType;
-    description: string;      // 鑷劧璇█锛孋HAR浠杩欎釜
-    immediateResult: string;  // 鍗虫椂鍚庢灉鎻忚堪
-    reasoning?: string;       // 瑙掕壊鍐呭績鐙櫧锛堝畬鏁村師鏂囷級
-    reactionToUser?: string;  // 瑙掕壊瀵圭帺瀹舵搷浣滅殑璇勪环
-    narrative?: CharNarrative; // 瑙掕壊鍙欎簨灞傦紙LLM鍥炲悎浣跨敤锛?
-    chainFromId?: string;     // 鐢卞摢涓簨浠堕摼寮曞彂
+    description: string;      // 自然语言，CHAR们读这个
+    immediateResult: string;  // 即时后果描述
+    reasoning?: string;       // 角色内心独白（完整原文）
+    reactionToUser?: string;  // 角色对玩家操作的评价
+    narrative?: CharNarrative; // 角色叙事层（LLM回合使用）
+    chainFromId?: string;     // 由哪个事件链引发
     storyKind?: SimStoryKind;
     headline?: string;
     involvedNpcIds?: string[];
@@ -5601,29 +5837,29 @@ export interface SimPendingEffect {
     description: string;
     effectCode: SimEffectCode;
     effectValue?: number;
-    chainFrom?: string;        // 浜х敓姝ゆ晥鏋滅殑浜嬩欢ID
-    severity?: number;         // 1-5 涓ラ噸绋嬪害
-    involvedNpcIds?: string[]; // 娑夊強鐨凬PC
+    chainFrom?: string;        // 产生此效果的事件ID
+    severity?: number;         // 1-5 严重程度
+    involvedNpcIds?: string[]; // 涉及的NPC
 }
 
 export interface SimNPC {
     id: string;
     name: string;
-    emoji: string;       // 瑙掕壊澶村儚 emoji锛堝悗缁浛鎹负鍍忕礌澶村儚seed锛?
-    personality: string[]; // ["鏆磋簛","鍠勮壇","濂藉"]
+    emoji: string;       // 角色头像 emoji（后续替换为像素头像seed）
+    personality: string[]; // ["暴躁","善良","好奇"]
     mood: number;        // -100 ~ 100
-    familyId: string | null; // null = 鐙珛
-    profession?: SimProfession; // 绾韩浠芥爣绛?
-    gold?: number;              // 璐㈠瘜鎸囨爣
-    // 浜虹墿鏁呬簨绯荤粺
-    gender?: SimGender;         // 鎬у埆锛堟瘡灞€闅忔満锛?
-    bio?: string;               // 浜虹墿绠€浠嬶紙1-2鍙ワ級
-    backstory?: string;         // 鑳屾櫙鏁呬簨锛?-3鍙ワ級
-    // 鍐呴┍鍔涚郴缁?
-    desires?: NPCDesire[];      // 褰撳墠娆叉湜
-    grudges?: string[];         // 璁颁粐瀵硅薄 NPC IDs
-    crushes?: string[];         // 鏆楁亱瀵硅薄 NPC IDs
-    // 鍚戝悗鍏煎鏃у瓨妗ｏ紙杩佺Щ鏃跺垹闄わ級
+    familyId: string | null; // null = 独立
+    profession?: SimProfession; // 纯身份标签
+    gold?: number;              // 财富指标
+    // 人物故事系统
+    gender?: SimGender;         // 性别（每局随机）
+    bio?: string;               // 人物简介（1-2句）
+    backstory?: string;         // 背景故事（2-3句）
+    // 内驱力系统
+    desires?: NPCDesire[];      // 当前欲望
+    grudges?: string[];         // 记仇对象 NPC IDs
+    crushes?: string[];         // 暗恋对象 NPC IDs
+    // 向后兼容旧存档（迁移时删除）
     energy?: number;
     skills?: SimSkills;
     inventory?: Record<string, number>;
@@ -5634,14 +5870,14 @@ export interface SimNPC {
 export interface SimFamily {
     id: string;
     name: string;
-    emoji: string;       // 瀹跺涵鏍囧織 emoji
+    emoji: string;       // 家庭标志 emoji
     memberIds: string[];
     relationships: Record<string, Record<string, number>>; // npcId -> npcId -> [-100,100]
     homeX: number;       // 0-100 percent
     homeY: number;
 }
 
-// 鈹€鈹€ LifeSim 鍩虹绫诲瀷 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ── LifeSim 基础类型 ──────────────────────────────────────────
 
 export type SimSeason = 'spring' | 'summer' | 'fall' | 'winter';
 export type SimWeather = 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'windy';
@@ -5651,7 +5887,7 @@ export type SimProfession = 'programmer' | 'designer' | 'finance' | 'influencer'
 
 export type SimGender = 'male' | 'female' | 'nonbinary';
 
-// 淇濈暀浣嗕笉鍐嶄娇鐢ㄧ殑鏃х被鍨嬶紙瀛樻。鍏煎锛?
+// 保留但不再使用的旧类型（存档兼容）
 export type SimActivity = 'farming' | 'mining' | 'fishing' | 'crafting' | 'socializing' | 'resting' | 'foraging' | 'trading';
 export interface SimSkills { farming: number; mining: number; fishing: number; crafting: number; social: number; foraging: number; }
 export interface SimBuilding { id: string; type: string; name: string; x: number; y: number; level: number; familyId?: string; }
@@ -5667,105 +5903,105 @@ export interface SimFestival {
     chaosChange: number;
 }
 
-// 绂荤嚎鍥為【浜嬩欢
+// 离线回顾事件
 export interface OfflineRecapEvent {
     day: number;
     season: SimSeason;
     timeOfDay: SimTimeOfDay;
-    headline: string;          // 鎴忓墽鎬ф爣棰?
-    description: string;       // 浜嬩欢鎻忚堪
+    headline: string;          // 戏剧性标题
+    description: string;       // 事件描述
     involvedNpcs: { name: string; emoji: string }[];
     eventType: SimEventType | SimEffectCode;
     moodChanges?: Record<string, number>;   // npcId -> delta
     relChanges?: { a: string; b: string; delta: number }[];
     chaosChange?: number;
-    narrativeQuote?: string;   // 绂荤嚎妯℃澘鏃佺櫧
+    narrativeQuote?: string;   // 离线模板旁白
 }
 
 export interface LifeSimState {
     id: string;
     createdAt: number;
     turnNumber: number;
-    currentActorId: string; // 'user' | char.id 鈥?褰撳墠璋佺殑鍥炲悎
+    currentActorId: string; // 'user' | char.id — 当前谁的回合
     families: SimFamily[];
     npcs: SimNPC[];
-    actionLog: SimAction[];  // 瀹屾暣鍘嗗彶
+    actionLog: SimAction[];  // 完整历史
     pendingEffects: SimPendingEffect[];
-    chaosLevel: number;      // 0-100锛屼贡搴︽寚鏁?
-    charQueue: string[];     // 寰呮墽琛岀殑CHAR id闃熷垪锛堢敤鎴风粨鏉熷悗濉叆锛?
-    replayPending: SimAction[]; // 鐢ㄦ埛鍥炴潵鍚庡緟鍥炴斁鐨勮鍔?
-    participantCharIds?: string[]; // 鍏佽鍙備笌鏈眬LifeSim鐨勫閮ㄨ鑹?
+    chaosLevel: number;      // 0-100，乱度指数
+    charQueue: string[];     // 待执行的CHAR id队列（用户结束后填入）
+    replayPending: SimAction[]; // 用户回来后待回放的行动
+    participantCharIds?: string[]; // 允许参与本局LifeSim的外部角色
     useIndependentApiConfig?: boolean;
     independentApiConfig?: Partial<APIConfig>;
     isProcessingCharTurn: boolean;
     gameOver: boolean;
     gameOverReason?: string;
-    // 鏃堕棿绯荤粺
+    // 时间系统
     season?: SimSeason;
     day?: number;        // 1-28
     year?: number;
     timeOfDay?: SimTimeOfDay;
     weather?: SimWeather;
-    lastFestival?: string;  // 涓婃瑙﹀彂鐨勮妭鏃ュ悕
-    // 绂荤嚎妯℃嫙
-    lastActiveTimestamp?: number; // 涓婃娲昏穬鏃堕棿
-    offlineRecap?: OfflineRecapEvent[]; // 绂荤嚎鍥為【鏁版嵁
-    // 鏃у瓧娈碉紙瀛樻。鍏煎锛岃繍琛屾椂蹇界暐锛?
+    lastFestival?: string;  // 上次触发的节日名
+    // 离线模拟
+    lastActiveTimestamp?: number; // 上次活跃时间
+    offlineRecap?: OfflineRecapEvent[]; // 离线回顾数据
+    // 旧字段（存档兼容，运行时忽略）
     buildings?: SimBuilding[];
     worldInventory?: Record<string, number>;
     worldGold?: number;
 }
 
-// 鈹€鈹€鈹€ 琛楄 路 绾︿細涓栫晫寮曟搸 (Date World Engine) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// char 甯︾潃 user 鍦ㄤ笉鍚屽満鏅噷婧滆揪鐨勬棩甯搁櫔浼村悜绾︿細銆傚壇 API 褰撲笘鐣屽紩鎿庡仛鍦烘櫙璋冨害锛?
-// 鏀寔鍐呯疆/鑷畾涔夊満鏅€佸涓栫晫绾垮垎鏀€佽瘽/鍔ㄤ綔鍒嗚緭鍏ャ€佹皼鍥?BGM銆佹瘡 20 杞€荤粨闅愯棌涓婃枃銆?
+// ─── 街角 · 约会世界引擎 (Date World Engine) ──────────────────────────
+// char 带着 user 在不同场景里溜达的日常陪伴向约会。副 API 当世界引擎做场景调度，
+// 支持内置/自定义场景、多世界线分支、话/动作分输入、氛围 BGM、每 20 轮总结隐藏上文。
 
-/** 绾︿細鍦烘櫙锛堝唴缃垨鑷畾涔夛級 */
+/** 约会场景（内置或自定义） */
 export interface DateScene {
   id: string;
-  name: string;        // "娴疯竟鏍堥亾"
-  emoji: string;       // "馃寠"
-  vibe: string;        // 鍩鸿皟/姘涘洿锛堝杺涓栫晫寮曟搸 + BGM 鐢熸垚锛?
-  opening: string;     // 寮€鍦烘梺鐧?
+  name: string;        // "海边栈道"
+  emoji: string;       // "🌊"
+  vibe: string;        // 基调/氛围（喂世界引擎 + BGM 生成）
+  opening: string;     // 开场旁白
   builtin?: boolean;
 }
 
 export type DateRole = 'user' | 'char' | 'world';
 
-/** 绾︿細閲岀殑涓€鏉℃秷鎭細user(璇?鍔ㄤ綔) / char(鍥炲簲) / world(涓栫晫寮曟搸鏃佺櫧路鍦烘櫙璋冨害) */
+/** 约会里的一条消息：user(话+动作) / char(回应) / world(世界引擎旁白·场景调度) */
 export interface DateMessage {
   id: string;
   role: DateRole;
-  speech?: string;     // 璇寸殑璇?
-  action?: string;     // 鍋氱殑鍔ㄤ綔 / 鏃佺櫧
+  speech?: string;     // 说的话
+  action?: string;     // 做的动作 / 旁白
   ts: number;
 }
 
-/** 涓€鏉′笘鐣岀嚎锛堜竴涓墽鎯呭垎鏀級銆傚涓栫晫绾?= 鍚岃鑹蹭笅澶氭潯 DateWorldline銆?*/
+/** 一条世界线（一个剧情分支）。多世界线 = 同角色下多条 DateWorldline。 */
 export interface DateWorldline {
   id: string;
   charId: string;
   sceneId: string;
   sceneName: string;
   sceneEmoji: string;
-  vibe: string;            // 褰撳墠姘涘洿鍏抽敭璇嶏紙闅忓墽鎯呮洿鏂帮紝鍠?BGM锛?
-  title: string;           // 涓栫晫绾挎爣棰橈紙鑷姩鍙栵紝鐢ㄦ埛鍙敼锛?
+  vibe: string;            // 当前氛围关键词（随剧情更新，喂 BGM）
+  title: string;           // 世界线标题（自动取，用户可改）
   createdAt: number;
   updatedAt: number;
-  turnCount: number;       // 宸茶繘琛屽洖鍚堟暟锛堢敤浜?20 杞€荤粨锛?
-  messages: DateMessage[]; // 褰撳墠鍙娑堟伅锛堟€荤粨闅愯棌鍚庡彧淇濈暀 mark 涔嬪悗鐨勶級
-  recap?: string;          // 鎴嚦 recapTurnMark 鐨勫墽鎯呮€荤粨锛堥殣钘忎笂鏂囧悗娉ㄥ叆涓栫晫寮曟搸锛?
+  turnCount: number;       // 已进行回合数（用于 20 轮总结）
+  messages: DateMessage[]; // 当前可见消息（总结隐藏后只保留 mark 之后的）
+  recap?: string;          // 截至 recapTurnMark 的剧情总结（隐藏上文后注入世界引擎）
   recapTurnMark?: number;
-  parentId?: string;       // 浠庡摢鏉′笘鐣岀嚎鍒嗗弶鏉?
+  parentId?: string;       // 从哪条世界线分叉来
   forkedAtTurn?: number;
-  bgmAssetKey?: string;    // 宸茬敓鎴愮殑涓撳睘 BGM 璧勬簮 key锛坢inimaxMusic 缂撳瓨锛?
-  bgmVibe?: string;        // 鐢熸垚璇?BGM 鏃剁殑姘涘洿
+  bgmAssetKey?: string;    // 已生成的专属 BGM 资源 key（minimaxMusic 缓存）
+  bgmVibe?: string;        // 生成该 BGM 时的氛围
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 鎶樺瓙鎴徛疯皥蹇冿紙heart-to-heart锛夛細璁?user 鏈変釜琚鐪熷€惧惉銆佽瀹夋叞鐨勫湴鏂广€?
-// 姣忔璋堝績鏄竴涓?user / char 杞祦鐨勮瘽锛屽彲瀛樻。銆佸彲鏀跺綍杩涘瞾鏃惰路鍏歌棌棣嗐€佸彲杞彂缁欏埆鐨勮鑹层€?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 折子戏·谈心（heart-to-heart）：让 user 有个被认真倾听、被安慰的地方。
+// 每段谈心是一串 user / char 轮流的话，可存档、可收录进岁时记·典藏馆、可转发给别的角色。
+// ──────────────────────────────────────────────────────────────────
 export interface TalkTurn {
   role: 'user' | 'char';
   text: string;
@@ -5781,20 +6017,20 @@ export interface TalkInsight {
 export interface TalkSession {
   id: string;
   charId: string;
-  title: string;          // 鍙栬嚜棣栧彞鎴栦富棰橈紝鍒楄〃灞曠ず鐢?
-  mood?: string;          // 璋堝績褰撲笅閫夌殑蹇冩儏 / 涓婚鏍囩
-  mode?: TalkMode;        // 璋堝績鏂瑰紡锛氶櫔浼?/ 姊崇悊 / 榧撳姴 / 鍒嗕韩寮€蹇冧簨 / 鍐欎竴灏佷俊
-  intention?: string;     // 鐢ㄦ埛寮€鍦哄墠鍐欎笅鐨勬兂琚浣曢櫔浼?
-  insights?: TalkInsight[]; // 闃舵鎬у畨鏀惧崱 / 灏忕粨
+  title: string;          // 取自首句或主题，列表展示用
+  mood?: string;          // 谈心当下选的心情 / 主题标签
+  mode?: TalkMode;        // 谈心方式：陪伴 / 梳理 / 鼓劲 / 分享开心事 / 写一封信
+  intention?: string;     // 用户开场前写下的想被如何陪伴
+  insights?: TalkInsight[]; // 阶段性安放卡 / 小结
   turns: TalkTurn[];
   createdAt: number;
   lastActiveAt: number;
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 鎶樺瓙鎴徛峰褰憋紙鏌掞級锛氬悓涓€涓汉鍦ㄤ笉鍚屾椂闂撮噷鐨勪袱涓嚜宸辩浉閫€?
-// 鐢熸垚缁撴灉榛樿鍙暀鍦ㄦ姌瀛愭垙锛涚敤鎴蜂富鍔ㄥ彂鍒拌亰澶?/ 鏀惰繘鍏歌棌棣嗗悗鎵嶈繘鍏ュ叾瀹冨嚭鍙ｃ€?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 折子戏·对影（柒）：同一个人在不同时间里的两个自己相逢。
+// 生成结果默认只留在折子戏；用户主动发到聊天 / 收进典藏馆后才进入其它出口。
+// ──────────────────────────────────────────────────────────────────
 export type TheaterReflectionMode = 'moonlight' | 'letter' | 'crossroad' | 'reconcile';
 export type TheaterReflectionTone = 'restrained' | 'tender' | 'aching' | 'relieved';
 export type TheaterReflectionLength = 'short' | 'standard' | 'long';
@@ -5848,37 +6084,37 @@ export interface TheaterReflectionSession {
   updatedAt: number;
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 鎶樺瓙鎴徛风嫾浜烘潃锛堟崒锛夛細鎷変竴妗岀啛浜哄紑涓€灞€鐙间汉鏉€銆?
-// user 涓庨€変腑鐨勮鑹插悇鍗犱竴搴э紝AI 鐜╁鎸夊悇鑷韩浠斤紙鐙?/ 棰勮█瀹?/ 濂冲帆 / 鐚庝汉 / 骞虫皯锛?
-// 鍦ㄥ閲岃鍔ㄣ€佺櫧澶╁彂瑷€銆佹姇绁ㄦ斁閫愩€侫I 鍙戣█璧板壇 API銆佽创鍚勮嚜浜鸿璇磋瘽銆佷細浼浼氭帹鐞嗐€?
-// 涓€灞€瀹屾暣娴佺▼锛堝鈫掓樇鈫掓姇绁級璁板湪 log 閲岋紝鍙瓨妗ｃ€佸洖鐪嬨€佺画灞€銆?
-// 馃搶 prompt 鏂囨闆嗕腑鍦?utils/theaterPrompts.ts锛圼鎹宂 鐙间汉鏉€ 鍖烘锛夛紝寮曟搸鍦?utils/theaterWerewolf.ts銆?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 折子戏·狼人杀（捌）：拉一桌熟人开一局狼人杀。
+// user 与选中的角色各占一座，AI 玩家按各自身份（狼 / 预言家 / 女巫 / 猎人 / 平民）
+// 在夜里行动、白天发言、投票放逐。AI 发言走副 API、贴各自人设说话、会伪装会推理。
+// 一局完整流程（夜→昼→投票）记在 log 里，可存档、回看、续局。
+// 📌 prompt 文案集中在 utils/theaterPrompts.ts（[捌] 狼人杀 区段），引擎在 utils/theaterWerewolf.ts。
+// ──────────────────────────────────────────────────────────────────
 export type WerewolfRole = 'wolf' | 'seer' | 'witch' | 'hunter' | 'villager';
 export type WerewolfPhase = 'setup' | 'night' | 'day' | 'vote' | 'over';
 export type WerewolfDeathReason = 'wolf' | 'vote' | 'poison' | 'shot';
 
 export interface WerewolfPlayer {
-  seat: number;            // 搴т綅鍙?1..N
+  seat: number;            // 座位号 1..N
   name: string;
   isUser: boolean;
-  charId?: string;         // AI 鐜╁瀵瑰簲瑙掕壊锛坲ser 搴т綅鏃狅級
+  charId?: string;         // AI 玩家对应角色（user 座位无）
   avatar?: string;
   role: WerewolfRole;
   alive: boolean;
-  deadRound?: number;      // 姝讳簬绗嚑杞?
+  deadRound?: number;      // 死于第几轮
   deadReason?: WerewolfDeathReason;
 }
 
 export interface WerewolfLogEntry {
   round: number;
   kind: 'narration' | 'speech' | 'vote' | 'death' | 'result' | 'system' | 'check';
-  seat?: number;           // 鍏宠仈鐜╁搴т綅
-  name?: string;           // 鍐椾綑瀛樺悕瀛楋紝閬垮厤搴т綅閲嶆帓
+  seat?: number;           // 关联玩家座位
+  name?: string;           // 冗余存名字，避免座位重排
   text: string;
   at: number;
-  privateToUser?: boolean; // 浠?user 鍙锛堥瑷€瀹舵煡楠岀粨鏋滅瓑锛?
+  privateToUser?: boolean; // 仅 user 可见（预言家查验结果等）
 }
 
 export interface WerewolfGame {
@@ -5887,27 +6123,27 @@ export interface WerewolfGame {
   createdAt: number;
   lastActiveAt: number;
   players: WerewolfPlayer[];
-  round: number;           // 褰撳墠杩涜鍒扮鍑犺疆锛堢 1 涓鏅?= 1锛?
+  round: number;           // 当前进行到第几轮（第 1 个夜晚 = 1）
   phase: WerewolfPhase;
   log: WerewolfLogEntry[];
-  witchHealUsed: boolean;  // 濂冲帆瑙ｈ嵂鏄惁宸茬敤
-  witchPoisonUsed: boolean;// 濂冲帆姣掕嵂鏄惁宸茬敤
-  pendingKill?: number | null;   // 鏈鐙煎垁鐩爣搴т綅锛堢粨绠楀墠鏆傚瓨锛?
+  witchHealUsed: boolean;  // 女巫解药是否已用
+  witchPoisonUsed: boolean;// 女巫毒药是否已用
+  pendingKill?: number | null;   // 本夜狼刀目标座位（结算前暂存）
   winner?: 'good' | 'wolf' | null;
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 鎶樺瓙鎴徛风湡蹇冭瘽澶у啋闄╋紙鐜栵級锛氬拰瑙掕壊浠洿涓€鍦堢帺杞摱瀛愩€?
-// 姣忚疆杞摱瀛愰€変竴涓€屽彈棰樿€呫€嶏紝TA 鎸戠湡蹇冭瘽鎴栧ぇ鍐掗櫓锛涘彟涓€涓汉鍑洪锛屽彈棰樿€呬綔绛?鎵ц銆?
-// user 涓?AI 閮借兘褰撳彈棰樿€?/ 鍑洪鑰咃紱AI 璐村悇鑷汉璁惧嚭棰樸€佺瓟棰橈紝鍙皟灏哄害锛堣交鏉?鏆ф槯/澶ц儐锛夈€?
-// 涓€灞€锛濅竴涓湀 + 涓€涓插洖鍚堣褰曪紝鍙瓨妗ｃ€佸洖鐪嬨€佺画鐜┿€?
-// 馃搶 prompt 鏂囨闆嗕腑鍦?utils/theaterPrompts.ts锛圼鐜朷 鐪熷績璇濆ぇ鍐掗櫓 鍖烘锛夛紝寮曟搸鍦?utils/theaterTruthDare.ts銆?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 折子戏·真心话大冒险（玖）：和角色们围一圈玩转瓶子。
+// 每轮转瓶子选一个「受题者」，TA 挑真心话或大冒险；另一个人出题，受题者作答/执行。
+// user 与 AI 都能当受题者 / 出题者；AI 贴各自人设出题、答题，可调尺度（轻松/暧昧/大胆）。
+// 一局＝一个圈 + 一串回合记录，可存档、回看、续玩。
+// 📌 prompt 文案集中在 utils/theaterPrompts.ts（[玖] 真心话大冒险 区段），引擎在 utils/theaterTruthDare.ts。
+// ──────────────────────────────────────────────────────────────────
 export type TruthDareKind = 'truth' | 'dare';
 export type TruthDareSpice = 'light' | 'flirty' | 'bold';
 
 export interface TruthDarePlayer {
-  id: string;          // 'user' 鎴?charId
+  id: string;          // 'user' 或 charId
   name: string;
   isUser: boolean;
   charId?: string;
@@ -5915,14 +6151,14 @@ export interface TruthDarePlayer {
 }
 
 export interface TruthDareRound {
-  no: number;          // 绗嚑鍥炲悎
-  targetId: string;    // 鍙楅鑰?player id
+  no: number;          // 第几回合
+  targetId: string;    // 受题者 player id
   targetName: string;
-  kind: TruthDareKind; // 鐪熷績璇?/ 澶у啋闄?
-  poserId: string;     // 鍑洪鑰?player id
+  kind: TruthDareKind; // 真心话 / 大冒险
+  poserId: string;     // 出题者 player id
   poserName: string;
-  challenge: string;   // 棰橀潰
-  answer: string;      // 浣滅瓟 / 鎵ц鎻忚堪
+  challenge: string;   // 题面
+  answer: string;      // 作答 / 执行描述
   at: number;
 }
 
@@ -5932,15 +6168,15 @@ export interface TruthDareSession {
   createdAt: number;
   lastActiveAt: number;
   players: TruthDarePlayer[];
-  spice: TruthDareSpice;    // 灏哄害
+  spice: TruthDareSpice;    // 尺度
   rounds: TruthDareRound[];
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 鎶樺瓙鎴徛风暘澶栭棶鍗凤細鍙繚瀛?缁仛鐨勯棶鍗锋埧闂淬€?
-// 姣忛淇濆瓨 user 涓庝竴涓垨澶氫釜瑙掕壊鐨勭瓟妗堬紝鎻愪氦绛旀鍚庤繘鍏ラ鍐呰瘎璁哄尯锛涘彧鏈変富鍔ㄧ偣涓嬩竴棰樻墠鎺ㄨ繘銆?
-// 馃搶 prompt 鏂囨闆嗕腑鍦?utils/theaterPrompts.ts锛圼璐癩 鐣 鍖烘锛夛紝鐢熸垚閫昏緫鍦?utils/theaterExtra.ts銆?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 折子戏·番外问卷：可保存/续做的问卷房间。
+// 每题保存 user 与一个或多个角色的答案，提交答案后进入题内评论区；只有主动点下一题才推进。
+// 📌 prompt 文案集中在 utils/theaterPrompts.ts（[贰] 番外 区段），生成逻辑在 utils/theaterExtra.ts。
+// ──────────────────────────────────────────────────────────────────
 export type TheaterQuizStatus = 'active' | 'finished';
 export type TheaterQuizItemState = 'answering' | 'commenting' | 'complete';
 export type TheaterQuizAnswerStatus = 'pending' | 'done' | 'failed';
@@ -5975,7 +6211,7 @@ export interface TheaterQuizResult {
 }
 
 export interface TheaterQuizAnswer {
-  speakerId: string;       // 'user' 鎴?charId
+  speakerId: string;       // 'user' 或 charId
   speakerName: string;
   isUser: boolean;
   charId?: string;
@@ -5988,7 +6224,7 @@ export interface TheaterQuizAnswer {
 
 export interface TheaterQuizComment {
   id: string;
-  speakerId: string;       // 'user' 鎴?charId
+  speakerId: string;       // 'user' 或 charId
   speakerName: string;
   isUser: boolean;
   charId?: string;
@@ -6037,32 +6273,32 @@ export interface TheaterFauxPiece {
   updatedAt: number;
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 宀佹椂璁奥峰吀钘忛锛氭妸銆岃皥蹇?/ 鍒涗綔绀?/ 鑷範瀹?/ 鎶樺瓙鎴忋€嶉噷瀹屾垚鐨勫唴瀹规敹杩涙潵锛?
-// 鍙湪鍏歌棌棣嗛噷鎶婂凡鏀跺綍鐨勫墽鍦哄唴瀹逛笌璋堝績杞彂缁欎换鎰忚鑹诧紙缁?char B 鐪?user & char A 鐨勮褰曪級銆?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+// ──────────────────────────────────────────────────────────────────
+// 岁时记·典藏馆：把「谈心 / 创作社 / 自习室 / 折子戏」里完成的内容收进来，
+// 可在典藏馆里把已收录的剧场内容与谈心转发给任意角色（给 char B 看 user & char A 的记录）。
+// ──────────────────────────────────────────────────────────────────
 export type CollectionSourceType = 'talk' | 'novel' | 'song' | 'course' | 'quiz' | 'guidebook' | 'game' | 'reflection' | 'chat';
 export interface CollectionItem {
-  id: string;                 // = `${sourceType}:${sourceId}`锛屽ぉ鐒跺幓閲?
+  id: string;                 // = `${sourceType}:${sourceId}`，天然去重
   sourceType: CollectionSourceType;
   sourceId: string;
   title: string;
-  subtitle?: string;          // 鍓爣棰橈細鍙備笌瑙掕壊 / 浣撹 / 蹇冩儏绛?
-  excerpt?: string;           // 涓€灏忔棰勮
-  charIds?: string[];         // 鍏宠仈瑙掕壊锛堢敤浜庛€屾垜鍜?A 鐨勮褰曘€嶄笌杞彂鎺緸锛?
-  cover?: string;             // emoji 鎴栧浘鐗?URL
+  subtitle?: string;          // 副标题：参与角色 / 体裁 / 心情等
+  excerpt?: string;           // 一小段预览
+  charIds?: string[];         // 关联角色（用于「我和 A 的记录」与转发措辞）
+  cover?: string;             // emoji 或图片 URL
   collectedAt: number;
 }
 
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-// 澶栧崠 App锛堝弬鑰冪編鍥級锛歝har 鍙互缁?user 鐐瑰崟銆乽ser 涔熷彲浠ョ粰 char 鐐瑰崟銆?
-// 搴楅摵涓烘湰鍦扮敓鎴愶紙姣忔鍒锋柊 10+ 瀹讹紝鍙繘搴楃偣鑿滐級锛岃鍗曞彲鐪嬮厤閫佽繘搴︺€佸拰楠戞墜/鍟嗗鑱婂ぉ锛?
-// 浠樻鏀寔鑷繁浠樹笌浠ｄ粯锛屽苟涓庢潵寰€ App 鑱斿姩锛堢粰鏌愯鑹茬偣鍗?浠ｄ粯浼氬湪璇ヨ鑹茶亰澶╅噷鐣欐秷鎭級銆?
-// 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-/** 鑿滃搧瑙勬牸缁勶紙鍗曢€夛級锛氬銆屼唤閲忥細鏍囧噯浠?澶т唤(+5)銆嶃€岃荆搴︼細涓嶈荆/寰荆/鐗硅荆銆嶃€傚鏍囩編鍥€岄€夎鏍笺€嶃€?*/
+// ──────────────────────────────────────────────────────────────────
+// 外卖 App（参考美团）：char 可以给 user 点单、user 也可以给 char 点单。
+// 店铺为本地生成（每次刷新 10+ 家，可进店点菜），订单可看配送进度、和骑手/商家聊天，
+// 付款支持自己付与代付，并与来往 App 联动（给某角色点单/代付会在该角色聊天里留消息）。
+// ──────────────────────────────────────────────────────────────────
+/** 菜品规格组（单选）：如「份量：标准份/大份(+5)」「辣度：不辣/微辣/特辣」。对标美团「选规格」。 */
 export interface TakeoutDishSpecOption { label: string; priceDelta: number; }
 export interface TakeoutDishSpec { name: string; options: TakeoutDishSpecOption[]; }
-/** 鑿滃搧鍔犳枡锛堝閫夛紝鎸変唤鍔犱环锛夛細濡傘€屽姞铔?+2銆嶃€屽姞瀹界矇 +3銆嶃€傚鏍囩編鍥€屽姞鏂欍€嶃€?*/
+/** 菜品加料（多选，按份加价）：如「加蛋 +2」「加宽粉 +3」。对标美团「加料」。 */
 export interface TakeoutDishAddon { label: string; price: number; }
 export interface TakeoutDish {
   id: string;
@@ -6070,110 +6306,132 @@ export interface TakeoutDish {
   desc?: string;
   price: number;
   emoji?: string;
-  popular?: boolean;       // 鎷涚墝/鐑攢
-  /** 鑿滃搧鏈堝敭锛堝睍绀恒€屾湀鍞甆銆嶏級锛屽彲閫夈€?*/
+  popular?: boolean;       // 招牌/热销
+  /** 菜品月售（展示「月售N」），可选。 */
   monthlySales?: number;
-  /** 瑙勬牸缁勶紙鍗曢€夛紝鍙缁勶細浠介噺/杈ｅ害/鐢滃害/鍐伴噺鈥︼級锛岄€夐」甯﹀樊浠枫€傚鏍囩編鍥€岄€夎鏍笺€嶃€?*/
+  /** 规格组（单选，可多组：份量/辣度/甜度/冰量…），选项带差价。对标美团「选规格」。 */
   specs?: TakeoutDishSpec[];
-  /** 鍔犳枡锛堝閫夛紝鎸変唤鍔犱环锛夈€傚鏍囩編鍥€屽姞鏂欍€嶃€?*/
+  /** 加料（多选，按份加价）。对标美团「加料」。 */
   addons?: TakeoutDishAddon[];
-  /** 鐢ㄦ埛鍦ㄩキ绁ㄩ噷鎵嬪姩鏂板鐨勮彍銆?*/
+  /** 用户在饭票里手动新增的菜。 */
   userCustom?: boolean;
-  /** 鐢ㄦ埛鎵嬪姩鏀硅繃杩欓亾鑿滅殑鍚嶇О銆佷环鏍笺€佽鏍兼垨鍏跺畠瀛楁銆?*/
+  /** 用户手动改过这道菜的名称、价格、规格或其它字段。 */
   userEdited?: boolean;
-  /** 浠庘€滄垜鐨勮彍搴撯€濆鍒惰繘褰撳墠搴楅摵鐨勮彍鍝佹潵婧愰敋銆?*/
+  /** 从“我的菜库”复制进当前店铺的菜品来源锚。 */
   libraryDishId?: string;
-  /** 鏈€杩戜竴娆℃墜鍔ㄤ繚瀛樻椂闂淬€?*/
+  /** 最近一次手动保存时间。 */
   updatedAt?: number;
 }
 export interface TakeoutStore {
   id: string;
   name: string;
-  emoji: string;           // 搴楅摵 logo锛坋moji锛?
-  category: string;        // 涓 / 濂惰尪 / 蹇 / 鐢滃搧 鈥?
+  emoji: string;           // 店铺 logo（emoji）
+  category: string;        // 中餐 / 奶茶 / 快餐 / 甜品 …
   rating: number;          // 4.x
-  monthlySales: number;    // 鏈堝敭
-  deliveryMinutes: number; // 棰勮閰嶉€佸垎閽?
+  monthlySales: number;    // 月售
+  deliveryMinutes: number; // 预计配送分钟
   deliveryFee: number;
-  minOrder: number;        // 璧烽€佷环
+  minOrder: number;        // 起送价
   distanceKm: number;
-  promo?: string;          // 婊″噺 / 棣栧崟浼樻儬鏂囨
+  promo?: string;          // 满减 / 首单优惠文案
   dishes: TakeoutDish[];
-  /** AI 鐢熸垚鐨勫簵閾虹畝浠?/ 鎷涚墝涓€鍙ヨ瘽锛堝弬鐓х湡瀹炲鍗栧簵鐨勩€屽簵閾哄叕鍛娿€嶏級銆?*/
+  /** AI 生成的店铺简介 / 招牌一句话（参照真实外卖店的「店铺公告」）。 */
   blurb?: string;
   /**
-   * 闅愯棌鐨勩€岃壇蹇冨€笺€?~1锛氳秺浣庤秺榛戝績锛堝垎閲忎笉瓒炽€佸崼鐢熷樊銆佸浘鏂囦笉绗︺€佸己鍒剁爫鍗曠殑姒傜巼瓒婇珮锛夈€?
-   * 鐜板疄閲屼笅鍗曞墠鐪嬩笉瑙侊紝鍙敤浜庝笅鍗曞悗鎺烽厤閫佷簨浠讹紱UI 涓嶇洿鎺ュ睍绀恒€?
+   * 隐藏的「良心值」0~1：越低越黑心（分量不足、卫生差、图文不符、强制砍单的概率越高）。
+   * 现实里下单前看不见，只用于下单后掷配送事件；UI 不直接展示。
    */
   integrity?: number;
-  /** 鐜板疄閲岀湅寰楄鐨勭孩鏃楁彁绀猴紙濡傘€岃繎鏈熷崼鐢熷樊璇勫路璋ㄦ厧涓嬪崟銆嶏級銆傞粦蹇冨簵閲屾湁涓€閮ㄥ垎浼氫寒鏄庯紝姝ｅ父搴椾负绌恒€?*/
+  /** 现实里看得见的红旗提示（如「近期卫生差评多·谨慎下单」）。黑心店里有一部分会亮明，正常店为空。 */
   warning?: string;
-  /** AI 鐢熸垚鏍囪锛堢敤浜庛€孉I 鐜版悡鐨勫簵銆嶅窘鏍囷級銆?*/
+  /** AI 生成标记（用于「AI 现搓的店」徽标）。 */
   aiGenerated?: boolean;
-  /** 鐢ㄦ埛鎵嬪姩鍒涘缓鐨勯摵瀛愩€?*/
+  /** 用户手动创建的铺子。 */
   userCustom?: boolean;
-  /** 鐢ㄦ埛鎵嬪姩鏀硅繃杩欏閾哄瓙鐨勮祫鏂欐垨鑿滃崟銆?*/
+  /** 用户手动改过这家铺子的资料或菜单。 */
   userEdited?: boolean;
-  /** 鏈€杩戜竴娆℃墜鍔ㄤ繚瀛樻椂闂淬€?*/
+  /** 最近一次手动保存时间。 */
   updatedAt?: number;
 }
 export interface TakeoutOrderItem {
   dishId: string; name: string; price: number; qty: number; emoji?: string;
-  /** 鎵€閫夎鏍肩殑鍚堝苟鎻忚堪锛堝銆屽ぇ浠铰峰井杈ｃ€嶏級锛屽鏍囩編鍥€岄€夎鏍笺€嶃€俻rice 宸插惈瑙勬牸/鍔犳枡宸环銆?*/
+  /** 所选规格的合并描述（如「大份·微辣」），对标美团「选规格」。price 已含规格/加料差价。 */
   spec?: string;
-  /** 鎵€閫夊姞鏂欙紙濡傘€屽姞铔嬨€嶃€屽姞鑲犮€嶏級锛屽鏍囩編鍥€屽姞鏂欍€嶃€?*/
+  /** 所选加料（如「加蛋」「加肠」），对标美团「加料」。 */
   addons?: string[];
 }
-/** 涓€鏉?NPC / 鍟嗗 瀵硅瘎浠风殑鍥炲簲锛堛€屽叾瀹?npc 璇勮銆嶏級 */
+export type TakeoutAddressOwnerType = 'me' | 'char';
+export interface TakeoutAddressCard {
+  id: string;
+  ownerType: TakeoutAddressOwnerType;
+  /** ownerType==='char' 时为角色 id；ownerType==='me' 时为空。 */
+  ownerId?: string;
+  /** 地址卡标题，如“家”“公司”“学校”“常去处”。 */
+  label: string;
+  /** 地址标签，用于筛选 / UI 章戳。 */
+  tag: '家' | '公司' | '学校' | '常去处' | '自定义' | string;
+  receiverName: string;
+  /** 虚拟电话、门禁暗号或联系备注。不会触发真实电话。 */
+  contactHint?: string;
+  /** 城市 / 区域，仅作本地展示和地址预填。 */
+  city?: string;
+  addressLine: string;
+  doorplate?: string;
+  deliveryNote?: string;
+  isDefault: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+/** 一条 NPC / 商家 对评价的回应（「其它 npc 评论」） */
 export interface TakeoutReviewReply { name: string; emoji: string; text: string; at: number; isMerchant?: boolean; }
-/** 鐢ㄦ埛瀵规煇鍗曠殑璇勪环 */
+/** 用户对某单的评价 */
 export interface TakeoutReview {
-  rating: number;       // 1~5 鏄?
+  rating: number;       // 1~5 星
   text?: string;
-  tags?: string[];      // 蹇嵎鏍囩锛堝銆屽垎閲忚冻銆嶃€岄€佸緱蹇€嶏級
+  tags?: string[];      // 快捷标签（如「分量足」「送得快」）
   at: number;
-  likes?: number;       // 鍏跺畠椋熷鐐圭殑銆屾湁鐢ㄣ€嶆暟
-  replies?: TakeoutReviewReply[];  // 鍟嗗 / 鍏跺畠椋熷鐨勮瘎璁?
+  likes?: number;       // 其它食客点的「有用」数
+  replies?: TakeoutReviewReply[];  // 商家 / 其它食客的评论
 }
 /**
- * 閰嶉€佺姸鎬侊細
- * - preparing 鍟嗗澶囬涓?/ delivering 楠戞墜閰嶉€佷腑锛堟寜鏃堕棿瀹炴椂鎺ㄧ畻锛?
- * - arrived 宸插埌杈韭峰緟鏀惰揣锛坣ow >= etaAt 浣嗙敤鎴峰皻鏈‘璁ゆ敹璐э紱銆屾敹鍒拌揣鎵嶈兘鐐归€佽揪銆嶇殑鍓嶆彁锛?
- * - delivered 宸查€佽揪锛堢敤鎴风偣浜嗙‘璁ゆ敹璐э紝鎴栫粰瑙掕壊鐐圭殑鍗曞埌鏃惰鑹插凡鏀朵笅锛?
- * - cancelled 宸插彇娑?
+ * 配送状态：
+ * - preparing 商家备餐中 / delivering 骑手配送中（按时间实时推算）
+ * - arrived 已到达·待收货（now >= etaAt 但用户尚未确认收货；「收到货才能点送达」的前提）
+ * - delivered 已送达（用户点了确认收货，或给角色点的单到时角色已收下）
+ * - cancelled 已取消
  */
 export type TakeoutStatus = 'preparing' | 'delivering' | 'arrived' | 'delivered' | 'cancelled';
 export interface TakeoutChatMsg { role: 'user' | 'rider' | 'store' | 'support'; text: string; at: number; }
 
-/** 榛戝績鍟嗗 / 鍧忛獞鎵嬩細瑙﹀彂鐨勭幇瀹炲寲閰嶉€佷簨鏁呯绫汇€?*/
+/** 黑心商家 / 坏骑手会触发的现实化配送事故种类。 */
 export type TakeoutIncidentKind =
-  | 'short_weight'    // 缂烘枻灏戜袱 / 鍒嗛噺鏄庢樉涓嶈冻
-  | 'missing_item'    // 婕忓彂椁愬搧
-  | 'wrong_item'      // 閫侀敊椁?/ 涓婇敊鑿?
-  | 'foreign_object'  // 椁愰噷鏈夊紓鐗╋紙澶村彂銆佸鏂欌€︼級
-  | 'cold_food'       // 椁愬搧鍐板噳鍧ㄦ垚涓€鍥?
-  | 'spilled'         // 鎾掓紡 / 鍖呰鐮存崯姹ゆ眮娲掑厜
-  | 'severe_late'     // 涓ラ噸瓒呮椂
-  | 'rider_ate'       // 楠戞墜鍋峰悆 / 鍔ㄨ繃椁?
-  | 'left_at_door'    // 涓嶆墦鐢佃瘽鐩存帴涓㈤棬鍙ｏ紙鐢氳嚦鏀鹃敊鍦版柟锛?
-  | 'fake_photo'      // 鍥炬枃涓ラ噸涓嶇锛堝崠瀹剁 vs 涔板绉€锛?
-  | 'force_cancel';   // 鍟嗗鏀朵簡閽辫繜杩熶笉鎺ュ崟 / 寮哄埗鐮嶅崟
+  | 'short_weight'    // 缺斤少两 / 分量明显不足
+  | 'missing_item'    // 漏发餐品
+  | 'wrong_item'      // 送错餐 / 上错菜
+  | 'foreign_object'  // 餐里有异物（头发、塑料…）
+  | 'cold_food'       // 餐品冰凉坨成一团
+  | 'spilled'         // 撒漏 / 包装破损汤汁洒光
+  | 'severe_late'     // 严重超时
+  | 'rider_ate'       // 骑手偷吃 / 动过餐
+  | 'left_at_door'    // 不打电话直接丢门口（甚至放错地方）
+  | 'fake_photo'      // 图文严重不符（卖家秀 vs 买家秀）
+  | 'force_cancel';   // 商家收了钱迟迟不接单 / 强制砍单
 
-/** 涓€妗╅厤閫佷簨鏁咃紱涓嬪崟鏃舵寜鑹績鍊?楠戞墜闈犺氨搴︽幏鍑猴紝閫佽揪鍚庢毚闇茬粰鐢ㄦ埛銆?*/
+/** 一桩配送事故；下单时按良心值/骑手靠谱度掷出，送达后暴露给用户。 */
 export interface TakeoutIncident {
   kind: TakeoutIncidentKind;
-  by: 'store' | 'rider';   // 璐ｄ换鏂?
-  title: string;           // 鐭爣棰樸€岀己鏂ゅ皯涓ゃ€?
-  detail: string;          // 鐜板疄鍖栨弿杩?
-  suggestedRefund: number; // 鍚堢悊璧斾粯閲戦锛堟姇璇夋垚绔嬪悗閫€鍥為挶鍖咃級
+  by: 'store' | 'rider';   // 责任方
+  title: string;           // 短标题「缺斤少两」
+  detail: string;          // 现实化描述
+  suggestedRefund: number; // 合理赔付金额（投诉成立后退回钱包）
 }
 
-/** 鎶曡瘔 / 鍞悗澶勭悊鐘舵€併€?*/
+/** 投诉 / 售后处理状态。 */
 export interface TakeoutComplaint {
-  filed: boolean;          // 宸插彂璧锋姇璇?
-  resolved: boolean;       // 骞冲彴宸茬粨妗?
-  outcome?: string;        // 缁撴缁撹鏂囨
-  refunded: number;        // 鏈鎶曡瘔閫€鍥為噾棰?
+  filed: boolean;          // 已发起投诉
+  resolved: boolean;       // 平台已结案
+  outcome?: string;        // 结案结论文案
+  refunded: number;        // 本次投诉退回金额
 }
 
 export interface TakeoutOrder {
@@ -6185,46 +6443,49 @@ export interface TakeoutOrder {
   subtotal: number;
   deliveryFee: number;
   packFee: number;
-  /** 鍙€夛細缁欒窇鑵跨殑灏忚垂锛堢粨绠楁椂鑷€夛紝璁″叆 total锛岃寮哄埗鐮嶅崟鏃堕殢 total 鍘熻矾閫€鍥烇級銆?*/
+  /** 可选：给跑腿的小费（结算时自选，计入 total，被强制砍单时随 total 原路退回）。 */
   tip?: number;
   total: number;
-  /** 鏀惰揣浜猴細'me' = 鐢ㄦ埛鏈汉锛屽惁鍒欐槸 charId銆?*/
+  /** 收货人：'me' = 用户本人，否则是 charId。 */
   recipient: string;
-  /** 浠樻浜猴細'me' = 鐢ㄦ埛鑷粯锛屽惁鍒欐槸鏌愯鑹蹭唬浠樸€?*/
+  /** 付款人：'me' = 用户自付，否则是某角色代付。 */
   payer: string;
-  /** 涓昏鍏宠仈瑙掕壊 id锛堢敤浜庢潵寰€鑱斿姩 / 鍒楄〃灞曠ず锛夛細recipient 鎴?payer 涓偅涓鑹层€?*/
+  /** 主要关联角色 id（用于来往联动 / 列表展示）：recipient 或 payer 中那个角色。 */
   charId?: string;
   payStatus: 'unpaid' | 'paid';
-  /** 钀藉簱鏃剁殑鍩虹鐘舵€侊紱灞曠ず杩涘害鏃舵寜鏃堕棿瀹炴椂鎺ㄧ畻锛坙iveTakeoutStatus锛夈€?*/
+  /** 落库时的基础状态；展示进度时按时间实时推算（liveTakeoutStatus）。 */
   status: TakeoutStatus;
   riderName: string;
   riderEmoji: string;
   address: string;
+  /** 下单时所选地址卡 id；旧订单可能没有。订单展示仍以 address 快照为准。 */
+  addressCardId?: string;
+  /** 下单时地址卡标签快照，如“家 / 公司 / 学校”。 */
+  addressLabel?: string;
   note?: string;
   placedAt: number;
-  etaAt: number;           // 棰勮閫佽揪鏃堕棿鎴?
-  /** 棰勭害閫佽揪鏃堕棿鎴筹紙閫変簡銆岄绾﹂€佽揪銆嶆椂锛涗负绌猴紳灏藉揩閫佽揪锛夈€傚鏍囩編鍥㈤绾︿笅鍗曘€?*/
+  etaAt: number;           // 预计送达时间戳
+  /** 预约送达时间戳（选了「预约送达」时；为空＝尽快送达）。对标美团预约下单。 */
   scheduledAt?: number;
-  /** 椁愬叿浠芥暟锛?锛濇棤闇€椁愬叿鐨勭幆淇濋€夐」锛夈€傚鏍囩編鍥㈤鍏蜂唤鏁般€?*/
+  /** 餐具份数（0＝无需餐具的环保选项）。对标美团餐具份数。 */
   tableware?: number;
   deliveredAt?: number;
-  chat: TakeoutChatMsg[];  // 鍜岄獞鎵?鍟嗗/骞冲彴瀹㈡湇鐨勫璇?
+  chat: TakeoutChatMsg[];  // 和骑手/商家/平台客服的对话
   chatTarget?: 'rider' | 'store' | 'support';
-  /** 闅愯棌鐨勯獞鎵嬮潬璋卞害 0~1锛氳秺浣庤秺瀹规槗瓒呮椂/鎾掓紡/鍋峰悆/涓嶉€佷笂闂ㄣ€?*/
+  /** 隐藏的骑手靠谱度 0~1：越低越容易超时/撒漏/偷吃/不送上门。 */
   riderReliability?: number;
-  /** 涓嬪崟鏃舵幏鍑恒€侀€佽揪鍚庢毚闇茬殑閰嶉€佷簨鏁咃紙榛戝績鍟嗗 / 鍧忛獞鎵嬶級銆?*/
+  /** 下单时掷出、送达后暴露的配送事故（黑心商家 / 坏骑手）。 */
   incidents?: TakeoutIncident[];
-  /** 鎶曡瘔 / 鍞悗銆?*/
+  /** 投诉 / 售后。 */
   complaint?: TakeoutComplaint;
-  /** 寮哄埗鐮嶅崟鐨勫簵閾猴細琚晢瀹跺崟鏂归潰鍙栨秷锛堥挶宸查€€鍥為挶鍖咃級銆?*/
+  /** 强制砍单的店铺：被商家单方面取消（钱已退回钱包）。 */
   cancelledByStore?: boolean;
-  /** 鍙戣捣鏂癸細鐢ㄦ埛鍦ㄥ鍗?App / 鑱婂ぉ鍥炲舰閽堢偣鐨?= 'user'锛涜鑹蹭富鍔ㄤ负鐢ㄦ埛鐐圭殑 = 'char'銆?*/
+  /** 发起方：用户在外卖 App / 聊天回形针点的 = 'user'；角色主动为用户点的 = 'char'。 */
   initiatedBy?: 'user' | 'char';
-  /** 鏄惁宸插湪璇ヨ鑹茶亰澶╅噷鐢熸垚銆屽鍗栬鍗曞皬绁ㄣ€嶅崱鐗囷紙閬垮厤閲嶅鐢熸垚锛夈€?*/
+  /** 是否已在该角色聊天里生成「外卖订单小票」卡片（避免重复生成）。 */
   cardPosted?: boolean;
-  /** 缁欒鑹茬偣鐨勫崟锛氬埌鏃惰鑹插凡鍦ㄨ亰澶╅噷瀵规敹鍒板鍗栧仛鍑哄弽搴旓紝閬垮厤閲嶅瑙﹀彂銆?*/
+  /** 给角色点的单：到时角色已在聊天里对收到外卖做出反应，避免重复触发。 */
   reactionPosted?: boolean;
-  /** 鐢ㄦ埛瀵规湰鍗曠殑璇勪环锛堥€佽揪鍚庡彲璇勪环锛涘惈鍟嗗/鍏跺畠椋熷鐨勮瘎璁猴級銆?*/
+  /** 用户对本单的评价（送达后可评价；含商家/其它食客的评论）。 */
   review?: TakeoutReview;
 }
-

@@ -39,9 +39,10 @@ import {
     type ApkDownloadProgress,
     type NativeAppInfo,
 } from '../utils/appUpdates';
-import { scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
+import { queueManualDeepLink, scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { fetchModelList, testChatConnection } from '../utils/llmClient';
+import type { ApiErrorHelp } from '../utils/apiErrorHelp';
 
 // hot_news（orz.ai）可选热榜平台。key 必须与 API 的 ?platform= 完全一致。
 const HOTNEWS_PLATFORM_OPTIONS: { key: string; label: string }[] = [
@@ -1383,6 +1384,17 @@ const Settings: React.FC = () => {
           if (!scrollToManualAnchor(target.anchorId)) scrollToManualAnchor(groupId);
       }, 180);
   }, []), { enabled: activeApp === AppID.Settings });
+
+  const openApiErrorManualHelp = useCallback((help: ApiErrorHelp) => {
+      setShowApiCallLog(false);
+      queueManualDeepLink({
+          appId: AppID.Manual,
+          route: 'guide',
+          anchorId: help.manualAnchorId,
+          payload: { app: '文具盒', view: 'detail', settingId: help.manualSettingId },
+      });
+      openApp(AppID.Manual);
+  }, [openApp]);
 
   return (
     <div ref={settingsRootRef} className="settings-polaroid h-full w-full bg-[#f6f6f2] flex flex-col relative text-[#2f3437]" style={{ ...DOT_BG, paddingTop: 'var(--safe-top)' }}>
@@ -2825,7 +2837,11 @@ const Settings: React.FC = () => {
       </PaperSheet>
 
       {/* API 后台流水页面 */}
-      <ApiCallLogModal isOpen={showApiCallLog} onClose={() => setShowApiCallLog(false)} />
+      <ApiCallLogModal
+          isOpen={showApiCallLog}
+          onClose={() => setShowApiCallLog(false)}
+          onOpenManualHelp={openApiErrorManualHelp}
+      />
 
       {/* API 预设命名 */}
       <PaperSheet open={showPresetModal} tag="API PRESET" title="保存 API 预设" onClose={() => setShowPresetModal(false)} footer={<button onClick={handleSavePreset} className={`w-full py-3 font-black ${INK_BTN}`}>保存预设</button>}>

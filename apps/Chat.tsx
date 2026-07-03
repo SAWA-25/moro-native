@@ -6,10 +6,13 @@ import { DB } from '../utils/db';
 import { AppID, Message, MessageType, MemoryFragment, Emoji, EmojiCategory, DailySchedule, ScheduleSlot, CharacterProfile, UserProfile, TakeoutOrder, PrivateChatArchive, PrivateChatArchiveMessage, SocialPost, CollectionItem, PhoneLockState, ScreenPeekCard, ScreenPeekDeviceSnapshot, ChatAlarm, ChatAlarmChannel, ChatAlarmKind } from '../types';
 import { setTakeoutIntent, buildTakeoutCardMeta } from '../utils/takeout';
 import { resolveUnblockAppealDecision, type UnblockAppealDecision } from '../utils/unblockAppealActions';
+import { unblockCharacterByUser } from '../utils/blockActions';
+import { canCharContactUser, getPrivateBlockState } from '../utils/blockSystem';
 import { applyAffectionEval, sanitizeRelationshipUpdate, buildRelationshipState, isRelationshipStage, defaultRelationship, STAGE_DEFAULT_LABEL, canPropose as canProposeNow, createMarriageState } from '../utils/relationship';
 import ProposalOverlay from '../components/chat/ProposalOverlay';
 import { processImage } from '../utils/file';
-import { safeFetchJson, safeResponseJson, extractContent } from '../utils/safeApi';
+import { extractContent } from '../utils/safeApi';
+import { callChatCompletion } from '../utils/llmClient';
 import { generateDailyScheduleForChar, isEmotionBuffFeatureOn, isScheduleFeatureOn, reconcileScheduleWithChat, chatHasScheduleSignal } from '../utils/scheduleGenerator';
 import { runRecenter, RECENTER_DEFAULT_TURNS, type RecenterResult } from '../utils/recenter';
 import { proposalResultHint, innerVoicePromptBody, phoneLockAttemptPromptBody, phoneLockChatPromptBody, parallelReplyPromptBody, livePrivateDraftPromptBody, livePrivateInterjectPromptBody, blockPeekPrompt, privateCallDecisionPromptBody, musicShareAutoReplyHint, type PrivateCallMode } from '../utils/laiwangPrompts';
@@ -33,6 +36,7 @@ import { toggleReaction, CHAR_REACT_EVENT } from '../utils/messageReactions';
 import { CHAR_PAT_EVENT, DEFAULT_PAT_SUFFIX } from '../utils/patSuffix';
 import { CHAR_USER_REMARK_EVENT, type UserRemarkEventDetail } from '../utils/userRemarkSystem';
 import { CHAR_AVATAR_FROM_USER_IMAGE_EVENT, type CharAvatarEventDetail } from '../utils/charAvatarSystem';
+import { createMessageFollowup } from '../utils/chatFollowups';
 import { applyRegexToText, REGEX_SCRIPTS_UPDATED_EVENT } from '../utils/regex/store';
 import { regex_placement } from '../utils/regex/engine';
 import { ChatParser } from '../utils/chatParser';
@@ -215,25 +219,25 @@ const buildUserPhonePeekScreen = (
                 badge: '录屏中',
             }] : []),
             ...(apps.length ? apps.map((app, index) => {
-            const duration = screenPeekDurationText(app.durationMinutes);
-            const meta = app.lastTimeUsed ? screenPeekClock(app.lastTimeUsed) : duration;
-            return {
-                id: `user-phone-app-${index}`,
-                title: app.appName || '未知 App',
-                subtitle: app.packageName,
-                body: clipForPreview([
-                    app.isMoro ? 'Moro 当前在前台。' : (index === 0 ? 'TA 最近能看到你停在这里。' : '今日使用痕迹。'),
-                    duration ? `今日停留 ${duration}。` : '',
-                    app.note || '',
-                ].filter(Boolean).join(' '), 92),
-                meta: meta || (index === 0 ? '当前/最近' : '今日'),
-                badge: index === 0 ? '正在看' : undefined,
-            };
+                const duration = screenPeekDurationText(app.durationMinutes);
+                const meta = app.lastTimeUsed ? screenPeekClock(app.lastTimeUsed) : duration;
+                return {
+                    id: `user-phone-app-${index}`,
+                    title: app.appName || '未知 App',
+                    subtitle: app.packageName,
+                    body: clipForPreview([
+                        app.isMoro ? 'Moro 当前在前台。' : (index === 0 ? 'TA 最近能看到你停在这里。' : '今日使用痕迹。'),
+                        duration ? `今日停留 ${duration}。` : '',
+                        app.note || '',
+                    ].filter(Boolean).join(' '), 92),
+                    meta: meta || (index === 0 ? '当前/最近' : '今日'),
+                    badge: index === 0 ? '正在看' : undefined,
+                };
             }) : summaryLines.slice(0, 5).map((line, index) => ({
-            id: `user-phone-summary-${index}`,
-            title: index === 0 ? '真实手机状态' : `状态 ${index + 1}`,
-            body: line,
-            meta: screenPeekClock(now),
+                id: `user-phone-summary-${index}`,
+                title: index === 0 ? '真实手机状态' : `状态 ${index + 1}`,
+                body: line,
+                meta: screenPeekClock(now),
             }))),
         ].slice(0, 8))
         : [{
@@ -1306,14 +1310,14 @@ const Chat: React.FC = () => {
         const trimmed = userText.trim();
         if (!trimmed || !parallelReplyEnabled || parallelReplyTargets.length === 0) return;
         const replyApi = resolveAuxApi(auxApiConfig, apiConfig);
-        if (!replyApi.baseUrl || !replyApi.apiKey || !replyApi.model) {
+        if (!replyApi.baseUrl || !replyApi.model) {
             addToast('并发回复需要先在「文具盒」配置 API', 'info');
             return;
         }
 
         const targets = parallelReplyTargets
             .filter(target => target.id !== sourceChar.id)
-            .filter(target => !target.blacklisted && !target.charBlock?.active);
+            .filter(target => canCharContactUser(target));
         if (!targets.length) return;
 
         const clearBusy = (targetId: string) => {
@@ -1380,21 +1384,21 @@ ${parallelReplyPromptBody({
                     userText: trimmed,
                     recent,
                 })}`;
-                const data = await safeFetchJson(`${replyApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${replyApi.apiKey}` },
-                    body: JSON.stringify({
-                        model: replyApi.model,
-                        messages: [{ role: 'user', content: prompt }],
-                        temperature: 0.85,
-                        max_tokens: 800,
-                        stream: false,
+                const data = await callChatCompletion(replyApi, {
+                    model: replyApi.model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.85,
+                    max_tokens: 800,
+                    stream: false,
+                }, {
+                    maxRetries: 1,
+                    timeoutMs: 45000,
+                    meta: makeApiUsageMeta('chat.parallelReply', {
+                        charId: target.id,
+                        charName: target.name,
+                        apiRole: isAuxApiOn(auxApiConfig) ? 'aux' : 'main',
                     }),
-                }, 1, 45000, makeApiUsageMeta('chat.parallelReply', {
-                    charId: target.id,
-                    charName: target.name,
-                    apiRole: isAuxApiOn(auxApiConfig) ? 'aux' : 'main',
-                }));
+                });
                 const cleaned = ChatParser.sanitize((extractContent(data) || '').trim());
                 if (!ChatParser.hasDisplayContent(cleaned)) return 'empty';
                 const chunks = ChatParser.chunkTextByBubbleMode(cleaned, target.convoSettings?.bubbleStyleMode)
@@ -1461,8 +1465,9 @@ ${parallelReplyPromptBody({
     }, []);
 
     // ── 拉黑状态（双向） ──
-    const userBlockedChar = !!char?.blacklisted;      // 用户拉黑了角色
-    const charBlockedUser = !!char?.charBlock?.active; // 角色拉黑了用户
+    const privateBlockState = useMemo(() => getPrivateBlockState(char), [char]);
+    const userBlockedChar = privateBlockState.userBlockedChar;      // 用户拉黑了角色
+    const charBlockedUser = privateBlockState.charBlockedUser; // 角色拉黑了用户
     const pendingUnblockAppeal = useMemo(
         () => [...messages].reverse().find(m => m.metadata?.unblockAppeal?.status === 'pending') || null,
         [messages],
@@ -1705,7 +1710,7 @@ ${parallelReplyPromptBody({
         const queueCharId = activeCharIdRef.current;
         const queueChar = charRef.current;
         if (!queueCharId || !queueChar || queueChar.id !== queueCharId) return;
-        if (!queueChar.convoSettings?.autoReplyEachUserMessage || queueChar.blacklisted || queueChar.charBlock?.active) {
+        if (!queueChar.convoSettings?.autoReplyEachUserMessage || !canCharContactUser(queueChar)) {
             autoReplyQueueRef.current = [];
             return;
         }
@@ -1721,8 +1726,7 @@ ${parallelReplyPromptBody({
                     activeCharIdRef.current !== queueCharId ||
                     liveChar.id !== queueCharId ||
                     !liveChar.convoSettings?.autoReplyEachUserMessage ||
-                    liveChar.blacklisted ||
-                    liveChar.charBlock?.active
+                    !canCharContactUser(liveChar)
                 ) {
                     autoReplyQueueRef.current = [];
                     break;
@@ -1771,7 +1775,7 @@ ${parallelReplyPromptBody({
     }, [activeCharacterId, clearAutoReplyQueue]);
 
     useEffect(() => {
-        if (!char?.convoSettings?.autoReplyEachUserMessage || char.blacklisted || char.charBlock?.active) {
+        if (!char?.convoSettings?.autoReplyEachUserMessage || !canCharContactUser(char)) {
             clearAutoReplyQueue();
         }
     }, [char?.id, char?.convoSettings?.autoReplyEachUserMessage, char?.blacklisted, char?.charBlock?.active, clearAutoReplyQueue]);
@@ -1954,16 +1958,18 @@ ${parallelReplyPromptBody({
                 if (voiceLang && !originalText && spokenText) {
                     try {
                         const transApi = resolveAuxApi(auxApiConfig, apiConfig);
-                        const transRes = await fetch(`${transApi.baseUrl}/chat/completions`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${transApi.apiKey}` },
-                            body: JSON.stringify({
-                                model: transApi.model,
-                                messages: [{ role: 'system', content: '把以下内容翻译成中文。只输出翻译结果，不要任何解释。' }, { role: 'user', content: spokenText }],
-                                temperature: 0.3,
+                        const transData = await callChatCompletion(transApi, {
+                            model: transApi.model,
+                            messages: [{ role: 'system', content: '把以下内容翻译成中文。只输出翻译结果，不要任何解释。' }, { role: 'user', content: spokenText }],
+                            temperature: 0.3,
+                        }, {
+                            meta: makeApiUsageMeta('chat.translation', {
+                                charId: char.id,
+                                charName: char.name,
+                                apiRole: transApi.apiRole || 'aux',
+                                apiBinding: transApi.apiBinding || 'Voice translation',
                             }),
                         });
-                        const transData = await transRes.json();
                         const chineseText = transData?.choices?.[0]?.message?.content?.trim();
                         if (chineseText) originalText = chineseText;
                     } catch { /* keep originalText empty */ }
@@ -1991,16 +1997,18 @@ ${parallelReplyPromptBody({
                         const langLabel = VOICE_LANG_LABELS[voiceLang] || voiceLang;
                         try {
                             const transApi = resolveAuxApi(auxApiConfig, apiConfig);
-                            const transRes = await fetch(`${transApi.baseUrl}/chat/completions`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${transApi.apiKey}` },
-                                body: JSON.stringify({
-                                    model: transApi.model,
-                                    messages: [{ role: 'system', content: `Translate the following text to ${langLabel}. Output ONLY the translation, nothing else.` }, { role: 'user', content: originalText }],
-                                    temperature: 0.3,
+                            const transData = await callChatCompletion(transApi, {
+                                model: transApi.model,
+                                messages: [{ role: 'system', content: `Translate the following text to ${langLabel}. Output ONLY the translation, nothing else.` }, { role: 'user', content: originalText }],
+                                temperature: 0.3,
+                            }, {
+                                meta: makeApiUsageMeta('chat.translation', {
+                                    charId: char.id,
+                                    charName: char.name,
+                                    apiRole: transApi.apiRole || 'aux',
+                                    apiBinding: transApi.apiBinding || 'Voice translation',
                                 }),
                             });
-                            const transData = await transRes.json();
                             const translated = transData?.choices?.[0]?.message?.content?.trim();
                             if (translated) spokenText = translated;
                         } catch { /* use original */ }
@@ -2294,7 +2302,7 @@ ${parallelReplyPromptBody({
     // 刷新策略：① 进聊天时若缓存作息已存在但 generatedAt 距今 ≥24h，自动重算；
     //          ② 未过期则按差额挂一个一次性定时器，聊天长开也能到点自动刷新。
     useEffect(() => {
-        if (!char || !apiConfig.apiKey) return;
+        if (!char || !apiConfig.baseUrl || !apiConfig.model) return;
         if (!isScheduleFeatureOn(char)) {
             setScheduleData(null);
             return;
@@ -2441,7 +2449,7 @@ ${parallelReplyPromptBody({
     }, []);
 
     const triggerLiveSendReply = useCallback((fromQueue = false) => {
-        if (!char || !liveChatEnabled || char.blacklisted || char.charBlock?.active) return;
+        if (!char || !liveChatEnabled || !canCharContactUser(char)) return;
         if (isTyping) {
             if (!fromQueue) livePendingSendTriggerRef.current = true;
             return;
@@ -2455,7 +2463,7 @@ ${parallelReplyPromptBody({
     }, [char, liveChatEnabled, isTyping, messages, triggerAI]);
 
     const triggerLiveDraftReply = useCallback((draftText: string) => {
-        if (!char || char.blacklisted || char.charBlock?.active || isTyping) return;
+        if (!char || !canCharContactUser(char) || isTyping) return;
         const now = Date.now();
         if (!shouldTriggerLiveDraft({
             settings: liveDraftSettings,
@@ -2488,7 +2496,7 @@ ${parallelReplyPromptBody({
     const scheduleLiveDraftCheck = useCallback((draftText: string) => {
         clearLiveDraftTimer();
         liveDraftLastChangedAtRef.current = Date.now();
-        if (!char || char.blacklisted || char.charBlock?.active) return;
+        if (!char || !canCharContactUser(char)) return;
         if (!liveDraftSettings.enabled || !liveDraftSettings.draftAwareness) return;
         if (draftText.trim().length < liveDraftSettings.draftMinChars) return;
         liveDraftTimerRef.current = setTimeout(() => {
@@ -2554,7 +2562,7 @@ ${parallelReplyPromptBody({
         const trimmed = userText.trim();
         if (!trimmed || !liveChatEnabled || liveChatSettings.interjectMaxTargets <= 0) return;
         const replyApi = resolveAuxApi(auxApiConfig, apiConfig);
-        if (!replyApi.baseUrl || !replyApi.apiKey || !replyApi.model) return;
+        if (!replyApi.baseUrl || !replyApi.model) return;
 
         const candidates = getLiveChatInterjectCandidates(characters, sourceChar.id)
             .filter(target => !liveInterjectBusyIdsRef.current.has(target.id));
@@ -2583,21 +2591,21 @@ ${livePrivateInterjectPromptBody({
                     userText: trimmed,
                     recent,
                 })}`;
-                const data = await safeFetchJson(`${replyApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${replyApi.apiKey}` },
-                    body: JSON.stringify({
-                        model: replyApi.model,
-                        messages: [{ role: 'user', content: prompt }],
-                        temperature: 0.85,
-                        max_tokens: 800,
-                        stream: false,
+                const data = await callChatCompletion(replyApi, {
+                    model: replyApi.model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.85,
+                    max_tokens: 800,
+                    stream: false,
+                }, {
+                    maxRetries: 1,
+                    timeoutMs: 45000,
+                    meta: makeApiUsageMeta('chat.livePrivateInterject', {
+                        charId: target.id,
+                        charName: target.name,
+                        apiRole: isAuxApiOn(auxApiConfig) ? 'aux' : 'main',
                     }),
-                }, 1, 45000, makeApiUsageMeta('chat.livePrivateInterject', {
-                    charId: target.id,
-                    charName: target.name,
-                    apiRole: isAuxApiOn(auxApiConfig) ? 'aux' : 'main',
-                }));
+                });
                 const cleaned = ChatParser.sanitize((extractContent(data) || '').trim());
                 if (!ChatParser.hasDisplayContent(cleaned)) return;
                 const chunks = ChatParser.chunkTextByBubbleMode(cleaned, target.convoSettings?.bubbleStyleMode)
@@ -2646,17 +2654,15 @@ ${livePrivateInterjectPromptBody({
         if (!char || (!input.trim() && !customContent)) return;
 
         // 拉黑拦截：任意一方拉黑期间私聊都发不出去
-        if (char.charBlock?.active) {
-            addToast('你已被对方拉黑，消息无法送达', 'error');
-            return;
-        }
-        if (char.blacklisted) {
-            addToast(`你已将 ${char.name} 拉黑，无法发送消息`, 'error');
+        const sendBlock = getPrivateBlockState(char);
+        if (!sendBlock.canUserSend) {
+            addToast(sendBlock.userMessage || '拉黑期间无法发送消息', 'error');
             return;
         }
 
         let text = customContent || input.trim();
         const type = customType || 'text';
+        const rawMetadata = metadata || {};
 
         // 正则脚本（用户输入，改写消息原文）：全局 + 角色局部脚本中勾选「用户输入」
         // 且非仅显示/仅提示词的脚本在落库前生效（同 ST USER_INPUT placement）
@@ -2695,7 +2701,9 @@ ${livePrivateInterjectPromptBody({
                 charId: char.id,
                 url: text,
                 timestamp: Date.now(),
+                title: rawMetadata.genPrompt ? String(rawMetadata.genPrompt).slice(0, 40) : undefined,
                 savedDate: new Date().toISOString().split('T')[0],
+                source: rawMetadata.aiGenerated ? 'generated' : 'chat',
                 chatContext: recentChat
             });
             addToast('图片已保存至相册', 'info');
@@ -2708,7 +2716,6 @@ ${livePrivateInterjectPromptBody({
         }
 
         // Telegram 式回执：用户消息落库即「已发出」（单勾），角色回复成功后升级为「已读」（双勾）
-        const rawMetadata = metadata || {};
         const shouldQueueAutoReply = !!(
             char.convoSettings?.autoReplyEachUserMessage &&
             type === 'text' &&
@@ -2813,8 +2820,9 @@ ${livePrivateInterjectPromptBody({
     // 与 autoTriggerOnSend 自动路径的指示器行为一致。本地模式无此指示器，直接 triggerAI。
     const handleManualTrigger = () => {
         // 拉黑期间不触发 AI 回复（双向都无法继续私聊）
-        if (char && (char.blacklisted || char.charBlock?.active)) {
-            addToast(char.charBlock?.active ? '你已被对方拉黑' : '你已将对方拉黑，无法继续私聊', 'error');
+        const triggerBlock = getPrivateBlockState(char);
+        if (!triggerBlock.canUserSend) {
+            addToast(triggerBlock.userMessage || '拉黑期间无法继续私聊', 'error');
             return;
         }
         // 同上：上一轮还在跑时 triggerAI 会静默 reject，提前挡掉避免指示灯卡死。
@@ -2871,7 +2879,7 @@ ${livePrivateInterjectPromptBody({
     // ── 拉黑模式「看看 TA 在做什么」：用户仍无法私聊；用一次性隐藏提示触发角色
     //    生成此刻的动态，不把后台说明落进可见聊天流或通知横幅。──
     const handlePeekBlockedChar = () => {
-        if (!char || isTyping || !char.blacklisted) return;
+        if (!char || isTyping || !getPrivateBlockState(char).userBlockedChar) return;
         setShowUserBlockNotice(false);
         void triggerAI(messages, undefined, undefined, {
             ephemeralSystemPrompt: blockPeekPrompt(userProfile.name || '用户', char.name),
@@ -2948,7 +2956,7 @@ ${livePrivateInterjectPromptBody({
     // 角色对「用户求婚」的决定（专用一次性调用，不走常规对话管线）
     const decideCharProposal = async (vow: string): Promise<{ accept: boolean; reply: string }> => {
         const fallback = { accept: true, reply: `我愿意……${userProfile.name || '你'}，我愿意和你在一起。` };
-        if (!char || !apiConfig.baseUrl || !apiConfig.apiKey) return fallback;
+        if (!char || !apiConfig.baseUrl || !apiConfig.model) return fallback;
         try {
             const context = ContextBuilder.buildCoreContext(char, userProfile, true);
             const allMsgs = await DB.getMessagesByCharId(char.id);
@@ -2964,13 +2972,18 @@ ${recent || '（你们相处了很久）'}
 
 只输出一个 JSON（不要 markdown 代码块、不要多余解释）：
 {"accept": true 或 false, "reply": "你此刻对 ${userProfile.name || '对方'} 说的话（30-120字，带情绪与动作）"}`;
-            const res = await fetch(`${apiConfig.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiConfig.apiKey}` },
-                body: JSON.stringify({ model: apiConfig.model, messages: [{ role: 'user', content: prompt }], temperature: 0.9 }),
+            const data = await callChatCompletion(apiConfig, {
+                model: apiConfig.model,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.9,
+            }, {
+                meta: makeApiUsageMeta('chat.privateReply', {
+                    charId: char.id,
+                    charName: char.name,
+                    apiRole: 'main',
+                    apiBinding: 'Proposal reply',
+                }),
             });
-            if (!res.ok) throw new Error();
-            const data = await safeResponseJson(res);
             const content = (extractContent(data) || '').trim();
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
@@ -3042,8 +3055,8 @@ ${recent || '（你们相处了很久）'}
     const expiryScanLockRef = useRef(false);
     useEffect(() => {
         if (!char || isTyping || expiryScanLockRef.current) return;
-        if (char.charBlock?.active || char.blacklisted) return;
-        if (!apiConfig?.apiKey || !apiConfig?.baseUrl) return; // 没配 API 时只靠 UI 时间判定显示「已过期」，反应延后到配好后再触发
+        if (!canCharContactUser(char)) return;
+        if (!apiConfig?.baseUrl || !apiConfig?.model) return; // 没配 API 时只靠 UI 时间判定显示「已过期」，反应延后到配好后再触发
         const now = Date.now();
         const expired = messages.filter(m =>
             m.role === 'assistant' && m.type === 'transfer' &&
@@ -3083,8 +3096,8 @@ ${recent || '（你们相处了很久）'}
         if (!wasTyping || isTyping) return; // 仅在 AI 刚回复完的下降沿判定
         if (!char?.convoSettings?.allowPhoneBrowse) return; // 设置关闭则角色绝不发起
         if (charPhoneCheckActive || showOfflineMode || showCheckPhone || showCharProfile) return;
-        if (char.blacklisted || char.charBlock?.active) return;
-        if (!apiConfig?.apiKey || !apiConfig?.baseUrl) return;
+        if (!canCharContactUser(char)) return;
+        if (!apiConfig?.baseUrl || !apiConfig?.model) return;
         const cooldownKey = `moro_char_phone_check_last_${char.id}`;
         let last = 0;
         try { last = Number(localStorage.getItem(cooldownKey) || 0); } catch { /* ignore */ }
@@ -3419,13 +3432,14 @@ ${recent || '（你们相处了很久）'}
     // ── 音/视频通话：用户主动拨打 → 角色按人设 + 当前剧情决定接不接 → 接通则跳转对应通话页 ──
     const startPrivateCall = async (mode: PrivateCallMode) => {
         if (!char) return;
-        if (char.blacklisted || char.charBlock?.active) {
-            addToast(char.charBlock?.active ? '你已被对方拉黑，无法拨打' : '你已将对方拉黑，无法拨打', 'error');
+        const callBlock = getPrivateBlockState(char);
+        if (!callBlock.canUserSend) {
+            addToast(`${callBlock.userMessage || '拉黑期间无法拨打'}`.replace('无法发送消息', '无法拨打').replace('消息无法送达', '无法拨打'), 'error');
             return;
         }
         // 来电「接不接」是聊天以外的辅助决策 → 走副 API（未配置时回退主 API）
         const callApi = resolveAuxApi(auxApiConfig, apiConfig);
-        if (!callApi.baseUrl || !callApi.apiKey) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
+        if (!callApi.baseUrl || !callApi.model) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
         setShowPanel('none');
         voiceCallCancelRef.current = false;
         setPrivateCallMode(mode);
@@ -3443,17 +3457,18 @@ ${privateCallDecisionPromptBody({
             })}`;
             // 决策请求与最短响铃时间并行：让"正在呼叫"至少停留一会儿，更像真的在拨号
             const minRing = new Promise(r => setTimeout(r, 2500));
-            const response = await fetch(`${callApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${callApi.apiKey}` },
-                body: JSON.stringify({
-                    model: callApi.model,
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.9,
+            const data = await callChatCompletion(callApi, {
+                model: callApi.model,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.9,
+            }, {
+                meta: makeApiUsageMeta('chat.phoneTextReply', {
+                    charId: char.id,
+                    charName: char.name,
+                    apiRole: callApi.apiRole || 'aux',
+                    apiBinding: callApi.apiBinding || 'Private call decision',
                 }),
             });
-            if (!response.ok) throw new Error(`API ${response.status}`);
-            const data = await safeResponseJson(response);
             await minRing;
             if (voiceCallCancelRef.current) return;
             const raw = (extractContent(data) || '').trim();
@@ -3731,7 +3746,7 @@ ${privateCallDecisionPromptBody({
         let attempt = fallback;
         try {
             const lockApi = resolveAuxApi(auxApiConfig, apiConfig);
-            if (lockApi.baseUrl && lockApi.apiKey) {
+            if (lockApi.baseUrl && lockApi.model) {
                 const context = ContextBuilder.buildCoreContext(char, userProfile, true);
                 const recent = messages.slice(-30).map(m => formatMessageWithTime(m, char.name, userName, formatTime)).join('\n');
                 const prompt = `${context}\n\n${phoneLockAttemptPromptBody({
@@ -3743,13 +3758,19 @@ ${privateCallDecisionPromptBody({
                     note,
                     questions,
                 })}`;
-                const res = await fetch(`${lockApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lockApi.apiKey}` },
-                    body: JSON.stringify({ model: lockApi.model, messages: [{ role: 'user', content: prompt }], temperature: 0.92 }),
+                const data = await callChatCompletion(lockApi, {
+                    model: lockApi.model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.92,
+                }, {
+                    meta: makeApiUsageMeta('chat.lockScreen', {
+                        charId: char.id,
+                        charName: char.name,
+                        apiRole: lockApi.apiRole || 'aux',
+                        apiBinding: lockApi.apiBinding || 'Phone lock',
+                    }),
                 });
-                if (!res.ok) throw new Error(`API ${res.status}`);
-                let raw = (extractContent(await safeResponseJson(res)) || '').trim();
+                let raw = (extractContent(data) || '').trim();
                 raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
                 const s = raw.indexOf('{'); const e = raw.lastIndexOf('}');
                 if (s >= 0 && e > s) raw = raw.slice(s, e + 1);
@@ -3848,7 +3869,7 @@ ${privateCallDecisionPromptBody({
             : '我还在锁屏这里，看得见你的消息。你说吧，我在听。';
         try {
             const chatApi = resolveAuxApi(auxApiConfig, apiConfig);
-            if (chatApi.baseUrl && chatApi.apiKey) {
+            if (chatApi.baseUrl && chatApi.model) {
                 const context = ContextBuilder.buildCoreContext(char, userProfile, true);
                 const attemptText = phoneLockAttempt
                     ? `你刚才提交的口令：${phoneLockAttempt.passcodeInput || '（没输）'}\n你刚才写的答案：${phoneLockAttempt.answers.map((a, i) => `${i + 1}. ${a || '（空）'}`).join(' / ')}\n现在状态：${phoneLockAttempt.unlocked ? `已自动解锁（${phoneLockResultLabel(phoneLockAttempt.unlockReason)}）` : '仍被黑屏锁住。'}`
@@ -3863,13 +3884,19 @@ ${privateCallDecisionPromptBody({
                     attemptText,
                     historyText,
                 })}`;
-                const res = await fetch(`${chatApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${chatApi.apiKey}` },
-                    body: JSON.stringify({ model: chatApi.model, messages: [{ role: 'user', content: prompt }], temperature: 0.9 }),
+                const data = await callChatCompletion(chatApi, {
+                    model: chatApi.model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.9,
+                }, {
+                    meta: makeApiUsageMeta('chat.lockScreen', {
+                        charId: char.id,
+                        charName: char.name,
+                        apiRole: chatApi.apiRole || 'aux',
+                        apiBinding: chatApi.apiBinding || 'Phone lock chat',
+                    }),
                 });
-                if (!res.ok) throw new Error(`API ${res.status}`);
-                reply = (extractContent(await safeResponseJson(res)) || '').replace(/```/g, '').trim().slice(0, 180) || reply;
+                reply = (extractContent(data) || '').replace(/```/g, '').trim().slice(0, 180) || reply;
             }
         } catch (e) {
             console.warn('[Chat] phone lock chat failed:', e);
@@ -3899,7 +3926,7 @@ ${privateCallDecisionPromptBody({
     const handleRecenter = async () => {
         if (!char) return;
         if (isRecentering) { addToast('TA 正在回神，稍等一下…', 'info'); return; }
-        if (!apiConfig.apiKey) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
+        if (!apiConfig.baseUrl || !apiConfig.model) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
         setIsRecentering(true);
         try {
             const recent = await DB.getRecentMessagesByCharId(char.id, 60);
@@ -4071,7 +4098,7 @@ ${privateCallDecisionPromptBody({
                 // OfflineModeModal 没有进行中的会话时会自动生成见面开场；与角色 [[OFFLINE_START]]
                 // 自动触发（聊天设置「自动线下」）共用同一套线下模式与上下文落库。
                 if (!char) break;
-                if (char.blacklisted || char.charBlock?.active) { addToast('拉黑期间无法见面', 'error'); break; }
+                if (!getPrivateBlockState(char).canUserSend) { addToast('拉黑期间无法见面', 'error'); break; }
                 setShowPanel('none');
                 setShowOfflineMode(true);
                 break;
@@ -4301,7 +4328,8 @@ ${privateCallDecisionPromptBody({
     };
     const generateInnerVoice = async () => {
         if (!char || innerVoiceLoading) return;
-        if (!apiConfig.baseUrl || !apiConfig.apiKey) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
+        const innerVoiceApi = resolveAuxApi(auxApiConfig, apiConfig);
+        if (!innerVoiceApi.baseUrl || !innerVoiceApi.model) { addToast('请先在「文具盒」里配置 API', 'error'); return; }
         setInnerVoiceLoading(true);
         try {
             try {
@@ -4323,17 +4351,18 @@ ${privateCallDecisionPromptBody({
                 curStage: curRel?.stage || 'friend',
                 curLabel: curRel?.label || '朋友',
             })}`;
-            const response = await fetch(`${apiConfig.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiConfig.apiKey}` },
-                body: JSON.stringify({
-                    model: apiConfig.model,
-                    messages: [{ role: 'user', content: fullPrompt }],
-                    temperature: 0.9,
+            const data = await callChatCompletion(innerVoiceApi, {
+                model: innerVoiceApi.model,
+                messages: [{ role: 'user', content: fullPrompt }],
+                temperature: 0.9,
+            }, {
+                meta: makeApiUsageMeta('chat.coupleSpace.innerVoice', {
+                    charId: char.id,
+                    charName: char.name,
+                    apiRole: innerVoiceApi.apiRole || 'aux',
+                    apiBinding: innerVoiceApi.apiBinding || 'Inner voice',
                 }),
             });
-            if (!response.ok) throw new Error(`API ${response.status}`);
-            const data = await safeResponseJson(response);
             const content = (extractContent(data) || '').trim();
             if (!content) throw new Error('返回为空');
 
@@ -5333,10 +5362,28 @@ ${privateCallDecisionPromptBody({
         });
     };
 
+    useEffect(() => {
+        if (activeApp !== AppID.Chat || !activeCharacterId) return;
+        let raw = '';
+        try {
+            raw = sessionStorage.getItem('moro_chat_jump_to_message') || '';
+        } catch { /* ignore */ }
+        if (!raw) return;
+        try {
+            const payload = JSON.parse(raw) as { charId?: string; messageId?: number };
+            if (payload.charId !== activeCharacterId || typeof payload.messageId !== 'number') return;
+            sessionStorage.removeItem('moro_chat_jump_to_message');
+            window.setTimeout(() => { void handleJumpToMessageInChat(payload.messageId as number); }, 80);
+        } catch {
+            try { sessionStorage.removeItem('moro_chat_jump_to_message'); } catch { /* ignore */ }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeApp, activeCharacterId]);
+
     const handleFullArchive = async () => {
         // 整理归档（把聊天记录批量总结成档案）属「聊天以外」的辅助任务：走副 API（未配置副 API 时回退主 API）
         const archiveApi = resolveAuxApi(auxApiConfig, apiConfig);
-        if (!archiveApi.apiKey || !char) {
+        if (!archiveApi.baseUrl || !archiveApi.model || !char) {
             addToast('请先配置 API Key', 'error');
             return;
         }
@@ -5382,19 +5429,19 @@ ${privateCallDecisionPromptBody({
                 prompt = prompt.replace(/\$\{userProfile\.name\}/g, userProfile.name);
                 prompt = prompt.replace(/\$\{rawLog.*?\}/g, rawLog.substring(0, 200000));
 
-                const response = await fetch(`${archiveApi.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${archiveApi.apiKey}` },
-                    body: JSON.stringify({
-                        model: archiveApi.model,
-                        messages: [{ role: "user", content: prompt }],
-                        temperature: 0.5,
-                        max_tokens: 8000
-                    })
+                const data = await callChatCompletion(archiveApi, {
+                    model: archiveApi.model,
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.5,
+                    max_tokens: 8000
+                }, {
+                    meta: makeApiUsageMeta('chat.postProcess.summary', {
+                        charId: char.id,
+                        charName: char.name,
+                        apiRole: archiveApi.apiRole || 'aux',
+                        apiBinding: archiveApi.apiBinding || 'Private archive',
+                    }),
                 });
-
-                if (!response.ok) throw new Error(`API Error on ${dateStr}`);
-                const data = await safeResponseJson(response);
                 let summary = extractContent(data);
                 summary = summary.replace(/^["']|["']$/g, '').trim();
 
@@ -5547,6 +5594,25 @@ ${privateCallDecisionPromptBody({
         }
     };
 
+    const handleAddMessageToDashboard = async () => {
+        if (!selectedMessage || !char) return;
+        try {
+            await createMessageFollowup({
+                message: selectedMessage,
+                targetKind: 'char',
+                targetId: char.id,
+                targetName: char.convoSettings?.remarkName?.trim() || char.name,
+            });
+            addToast('已记到絮语总览', 'success');
+        } catch (err) {
+            console.warn('[Chat] add message to dashboard failed', err);
+            addToast('记到总览失败', 'error');
+        } finally {
+            setModalType('none');
+            setSelectedMessage(null);
+        }
+    };
+
     const handlePostMessageToMoments = async () => {
         if (!selectedMessage || !char) return;
         const target = selectedMessage;
@@ -5585,6 +5651,16 @@ ${privateCallDecisionPromptBody({
                 images: images.length > 0 ? images : undefined,
             },
             visibility: 'public',
+            audienceRules: { mode: 'public' },
+            lastActivityAt: Date.now(),
+            unreadForUser: true,
+            source: 'chat_forward',
+            relationSignals: [{
+                charId: char.id,
+                kind: 'posted',
+                text: `${char.name} 把聊天里的${kind}转发到了此刻`,
+                at: Date.now(),
+            }],
         };
         try {
             await DB.saveSocialPost(post);
@@ -7272,7 +7348,7 @@ ${privateCallDecisionPromptBody({
                 onCreatePrompt={createNewPrompt} onEditPrompt={editSelectedPrompt} onSavePrompt={handleSavePrompt} onDeletePrompt={handleDeletePrompt}
                 onSetHistoryStart={handleSetHistoryStart} onJumpToMessageInChat={handleJumpToMessageInChat} onEnterSelectionMode={handleEnterSelectionMode}
                 onReplyMessage={handleReplyMessage} onEditMessageStart={() => { if (selectedMessage) { setEditContent(selectedMessage.content); setModalType('edit-message'); } }}
-                onConfirmEditMessage={confirmEditMessage} onDeleteMessage={handleDeleteMessage} onRecallMessage={handleRecallMessage} onForwardMessage={handleForwardSingle} onCollectMessage={handleCollectMessage} onPostMessageToMoments={handlePostMessageToMoments} onReactMessage={handleReactMessage} onCopyMessage={handleCopyMessage} onDeleteEmoji={handleDeleteEmoji} onDeleteCategory={handleDeleteCategory}
+                onConfirmEditMessage={confirmEditMessage} onDeleteMessage={handleDeleteMessage} onRecallMessage={handleRecallMessage} onForwardMessage={handleForwardSingle} onCollectMessage={handleCollectMessage} onAddMessageToDashboard={handleAddMessageToDashboard} onPostMessageToMoments={handlePostMessageToMoments} onReactMessage={handleReactMessage} onCopyMessage={handleCopyMessage} onDeleteEmoji={handleDeleteEmoji} onDeleteCategory={handleDeleteCategory}
                 allCharacters={characters} onSaveCategoryVisibility={handleSaveCategoryVisibility}
                 translationEnabled={translationEnabled}
                 onToggleTranslation={() => { const next = !translationEnabled; setTranslationEnabled(next); localStorage.setItem(`chat_translate_enabled_${activeCharacterId}`, JSON.stringify(next)); if (!next) { setShowingTargetIds(new Set()); } }}
@@ -7960,24 +8036,47 @@ ${privateCallDecisionPromptBody({
                         return (
                             <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-amber-50 border-b border-amber-200 text-xs">
                                 <span className="text-amber-700 font-bold truncate">{char.name} 申请解除拉黑，查看验证消息后再决定</span>
-                                <button
-                                    onClick={() => { setUnblockAppealTarget(pendingUnblockAppeal); setUnblockAppealReply(''); }}
-                                    className="px-2.5 py-1 bg-amber-500 text-white rounded-full text-[11px] font-bold active:scale-95 shrink-0"
-                                >
-                                    查看申请
-                                </button>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        onClick={() => { void handlePeekBlockedChar(); }}
+                                        disabled={isTyping}
+                                        className="px-2.5 py-1 bg-white text-amber-700 border border-amber-200 rounded-full text-[11px] font-bold active:scale-95 disabled:opacity-50"
+                                    >
+                                        看看
+                                    </button>
+                                    <button
+                                        onClick={() => { setUnblockAppealTarget(pendingUnblockAppeal); setUnblockAppealReply(''); }}
+                                        className="px-2.5 py-1 bg-amber-500 text-white rounded-full text-[11px] font-bold active:scale-95"
+                                    >
+                                        查看申请
+                                    </button>
+                                </div>
                             </div>
                         );
                     }
                     return (
                         <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-100 border-b border-slate-200 text-xs">
                             <span className="text-slate-500 font-bold truncate">你已将 {char.name} 加入黑名单，无法发送消息</span>
-                            <button
-                                onClick={() => { updateCharacter(char.id, { blacklisted: false, blacklistedAt: undefined, unblockAppeal: { active: false, awaiting: false, nextAt: 0, rejectedCount: 0 } }); addToast(`已将 ${char.name} 移出黑名单`, 'success'); }}
-                                className="px-2.5 py-1 bg-slate-600 text-white rounded-full text-[11px] font-bold active:scale-95 shrink-0"
-                            >
-                                解除拉黑
-                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                    onClick={() => { void handlePeekBlockedChar(); }}
+                                    disabled={isTyping}
+                                    className="px-2.5 py-1 bg-white text-slate-600 border border-slate-200 rounded-full text-[11px] font-bold active:scale-95 disabled:opacity-50"
+                                >
+                                    看看
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        void unblockCharacterByUser({ char, updateCharacter, handledFrom: 'manual', clearUnread }).then(() => {
+                                            addToast(`已将 ${char.name} 移出黑名单`, 'success');
+                                            return reloadMessages(visibleCountRef.current);
+                                        });
+                                    }}
+                                    className="px-2.5 py-1 bg-slate-600 text-white rounded-full text-[11px] font-bold active:scale-95"
+                                >
+                                    解除拉黑
+                                </button>
+                            </div>
                         </div>
                     );
                 })()}
@@ -8048,7 +8147,7 @@ ${privateCallDecisionPromptBody({
                         {characters.filter(c => c.id !== activeCharacterId).map(c => {
                             const selected = parallelReplyTargetIds.has(c.id);
                             const busy = parallelReplyBusyIds.has(c.id);
-                            const blocked = !!(c.blacklisted || c.charBlock?.active);
+                            const blocked = getPrivateBlockState(c).blocked;
                             return (
                                 <button
                                     key={c.id}

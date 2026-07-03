@@ -22,8 +22,10 @@ import {
 import { DB } from '../db';
 import { buildChatRequestPayload } from '../chatRequestPayload';
 import { PresetRuntime } from '../presets';
-import { safeFetchJson } from '../safeApi';
+import { extractContent } from '../safeApi';
 import { makeApiUsageMeta } from '../apiUsageCatalog';
+import { callChatCompletion } from '../llmClient';
+import { normalizeOpenAiBaseUrl } from '../openAiCompat';
 import { processNewMessages } from '../memoryPalace/pipeline';
 import { resolveMemoryPalaceAuxConfigsFromStorage } from '../memoryPalace/auxConfig';
 import { loadMusicCfgStandalone } from '../../context/MusicContext';
@@ -312,26 +314,24 @@ export async function runVRSession(deps: VRSessionDeps): Promise<VRSessionResult
         if (requestBody.max_tokens === undefined) delete requestBody.max_tokens;
 
         // 调 LLM（记录一次调用，供"调用记录"对账）
-        const baseUrl = vrApi.baseUrl.replace(/\/+$/, '');
+        const baseUrl = normalizeOpenAiBaseUrl(vrApi.baseUrl);
         const callStart = Date.now();
         let data: any;
         try {
-            data = await safeFetchJson(`${baseUrl}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${vrApi.apiKey || 'sk-none'}` },
-                body: JSON.stringify(requestBody),
-            }, 2, 0, makeApiUsageMeta('vrWorld.session', {
-                charId: char.id,
-                charName: char.name,
-                apiRole: 'custom',
-                apiBinding: '页外独立 API',
-            }));
+            data = await callChatCompletion(vrApi, requestBody, {
+                meta: makeApiUsageMeta('vrWorld.session', {
+                    charId: char.id,
+                    charName: char.name,
+                    apiRole: 'custom',
+                    apiBinding: '页外独立 API',
+                }),
+            });
             logVRApiCall({ ts: callStart, charName: char.name, room: room.id, model: vrApi.model, baseUrl, ok: true, ms: Date.now() - callStart });
         } catch (e: any) {
             logVRApiCall({ ts: callStart, charName: char.name, room: room.id, model: vrApi.model, baseUrl, ok: false, ms: Date.now() - callStart, error: (e?.message || String(e)).slice(0, 160) });
             throw e;
         }
-        let aiContent: string = data.choices?.[0]?.message?.content || '';
+        let aiContent: string = extractContent(data) || '';
         aiContent = aiContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
         const prevState = char.vrState || { enabled: true, intervalMinutes: VR_DEFAULT_INTERVAL_MIN };

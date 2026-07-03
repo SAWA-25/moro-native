@@ -7,10 +7,13 @@ import { fetchMiniMaxVoices, MiniMaxVoiceItem } from '../../utils/minimaxVoice';
 import { resolveMiniMaxApiKey } from '../../utils/minimaxApiKey';
 import { isCharBlockDisabled, setCharBlockDisabled } from '../../utils/blockSystem';
 import { isEmotionBuffFeatureOn, isScheduleFeatureOn } from '../../utils/scheduleGenerator';
-import { isAuxApiOn } from '../../utils/auxApi';
+import { isAuxApiOn, resolveAuxApi } from '../../utils/auxApi';
 import { scrollToManualAnchor, useManualDeepLink } from '../../utils/manualDeepLink';
 import { PAPER_TONES, MONO_STACK, CUTE_STACK } from '../handbook/paper';
 import { normalizeLiveChatSettings, resolveLiveChatEnabled } from '../../utils/liveChat';
+import { callChatCompletion } from '../../utils/llmClient';
+import { extractContent } from '../../utils/safeApi';
+import { makeApiUsageMeta } from '../../utils/apiUsageCatalog';
 
 /**
  * 聊天设置（会话设置）全屏面板。
@@ -361,19 +364,26 @@ const ConvoSettingsPanel: React.FC<ConvoSettingsPanelProps> = (props) => {
     const deleteMemo = (id: string) => updateCharacter(char.id, { memos: (char.memos || []).filter(m => m.id !== id) });
     const toggleMemoDone = (id: string) => updateCharacter(char.id, { memos: (char.memos || []).map(m => m.id === id ? { ...m, done: !m.done } : m) });
     const generateMemos = async () => {
-        if (!apiConfig.apiKey) { addToast('先去「文具盒」配置好聊天 API', 'error'); return; }
+        const memoApi = resolveAuxApi(auxApiConfig, apiConfig);
+        if (!memoApi.baseUrl || !memoApi.model) { addToast('先去「文具盒」配置好 API', 'error'); return; }
         setMemoGenerating(true);
         try {
             const persona = (char.systemPrompt || '').slice(0, 800);
             const prompt = `你是「${char.name}」。请根据你的人设，写 3~4 条你自己手机备忘录里会有的内容（待办、随手记、藏起来的小心事、清单等，要贴合你的性格与生活，简短自然）。\n\n你的人设：${persona}\n\n只输出 JSON 字符串数组，例如：["明天记得交房租","想给 TA 买生日礼物，纠结选什么","健身：周一三五"]`;
-            const res = await fetch(`${apiConfig.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiConfig.apiKey}` },
-                body: JSON.stringify({ model: apiConfig.model, messages: [{ role: 'user', content: prompt }], temperature: 0.9 }),
+            const data = await callChatCompletion(memoApi, {
+                model: memoApi.model,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.9,
+                stream: false,
+            }, {
+                meta: makeApiUsageMeta('chat.memoGenerate', {
+                    charId: char.id,
+                    charName: char.name,
+                    apiRole: memoApi.apiRole || 'aux',
+                    apiBinding: memoApi.apiBinding || '角色备忘录',
+                }),
             });
-            if (!res.ok) throw new Error('生成失败，再试一次');
-            const data = await res.json();
-            let txt: string = data?.choices?.[0]?.message?.content || '';
+            let txt: string = extractContent(data) || '';
             txt = txt.replace(/```json/g, '').replace(/```/g, '').trim();
             const a = txt.indexOf('['), b = txt.lastIndexOf(']');
             if (a >= 0 && b > a) txt = txt.slice(a, b + 1);
