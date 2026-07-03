@@ -127,6 +127,29 @@ jobs:
         working-directory: ios/App
         run: pod install
 
+      - name: Apply iOS app bundle identifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          bundle_id = os.environ["BUNDLE_ID"]
+          project = Path("ios/App/App.xcodeproj/project.pbxproj")
+          text = project.read_text()
+          text, count = re.subn(
+              r"PRODUCT_BUNDLE_IDENTIFIER = [^;]+;",
+              f"PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};",
+              text,
+          )
+          if count == 0:
+              raise SystemExit("No PRODUCT_BUNDLE_IDENTIFIER entries were updated.")
+          project.write_text(text)
+          print(f"Updated {count} App project bundle identifier entries to {bundle_id}.")
+          PY
+
       - name: Install signing certificate and provisioning profile
         if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
         shell: bash
@@ -186,7 +209,6 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath "${derived_data}" \
-            PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -213,7 +235,6 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "${archive_path}" \
             DEVELOPMENT_TEAM="${IOS_TEAM_ID}" \
-            PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
             CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}"
@@ -292,6 +313,49 @@ jobs:
             exit 1
           fi
 
+          python3 - <<'PY'
+          import os
+          import plistlib
+          import re
+          from collections import defaultdict
+          from pathlib import Path
+
+          app_path = Path(os.environ["APP_PATH"])
+          bundle_id = os.environ["BUNDLE_ID"]
+
+          for info_path in app_path.glob("Frameworks/*.framework/Info.plist"):
+              name = info_path.parent.stem
+              safe_name = re.sub(r"[^A-Za-z0-9]+", "-", name).strip("-").lower()
+              next_id = f"{bundle_id}.framework.{safe_name}"
+              with info_path.open("rb") as fh:
+                  info = plistlib.load(fh)
+              old_id = info.get("CFBundleIdentifier")
+              if old_id != next_id:
+                  info["CFBundleIdentifier"] = next_id
+                  with info_path.open("wb") as fh:
+                      plistlib.dump(info, fh)
+                  print(f"Framework bundle id: {old_id} -> {next_id}")
+
+          seen = defaultdict(list)
+          for info_path in app_path.rglob("Info.plist"):
+              try:
+                  with info_path.open("rb") as fh:
+                      info = plistlib.load(fh)
+              except Exception:
+                  continue
+              bundle = info.get("CFBundleIdentifier")
+              if bundle:
+                  seen[bundle].append(str(info_path.relative_to(app_path)))
+
+          duplicates = {bundle: paths for bundle, paths in seen.items() if len(paths) > 1}
+          if duplicates:
+              for bundle, paths in duplicates.items():
+                  print(f"Duplicate CFBundleIdentifier {bundle}:")
+                  for path in paths:
+                      print(f"  - {path}")
+              raise SystemExit("Duplicate CFBundleIdentifier values remain in the app bundle.")
+          PY
+
           rm -rf "${package_root}"
           mkdir -p "${payload_dir}" release "${zsign_dir}"
           cp -R "${APP_PATH}" "${payload_dir}/App.app"
@@ -312,7 +376,6 @@ jobs:
             -k "${certificate_path}" \
             -p "${IOS_CERTIFICATE_PASSWORD}" \
             -m "${profile_path}" \
-            -b "${BUNDLE_ID}" \
             -o "release/${IPA_NAME}" \
             "${unsigned_ipa}"
 
