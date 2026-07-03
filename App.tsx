@@ -3,6 +3,7 @@ import React from 'react';
 import { OSProvider } from './context/OSContext';
 import { MusicProvider } from './context/MusicContext';
 import { DesktopPetProvider } from './context/DesktopPetContext';
+import { UserScreenWatchProvider } from './context/UserScreenWatchContext';
 import PhoneShell from './components/PhoneShell';
 import DevDebugPanel from './components/DevDebugPanel';
 import VRBroadcast from './components/VRBroadcast';
@@ -32,7 +33,9 @@ const App: React.FC = () => {
           <OSProvider>
             <DesktopPetProvider>
               <MusicProvider>
-                <PhoneShell />
+                <UserScreenWatchProvider>
+                  <PhoneShell />
+                </UserScreenWatchProvider>
               </MusicProvider>
             </DesktopPetProvider>
           </OSProvider>

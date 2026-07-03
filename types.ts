@@ -2660,6 +2660,55 @@ export interface ScreenPeekCard {
   sourceRunId?: string;
 }
 
+export interface UserScreenWatchSettings {
+  captureFrames: boolean;
+  trackMoroUsage: boolean;
+  floatingEnabled: boolean;
+  sampleIntervalMs: number;
+  commentCooldownMs: number;
+}
+
+export interface UserScreenWatchUsageSlice {
+  appId: AppID;
+  appName: string;
+  startedAt: number;
+  endedAt: number;
+  durationMs: number;
+}
+
+export interface UserScreenWatchFrame {
+  id: string;
+  capturedAt: number;
+  imageDataUrl?: string;
+  sourceLabel?: string;
+  inferredApp?: string;
+  summary?: string;
+}
+
+export interface UserScreenWatchComment {
+  id: string;
+  frameId?: string;
+  text: string;
+  createdAt: number;
+  source: 'vision' | 'text' | 'fallback' | 'summary';
+}
+
+export interface UserScreenWatchSession {
+  id: string;
+  charId: string;
+  charName: string;
+  startedAt: number;
+  endedAt?: number;
+  updatedAt: number;
+  status: 'active' | 'paused' | 'ended' | 'error';
+  settings: UserScreenWatchSettings;
+  usage: UserScreenWatchUsageSlice[];
+  frames: UserScreenWatchFrame[];
+  comments: UserScreenWatchComment[];
+  summary?: string;
+  error?: string;
+}
+
 export interface RelationshipNetworkEdge {
   id: string;
   pairKey: string;
@@ -3572,6 +3621,27 @@ export interface ConvoSettings {
 }
 
 /** 群公告（QQ 式）：一条当前生效的公告，群主/管理员可发布、修改或撤下。 */
+export interface GroupConvoSettings {
+    bubbleStyleMode?: 'split' | 'whole' | 'freeform';
+    personaDrivenMessageLength?: boolean;
+    liveChatOverride?: LiveChatOverride;
+    autoReplyEachUserMessage?: boolean;
+    narrationMode?: boolean;
+    innerVoiceEnabled?: boolean;
+    translationEnabled?: boolean;
+    translateSourceLang?: string;
+    translateTargetLang?: string;
+    translateStyle?: string;
+    emojiAssociation?: boolean;
+    allowedEmojiCategoryIds?: string[];
+    headerDecorText?: string;
+    footerDecorText?: string;
+    inputPlaceholderText?: string;
+    hideTimestamp?: boolean;
+    contextLimit?: number;
+    mountedWorldbookIds?: string[];
+}
+
 export interface GroupAnnouncement {
     /** 公告正文 */
     text: string;
@@ -3602,6 +3672,7 @@ export interface GroupProfile {
     members: string[];
     avatar?: string;
     createdAt: number;
+    convoSettings?: GroupConvoSettings;
     /**
      * 私聊里"近期群活动"上下文从这个群最多取最后多少条消息。
      * 不设默认 80。设大点能让活跃群更完整，设小点节省 token、避免某个活跃群把其他群挤掉。
@@ -4836,7 +4907,7 @@ export interface GameSession {
     lastPlayedAt: number;
 }
 
-export type MessageType = 'text' | 'image' | 'emoji' | 'interaction' | 'transfer' | 'system' | 'social_card' | 'forum_card' | 'chat_forward' | 'screen_peek_card' | 'xhs_card' | 'twitter_card' | 'score_card' | 'music_card' | 'mcd_card' | 'html_card' | 'news_card' | 'vr_card' | 'trpg_card' | 'location' | 'voice' | 'call_log' | 'takeout_card' | 'proposal_card' | 'poll_card' | 'relay_card' | 'checkin_card' | 'gift_card';
+export type MessageType = 'text' | 'image' | 'emoji' | 'interaction' | 'transfer' | 'system' | 'social_card' | 'forum_card' | 'chat_forward' | 'screen_peek_card' | 'screen_watch_card' | 'xhs_card' | 'twitter_card' | 'score_card' | 'music_card' | 'mcd_card' | 'html_card' | 'news_card' | 'vr_card' | 'trpg_card' | 'location' | 'voice' | 'call_log' | 'takeout_card' | 'proposal_card' | 'poll_card' | 'relay_card' | 'checkin_card' | 'gift_card';
 
 export type ChatAlarmKind = 'sleep' | 'wake' | 'custom';
 export type ChatAlarmChannel = 'auto' | 'reminder' | 'call';
@@ -4993,6 +5064,8 @@ export interface ShopItem {
     blurb: string;          // 一句话描述
     image?: string;         // 真实商品图 URL（AI 生成/有图时填，渲染时优先用图，否则用 emoji 文字图）
     generated?: boolean;    // 是否 AI 实时生成（区分内置兜底商品）
+    custom?: boolean;       // 是否用户手动新增或编辑过的本地商品
+    updatedAt?: number;     // 用户编辑保存时间
     rating?: number;        // 评分 1.0~5.0（AI 生成，有好有坏；缺省时按 id 确定性派生）
 }
 
@@ -5218,6 +5291,8 @@ export interface InnerVoiceEntry {
     charId: string;
     content: string;
     timestamp: number;
+    groupId?: string;
+    groupName?: string;
 }
 
 export interface EmojiCategory {
@@ -5350,6 +5425,7 @@ export interface FullBackupData {
     musicRecommendCache?: MusicRecommendCacheEntry[];
     phoneCallLogs?: PhoneCallLog[];           // 电话 App 通话记录
     phoneCheckSessions?: PhoneCheckSession[]; // 絮语查岗档案
+    userScreenWatchSessions?: UserScreenWatchSession[]; // 絮语观屏评论会话
     exchangeDiaryBooks?: ExchangeDiaryBook[]; // 日记社多角色交换日记本
     innerVoices?: InnerVoiceEntry[];          // 偷看心声历史
     llmPresets?: TavernPreset[];              // 预设 App：SillyTavern 式 Chat Completion 预设
@@ -6237,6 +6313,14 @@ export interface TakeoutDish {
   specs?: TakeoutDishSpec[];
   /** 加料（多选，按份加价）。对标美团「加料」。 */
   addons?: TakeoutDishAddon[];
+  /** 用户在饭票里手动新增的菜。 */
+  userCustom?: boolean;
+  /** 用户手动改过这道菜的名称、价格、规格或其它字段。 */
+  userEdited?: boolean;
+  /** 从“我的菜库”复制进当前店铺的菜品来源锚。 */
+  libraryDishId?: string;
+  /** 最近一次手动保存时间。 */
+  updatedAt?: number;
 }
 export interface TakeoutStore {
   id: string;
@@ -6262,6 +6346,12 @@ export interface TakeoutStore {
   warning?: string;
   /** AI 生成标记（用于「AI 现搓的店」徽标）。 */
   aiGenerated?: boolean;
+  /** 用户手动创建的铺子。 */
+  userCustom?: boolean;
+  /** 用户手动改过这家铺子的资料或菜单。 */
+  userEdited?: boolean;
+  /** 最近一次手动保存时间。 */
+  updatedAt?: number;
 }
 export interface TakeoutOrderItem {
   dishId: string; name: string; price: number; qty: number; emoji?: string;

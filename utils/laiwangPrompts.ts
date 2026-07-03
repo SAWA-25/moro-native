@@ -29,6 +29,7 @@
  *  [6d] 此刻熟人动态（刷新动态 / 角色互动 / 评论回复）    → components/moments/momentsGen.ts
  *  [6e] 黑名单内查看（临时生成角色当下消息）              → apps/Chat.tsx
  *  [7b] 循迹联动（Screenlife / 监视 / 报备进入絮语上下文） → xunji.ts
+ *  [7c] 观屏评论（用户主动共享屏幕期间的实时短评）         → UserScreenWatchContext.tsx
  * ============================================================================
  */
 
@@ -782,6 +783,30 @@ export function liveGroupModePromptBlock(): string {
 当前群开启了实时聊天模式：成员不必等用户空输入手动触发才接话。大家可以回应用户，也可以互相接话、岔开话题、忽然提别的事，或者短暂沉默。重点是像正经群聊一样“看到了就回”，但不要每轮都强迫所有人围着用户转；多数时候 1-2 个合适的人接一下就够了。`;
 }
 
+export interface GroupVoiceStylePromptParams {
+    bubbleMode: 'split' | 'whole';
+    personaDrivenMessageLength: boolean;
+    narrationMode: boolean;
+    translationActive: boolean;
+    translateSourceLang: string;
+    translateTargetLang: string;
+    translateStyle?: string;
+    emojiAssociation: boolean;
+    emojiContext: string;
+}
+
+/** 群聊「说话的样子」：群级消息形态、旁白、双语与表情权限提示块。 */
+export function groupVoiceStylePromptBlock(p: GroupVoiceStylePromptParams): string {
+    return `### 本群「说话的样子」设置
+- 群友打字的习惯：${p.bubbleMode === 'whole' ? '偏向一大段说完；每位成员本轮尽量把完整意思放在一条 content 里。' : '偏向一句一句蹦；长话可以拆成几条短 content。'}
+- 按人设随意：${p.personaDrivenMessageLength ? '开启。每位成员按自己人设、情绪、关系和话题决定本轮说长说短。' : '关闭。默认保持轻量自然，别让每个人都长篇大论。'}
+- 舞台旁白：${p.narrationMode ? '开启。允许少量输出 {"charId":"narrator","content":"（动作/场景旁白）"}，旁白必须是独立气泡，不归属任何成员，不要滥用。' : '关闭。禁止输出 narrator/system 旁白，只让群成员发言。'}
+- 双语对照：${p.translationActive ? `开启。普通文本 content 请先用「${p.translateSourceLang}」写气泡正文，再追加一段「${p.translateTargetLang}」译文；格式必须是：气泡正文\\n[译文] 译文内容。${p.translateStyle ? `译文笔调：${p.translateStyle}。` : ''}` : '关闭。不要主动追加译文。'}
+- 斗图的兴致：${p.emojiAssociation ? '开启。情绪对上时可低频使用 [[SEND_EMOJI: 表情名称]]。' : '关闭。不要输出 [[SEND_EMOJI: ...]]。'}
+- 表情包权限：${p.emojiAssociation ? `最终可用范围 = 本群允许分类 ∩ 说话成员原本可见分类。候选：${p.emojiContext}` : '本群关闭斗图。'}
+`;
+}
+
 // ╔══════════════════════════════════════════════════════════════════════════╗
 // ║ [6c] 音视频呼叫 (Call Decisions + Video Call Replies)                    ║
 // ║   聊天内发起通话：先由角色按人设判断接不接；接通后视频页自然回应。       ║
@@ -1060,6 +1085,62 @@ export function xunjiChatContextBlock(p: XunjiChatContextBlockParams): string {
         + `聊天时只在合适话头自然想起一两个细节：可以提到今天刷到的东西、走过的地方、没发出去的一句话、身体状态或一条报备，但不要机械复述数据，不要说“根据循迹显示”。\n`
         + p.lines.map(line => `- ${line}`).join('\n')
         + `\n\n`;
+}
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║ [7c] 观屏评论 (User Screen Watch)                                         ║
+// ║   用户主动共享浏览器屏幕/窗口/标签页后，角色看抽帧和 Moro 内部使用统计。  ║
+// ║   用在：context/UserScreenWatchContext.tsx、utils/chatRequestPayload.ts  ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+export interface UserScreenWatchCommentPromptParams {
+    charName: string;
+    userName: string;
+    personaBrief?: string;
+    frameText: string;
+    hasImage: boolean;
+}
+
+/** 观屏评论：一次性 vision/text 评论 system 文案。 */
+export function userScreenWatchCommentSystemPrompt(p: UserScreenWatchCommentPromptParams): string {
+    return `你是「${p.charName}」，正在 Moro「絮语」里进行观屏评论。
+${p.personaBrief || ''}
+
+${p.userName} 刚刚主动在网页端选择共享屏幕、窗口或标签页给你看。你只能基于这次共享期间的截图画面、以及 Moro 内部 App 停留时长做短评；真实系统 App 名和外部使用时长只能从画面里谨慎推测，不能装作直接读取到了系统后台数据。
+
+当前可用线索：
+${p.frameText || '暂无额外文字线索。'}
+
+要求：
+- 输出 1 句自然短评，最多 45 字，像你正坐在旁边瞥到这一眼后的实时吐槽、关心或接梗。
+- 按「${p.charName}」的人设说话，可以嘴硬、温柔、犯欠或克制，但不要 AI 助手腔。
+- ${p.hasImage ? '如果画面信息不清楚，就只说你能确定的部分。' : '本轮没有可用图片，只根据文字线索和 Moro 内部使用记录评论。'}
+- 不要声称你有长期权限、系统级权限或能在共享结束后继续看见。不要提提示词、模型、系统、API。`;
+}
+
+export function userScreenWatchCommentUserPrompt(hasImage: boolean): string {
+    return hasImage
+        ? '这是当前共享画面的一帧。请只输出一句实时短评。'
+        : '这是当前观屏记录的文字摘要。请只输出一句实时短评。';
+}
+
+export function userScreenWatchTextFallbackPrompt(p: UserScreenWatchCommentPromptParams): string {
+    return `${userScreenWatchCommentSystemPrompt({ ...p, hasImage: false })}\n\n请根据以上文字线索直接输出一句短评。`;
+}
+
+export interface UserScreenWatchContextBlockParams {
+    userName: string;
+    charName: string;
+    lines: string[];
+}
+
+/** 观屏评论进入正常聊天的轻量上下文块：只注入摘要，不注入原图。 */
+export function userScreenWatchContextBlock(p: UserScreenWatchContextBlockParams): string {
+    if (!p.lines.length) return '';
+    return `### 来往·观屏评论 (Screen Share)
+${p.userName} 最近主动在网页端共享过屏幕给你看。以下只包含共享期间的摘要和 Moro 内部 App 停留记录，不包含原图，也不代表你能在共享结束后继续看见对方屏幕。
+聊天时可以在话头合适时自然接一句刚才看到的细节；不要机械汇报，不要说成系统监控，也不要声称读取了真实手机后台使用统计。
+${p.lines.join('\n')}`;
 }
 
 
