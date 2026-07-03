@@ -132,6 +132,9 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@25.9.0)(terser@5.31.6)
+      wrangler:
+        specifier: ^3.114.17
+        version: 3.114.17
 
   worker/instant-push:
     dependencies:
@@ -2036,8 +2039,8 @@ packages:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
 
-  exsolve@1.0.8:
-    resolution: {integrity: sha512-LmDxfWXwcTArk8fUEnOfSZpHOJ6zOMUJKOtFLFqJLoKJetuQG874Uc7/Kki7zFLzYybmZhp1M7+98pfMqeX8yA==}
+  exsolve@1.1.0:
+    resolution: {integrity: sha512-D+42+T12DdIlJM3uepa55qGiL3sYdLBOxIl2ifQCzCHz4c7eiolaHsi3BIqEr7JxBzxv2pYZQX9kw16ziMcEmw==}
 
   fake-indexeddb@6.2.5:
     resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
@@ -5053,7 +5056,7 @@ snapshots:
 
   expect-type@1.3.0: {}
 
-  exsolve@1.0.8: {}
+  exsolve@1.1.0: {}
 
   fake-indexeddb@6.2.5: {}
 
@@ -5996,7 +5999,7 @@ snapshots:
   unenv@2.0.0-rc.14:
     dependencies:
       defu: 6.1.7
-      exsolve: 1.0.8
+      exsolve: 1.1.0
       ohash: 2.0.11
       pathe: 2.0.3
       ufo: 1.6.4

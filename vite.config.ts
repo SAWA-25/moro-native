@@ -121,6 +121,7 @@ export default defineConfig(({ command, mode }) => {
       rollupOptions: {
         onwarn(warning, defaultHandler) {
           if (warning.message?.includes('dynamic import will not move module into another chunk')) return;
+          if (warning.code === 'EVAL' && warning.id?.includes('pdfjs-dist')) return;
           defaultHandler(warning);
         },
         output: {
