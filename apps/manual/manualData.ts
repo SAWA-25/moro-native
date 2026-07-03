@@ -71,6 +71,17 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-04-native-ios-startup-style-fallback',
+    date: '2026-07-04',
+    title: '安装版启动时不再只看着墙纸发呆啦',
+    kind: 'fix',
+    summary: '修复部分 iPhone 安装后打开只停在蓝白墙纸、锁屏和桌面没继续出现的问题。',
+    items: [
+      '安装包里会提前带好基础界面样式，启动时不用完全等手机现场生成。',
+      '这次只让启动、锁屏和桌面更稳，不会改动你的角色、聊天记录、外观设置或已有界面效果。',
+    ],
+  },
+  {
     id: '2026-07-03-native-install-106-release',
     date: '2026-07-03',
     title: '安装版 1.0.6 已经收拾好啦',
