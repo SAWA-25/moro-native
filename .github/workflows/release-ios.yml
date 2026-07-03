@@ -174,7 +174,7 @@ jobs:
           } >> "${GITHUB_ENV}"
 
       - name: Build unsigned iOS app
-        if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}
+        if: ${{ steps.release_settings.outputs.export_method == 'unsigned' || steps.release_settings.outputs.export_method == 'release-testing' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -200,7 +200,7 @@ jobs:
           echo "APP_PATH=${app_path}" >> "${GITHUB_ENV}"
 
       - name: Archive iOS app
-        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' && steps.release_settings.outputs.export_method != 'release-testing' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -221,7 +221,7 @@ jobs:
           echo "ARCHIVE_PATH=${archive_path}" >> "${GITHUB_ENV}"
 
       - name: Export IPA
-        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' }}
+        if: ${{ steps.release_settings.outputs.export_method != 'unsigned' && steps.release_settings.outputs.export_method != 'release-testing' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -267,6 +267,59 @@ jobs:
 
           mkdir -p release
           cp "${ipa_path}" "release/${IPA_NAME}"
+
+      - name: Sign release-testing IPA
+        if: ${{ steps.release_settings.outputs.export_method == 'release-testing' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          profile_path="${HOME}/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
+          profile_plist="${RUNNER_TEMP}/moro-profile.plist"
+          entitlements="${RUNNER_TEMP}/moro-entitlements.plist"
+          package_root="${RUNNER_TEMP}/signed-ipa"
+          payload_dir="${package_root}/Payload"
+
+          if [[ ! -d "${APP_PATH}" ]]; then
+            echo "::error::APP_PATH does not point to an app bundle: ${APP_PATH}"
+            exit 1
+          fi
+
+          actual_bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${APP_PATH}/Info.plist")"
+          if [[ "${actual_bundle_id}" != "${BUNDLE_ID}" ]]; then
+            echo "::error::Built bundle id ${actual_bundle_id} does not match signing profile bundle id ${BUNDLE_ID}."
+            exit 1
+          fi
+
+          security cms -D -i "${profile_path}" > "${profile_plist}"
+          /usr/libexec/PlistBuddy -x -c 'Print :Entitlements' "${profile_plist}" > "${entitlements}"
+          cp "${profile_path}" "${APP_PATH}/embedded.mobileprovision"
+
+          if [[ -d "${APP_PATH}/Frameworks" ]]; then
+            find "${APP_PATH}/Frameworks" -type d -name '*.framework' -print0 | while IFS= read -r -d '' framework; do
+              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${framework}"
+            done
+            find "${APP_PATH}/Frameworks" -type f -name '*.dylib' -print0 | while IFS= read -r -d '' dylib; do
+              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${dylib}"
+            done
+          fi
+
+          if [[ -d "${APP_PATH}/PlugIns" ]]; then
+            find "${APP_PATH}/PlugIns" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' plugin; do
+              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${plugin}"
+            done
+          fi
+
+          codesign --force --sign "${CODE_SIGN_IDENTITY}" --entitlements "${entitlements}" --timestamp=none "${APP_PATH}"
+          codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
+
+          rm -rf "${package_root}"
+          mkdir -p "${payload_dir}" release
+          cp -R "${APP_PATH}" "${payload_dir}/App.app"
+
+          (
+            cd "${package_root}"
+            zip -qry "${GITHUB_WORKSPACE}/release/${IPA_NAME}" Payload
+          )
 
       - name: Package unsigned IPA
         if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}
