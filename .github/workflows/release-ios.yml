@@ -273,11 +273,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          profile_path="${HOME}/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision"
-          profile_plist="${RUNNER_TEMP}/moro-profile.plist"
-          entitlements="${RUNNER_TEMP}/moro-entitlements.plist"
-          package_root="${RUNNER_TEMP}/signed-ipa"
+          certificate_path="${RUNNER_TEMP}/ios-signing.p12"
+          profile_path="${RUNNER_TEMP}/moro.mobileprovision"
+          package_root="${RUNNER_TEMP}/unsigned-ipa"
           payload_dir="${package_root}/Payload"
+          unsigned_ipa="${RUNNER_TEMP}/Moro-unsigned.ipa"
+          zsign_archive="${RUNNER_TEMP}/zsign-macos-arm64.tar.gz"
+          zsign_dir="${RUNNER_TEMP}/zsign"
 
           if [[ ! -d "${APP_PATH}" ]]; then
             echo "::error::APP_PATH does not point to an app bundle: ${APP_PATH}"
@@ -290,36 +292,31 @@ jobs:
             exit 1
           fi
 
-          security cms -D -i "${profile_path}" > "${profile_plist}"
-          /usr/libexec/PlistBuddy -x -c 'Print :Entitlements' "${profile_plist}" > "${entitlements}"
-          cp "${profile_path}" "${APP_PATH}/embedded.mobileprovision"
-
-          if [[ -d "${APP_PATH}/Frameworks" ]]; then
-            find "${APP_PATH}/Frameworks" -type d -name '*.framework' -print0 | while IFS= read -r -d '' framework; do
-              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${framework}"
-            done
-            find "${APP_PATH}/Frameworks" -type f -name '*.dylib' -print0 | while IFS= read -r -d '' dylib; do
-              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${dylib}"
-            done
-          fi
-
-          if [[ -d "${APP_PATH}/PlugIns" ]]; then
-            find "${APP_PATH}/PlugIns" -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' plugin; do
-              codesign --force --sign "${CODE_SIGN_IDENTITY}" --timestamp=none "${plugin}"
-            done
-          fi
-
-          codesign --force --sign "${CODE_SIGN_IDENTITY}" --entitlements "${entitlements}" --timestamp=none "${APP_PATH}"
-          codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
-
           rm -rf "${package_root}"
-          mkdir -p "${payload_dir}" release
+          mkdir -p "${payload_dir}" release "${zsign_dir}"
           cp -R "${APP_PATH}" "${payload_dir}/App.app"
 
           (
             cd "${package_root}"
-            zip -qry "${GITHUB_WORKSPACE}/release/${IPA_NAME}" Payload
+            zip -qry "${unsigned_ipa}" Payload
           )
+
+          curl -fsSL \
+            -o "${zsign_archive}" \
+            "https://github.com/zhlynn/zsign/releases/download/v1.0.4/zsign-macos-arm64.tar.gz"
+          echo "a4adb52dca395258065d7e738641704eb5e24c174c873b7681c026dfa627974c  ${zsign_archive}" | shasum -a 256 -c -
+          tar -xzf "${zsign_archive}" -C "${zsign_dir}"
+          chmod +x "${zsign_dir}/zsign"
+
+          "${zsign_dir}/zsign" \
+            -k "${certificate_path}" \
+            -p "${IOS_CERTIFICATE_PASSWORD}" \
+            -m "${profile_path}" \
+            -b "${BUNDLE_ID}" \
+            -o "release/${IPA_NAME}" \
+            "${unsigned_ipa}"
+
+          test -s "release/${IPA_NAME}"
 
       - name: Package unsigned IPA
         if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}
