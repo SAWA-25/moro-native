@@ -2,9 +2,9 @@
   "versionCode": 8,
   "versionName": "1.0.7",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
-  "sha256": "5306e1bcf28d1c42805f1c0c4a3cb923dfa6cd662a7424da03416007a5528ac3",
-  "sizeBytes": 273746826,
+  "sha256": "863a4c909dd0e97b3eee3ee491bf857a6f2b78bbf8f78071759fe7ba881f2f62",
+  "sizeBytes": 274003637,
   "releaseNotes": "正式版 1.0.7：\n- 上游的新内容已经装进安装版，共览、幕间集、见闻簿、补丁铺、剪报夹、絮语和音乐等入口都在啦。\n- Android 可以从 1.0.6 直接覆盖升级，右下角的小开发标记在正式版里会乖乖藏好。\n- TA 窥屏、观屏评论、查岗和落脚点这些轻互动继续守好授权边界，需要你点头的地方都会明说。\n- 安装包已经用正式签名重新打好，适合放心更新。",
   "mandatory": false,
-  "publishedAt": "2026-07-04T09:08:00+08:00"
+  "publishedAt": "2026-07-04T12:03:00+08:00"
 }
