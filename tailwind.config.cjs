@@ -62,6 +62,9 @@ module.exports = {
     'font-sans',
     'animate-fade-in',
     'animate-slide-up',
+    { pattern: /^font-(sans|display|label)$/ },
+    { pattern: /^animate-(fade-in|slide-up|slide-down|pop-in|deal-in|float-up|wiggle|bounce-slow|float|glow-pulse|shimmer|dot-pulse|breathe|drift-slow|drift-slower|sway|rise-in|tarot-shine|tarot-glow|tarot-bob|tarot-sheen|tarot-twinkle|tarot-float)$/ },
+    { pattern: /^(bg|text|border|ring|from|to|via)-(primary|primary-focus|primary-light|surface|surface-glass|ink|ink-soft)$/ },
   ],
   theme: {
     extend: {

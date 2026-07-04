@@ -10,8 +10,8 @@ const appInfoState = vi.hoisted(() => ({
   info: {
     id: 'wb.uniusc9734.tool7',
     name: 'Moro',
-    version: '1.0.7.0',
-    build: '8',
+    version: '1.0.7.1',
+    build: '9',
   },
 }));
 
@@ -59,14 +59,14 @@ const latestRelease = {
 };
 
 const iosOnlyRelease = {
-  tag_name: 'ios-1.0.7.1',
-  name: 'Moro iOS 1.0.7.1',
+  tag_name: 'ios-1.0.7.2',
+  name: 'Moro iOS 1.0.7.2',
   body: 'iOS 安装包',
   published_at: '2026-07-05T13:57:57Z',
   assets: [
     {
-      name: 'Moro-ios-1.0.7.1.ipa',
-      browser_download_url: 'https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.1/Moro-ios-1.0.7.1.ipa',
+      name: 'Moro-ios-1.0.7.2.ipa',
+      browser_download_url: 'https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa',
     },
   ],
 };
@@ -81,8 +81,8 @@ describe('app update manifest', () => {
     appInfoState.info = {
       id: 'wb.uniusc9734.tool7',
       name: 'Moro',
-      version: '1.0.7.0',
-      build: '8',
+      version: '1.0.7.1',
+      build: '9',
     };
     vi.unstubAllGlobals();
     vi.clearAllMocks();
@@ -188,9 +188,9 @@ describe('app update manifest', () => {
 
     expect(manifest.platform).toBe('ios');
     expect(manifest.packageType).toBe('ipa');
-    expect(manifest.versionName).toBe('1.0.7.1');
-    expect(manifest.ipaUrl).toBe('https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.1/Moro-ios-1.0.7.1.ipa');
-    expect(manifest.plistUrl).toBe('https://raw.githubusercontent.com/SAWA-25/moro-native/main/release/moro-ios-install.plist');
+    expect(manifest.versionName).toBe('1.0.7.2');
+    expect(manifest.ipaUrl).toBe('https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa');
+    expect(manifest.plistUrl).toBe('https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-ios-install.plist');
     expect(manifest.installUrl).toMatch(/^itms-services:\/\/\?action=download-manifest&url=/);
   });
 
@@ -211,7 +211,7 @@ describe('app update manifest', () => {
 
     expect(result.current.platform).toBe('ios');
     expect(result.latest.platform).toBe('ios');
-    expect(result.latest.versionName).toBe('1.0.7.1');
+    expect(result.latest.versionName).toBe('1.0.7.2');
     expect(result.updateAvailable).toBe(true);
   });
 });

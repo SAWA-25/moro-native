@@ -71,14 +71,28 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-native-cold-start-static-assets',
+    date: '2026-07-05',
+    title: '安装版冷启动少等外部资源了',
+    kind: 'improvement',
+    summary: '安装包打开时会更多使用本地自带的样式和素材，减少网络慢、离线或外部资源不可用时影响首屏的机会。',
+    items: [
+      '首屏样式不再依赖浏览器临时加载 Tailwind 或外部字体，打开安装版时更偏向直接使用包内样式。',
+      '英文标题和手写小标签会在首屏之后再切到包内装饰字体，中文仍使用系统字体，避免启动时加载大字体。',
+      '常用表情小图会随安装包使用本地素材，网络不稳时也更不容易因为表情 CDN 卡住或空白。',
+      '这次只优化启动资源和样式兜底，不会改动已有角色、聊天记录、主题、记忆或 API 设置。',
+    ],
+  },
+  {
     id: '2026-07-05-ios-ipa-settings-update-install-fix',
     date: '2026-07-05',
-    title: 'iPhone 安装版可以从文具盒安装 IPA 更新了',
+    title: 'iPhone 安装版 1.0.7.2 的安装入口对齐了',
     kind: 'fix',
-    summary: '修复 iPhone 安装版在文具盒检查更新后误走 Android APK 下载、无法继续安装新版的问题。',
+    summary: '文具盒、分享安装页和安装清单都会指向同一个 1.0.7.2 iPhone 包，避免看到旧的 1.0.7 链接或误走 Android APK。',
     items: [
       '文具盒会按当前手机平台查找更新：iPhone 只看 iOS / IPA 发布，Android 继续只看 APK 发布。',
       'iPhone 点“安装新版”会打开系统安装确认页，不再下载或跳转到 Android 安装包。',
+      'Safari 分享安装页、安装清单和 IPA 下载备用链接都会指向 iOS 1.0.7.2，和实际安装包版本保持一致。',
       '更新判断会读取 iPhone 安装包自己的版本号，避免网页版本号和 IPA 版本号混在一起导致误判。',
     ],
   },

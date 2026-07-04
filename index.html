@@ -22,7 +22,8 @@
 
     <script>
       (function () {
-        var cdnBase = 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/';
+        var cdnHost = 'cdnjs' + '.cloudflare' + '.com';
+        var cdnBase = 'https://' + cdnHost + '/ajax/libs/twemoji/14.0.2/72x72/';
         var localBase = new URL('%BASE_URL%vendor/twemoji/72x72/', window.location.href).href;
         var toLocalTwemoji = function (value) {
           return typeof value === 'string' && value.indexOf(cdnBase) === 0
@@ -57,153 +58,51 @@
       })();
     </script>
     <script>
-      if (window.tailwind) {
-      window.tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['var(--app-font)', 'sans-serif'],
-              display: ['var(--font-display)', 'serif'],
-              label: ['var(--font-label)', 'monospace'],
-            },
-            colors: {
-              primary: 'hsl(var(--primary-hue), var(--primary-sat), var(--primary-lightness))',
-              'primary-focus': 'hsl(var(--primary-hue), var(--primary-sat), calc(var(--primary-lightness) - 10%))',
-              'primary-light': 'hsl(var(--primary-hue), var(--primary-sat), 92%)',
-              surface: 'rgba(255, 255, 255, 0.75)',
-              'surface-glass': 'rgba(255, 255, 255, 0.35)',
-              ink: '#2b2933',
-              'ink-soft': '#8b8996',
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-              'slide-up': 'slideUp 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
-              'slide-down': 'slideDown 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
-              'pop-in': 'popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-              'deal-in': 'dealIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
-              'float-up': 'floatUp 3s ease-out forwards',
-              'wiggle': 'wiggle 0.5s ease-in-out infinite',
-              'bounce-slow': 'bounceSlow 2s ease-in-out infinite',
-              'float': 'floatDrift 4s ease-in-out infinite alternate',
-              'glow-pulse': 'glowPulse 3s ease-in-out infinite',
-              'shimmer': 'shimmer 2.5s ease-in-out infinite',
-              'dot-pulse': 'dotPulse 1.2s ease-in-out infinite',
-              'breathe': 'breathe 5s ease-in-out infinite',
-              'drift-slow': 'driftSlow 18s ease-in-out infinite alternate',
-              'drift-slower': 'driftSlow 26s ease-in-out infinite alternate-reverse',
-              'sway': 'sway 6s ease-in-out infinite alternate',
-              'rise-in': 'riseIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
-              'tarot-shine': 'tarotShine 1.05s ease-out',
-              'tarot-glow': 'tarotGlow 3.6s ease-in-out infinite',
-              'tarot-bob': 'tarotBob 4.8s ease-in-out infinite',
-              'tarot-sheen': 'tarotSheen 3.2s ease-in-out infinite',
-              'tarot-twinkle': 'tarotTwinkle 2.4s ease-in-out infinite',
-              'tarot-float': 'tarotFloat 5.5s ease-in-out infinite',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'scale(0.97) translateY(4px)' },
-                '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
-              },
-              slideUp: {
-                '0%': { transform: 'translateY(100%)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              },
-              slideDown: {
-                '0%': { transform: 'translateY(-100%)', opacity: '0' },
-                '100%': { transform: 'translateY(0)', opacity: '1' },
-              },
-              popIn: {
-                '0%': { opacity: '0', transform: 'scale(0.5)' },
-                '60%': { transform: 'scale(1.05)' },
-                '100%': { opacity: '1', transform: 'scale(1)' },
-              },
-              dealIn: {
-                '0%': { opacity: '0', transform: 'translateY(46px) scale(0.62) rotate(-9deg)' },
-                '65%': { opacity: '1', transform: 'translateY(-4px) scale(1.04) rotate(2deg)' },
-                '100%': { opacity: '1', transform: 'translateY(0) scale(1) rotate(0)' },
-              },
-              floatUp: {
-                '0%': { opacity: '1', transform: 'translateY(100vh) scale(1)' },
-                '50%': { opacity: '1' },
-                '100%': { opacity: '0', transform: 'translateY(-50px) scale(1.5)' },
-              },
-              wiggle: {
-                '0%, 100%': { transform: 'translate(-50%, -100%) rotate(-3deg)' },
-                '50%': { transform: 'translate(-50%, -100%) rotate(3deg)' },
-              },
-              bounceSlow: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-10px)' },
-              },
-              floatDrift: {
-                '0%': { transform: 'translateY(0) scale(1)', opacity: '0.3' },
-                '100%': { transform: 'translateY(-30px) scale(1.1)', opacity: '0.6' },
-              },
-              glowPulse: {
-                '0%, 100%': { boxShadow: '0 0 15px rgba(139, 92, 246, 0.15)' },
-                '50%': { boxShadow: '0 0 25px rgba(139, 92, 246, 0.3)' },
-              },
-              shimmer: {
-                '0%': { backgroundPosition: '-200% 0' },
-                '100%': { backgroundPosition: '200% 0' },
-              },
-              dotPulse: {
-                '0%, 80%, 100%': { opacity: '0.3', transform: 'scale(0.8)' },
-                '40%': { opacity: '1', transform: 'scale(1.1)' },
-              },
-              breathe: {
-                '0%, 100%': { transform: 'scale(1)', opacity: '0.55' },
-                '50%': { transform: 'scale(1.06)', opacity: '0.85' },
-              },
-              driftSlow: {
-                '0%': { transform: 'translate(0, 0) scale(1)' },
-                '100%': { transform: 'translate(28px, -22px) scale(1.12)' },
-              },
-              sway: {
-                '0%': { transform: 'rotate(-2.2deg)' },
-                '100%': { transform: 'rotate(2.2deg)' },
-              },
-              riseIn: {
-                '0%': { opacity: '0', transform: 'translateY(14px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              tarotShine: {
-                '0%': { transform: 'translateX(-130%) skewX(-12deg)', opacity: '0' },
-                '12%': { opacity: '0.85' },
-                '60%, 100%': { transform: 'translateX(230%) skewX(-12deg)', opacity: '0' },
-              },
-              tarotGlow: {
-                '0%, 100%': { opacity: '0.3', transform: 'scale(0.94)' },
-                '50%': { opacity: '0.68', transform: 'scale(1.05)' },
-              },
-              tarotBob: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-5px)' },
-              },
-              // 抽牌·正中聚焦那张：一道高光循环扫过，强化「这张在发光」的实体占卜质感（仿 Quin）
-              tarotSheen: {
-                '0%': { transform: 'translateX(-130%) skewX(-14deg)', opacity: '0' },
-                '18%': { opacity: '0.55' },
-                '50%, 100%': { transform: 'translateX(240%) skewX(-14deg)', opacity: '0' },
-              },
-              // 洗牌花上的星芒：缓慢明灭 + 轻微缩放，让牌堆看起来在呼吸
-              tarotTwinkle: {
-                '0%, 100%': { opacity: '0.15', transform: 'scale(0.7)' },
-                '50%': { opacity: '0.9', transform: 'scale(1.15)' },
-              },
-              // 聚焦牌的轻盈上下浮动（比 tarotBob 幅度大些，单张用）
-              tarotFloat: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-8px)' },
-              },
+      (function () {
+        var enableLocalFonts = function () {
+          document.documentElement.classList.add('moro-local-fonts-ready');
+        };
+        var scheduleLocalFonts = function () {
+          window.setTimeout(function () {
+            if ('requestIdleCallback' in window) {
+              window.requestIdleCallback(enableLocalFonts, { timeout: 1600 });
+              return;
             }
-          }
+            enableLocalFonts();
+          }, 2800);
+        };
+        if (document.readyState === 'complete') {
+          scheduleLocalFonts();
+        } else {
+          window.addEventListener('load', scheduleLocalFonts, { once: true });
         }
-      };
-      }
+      })();
     </script>
     <style>
+      @font-face {
+        font-family: 'Moro Local Hand';
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url('./fonts/moro/caveat-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+      }
+      @font-face {
+        font-family: 'Moro Local Display';
+        font-style: normal;
+        font-weight: 400 900;
+        font-display: swap;
+        src: url('./fonts/moro/playfair-display-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+      }
+      @font-face {
+        font-family: 'Moro Local Display';
+        font-style: italic;
+        font-weight: 400 900;
+        font-display: swap;
+        src: url('./fonts/moro/playfair-display-italic-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+      }
       :root {
         --primary-hue: 248;
         --primary-sat: 16%;
@@ -232,6 +131,10 @@
         --glass-bg: rgba(255, 255, 255, 0.88);
         --glass-border: rgba(236, 233, 226, 0.9);
         --glass-shadow: 0 16px 36px -20px rgba(50, 48, 60, 0.22);
+      }
+      html.moro-local-fonts-ready {
+        --font-display: 'Moro Local Display', Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC', serif;
+        --font-hand: 'Moro Local Hand', 'Kaiti SC', STKaiti, 'KaiTi', cursive;
       }
       @supports (padding: constant(safe-area-inset-top)) {
         :root {
@@ -505,6 +408,15 @@
       html.moro-native-app .moro-native-shell .scrap-list > .scrap-card,
       html.moro-native-app .moro-native-shell .stationery-grid > .stationery-strip {
         rotate: 0deg !important;
+      }
+      .font-sans {
+        font-family: var(--app-font);
+      }
+      .font-display {
+        font-family: var(--font-display);
+      }
+      .font-label {
+        font-family: var(--font-label);
       }
       /* 手写体小标签（桌面组件英文标注） */
       .font-hand {

@@ -6,7 +6,7 @@ const GITHUB_RELEASE_MANIFEST_ASSET = 'moro-update.json';
 const IOS_INSTALL_PLIST_ASSET = 'moro-ios-install.plist';
 const DEFAULT_RELEASE_OWNER = 'SAWA-25';
 const DEFAULT_RELEASE_REPO = 'moro-native';
-const DEFAULT_RELEASE_BRANCH = 'main';
+const DEFAULT_RELEASE_BRANCH = 'native-main';
 const DEFAULT_GITHUB_PROXY_URL = 'https://sullymeow.ccwu.cc/github?url=';
 const GITHUB_RELEASES_PAGE_SIZE = 20;
 

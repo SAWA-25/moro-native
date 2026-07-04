@@ -2,11 +2,57 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
 import { execSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { bakeVoiceMiddleware } from './server/bake-voice-middleware';
 import worker from './worker/index.js';
 
-const RELEASE_BRANCHES = new Set(['main', 'master']);
+const RELEASE_BRANCHES = new Set(['main', 'master', 'native-main']);
+const TWEMOJI_CDN_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72';
+const LOCAL_TWEMOJI_BASE = './vendor/twemoji/72x72';
+const LOCAL_NATIVE_FONT_FILES = [
+  'fonts/moro/caveat-latin.woff2',
+  'fonts/moro/playfair-display-latin.woff2',
+  'fonts/moro/playfair-display-italic-latin.woff2',
+];
+
+function assertNativeStaticResources(outDir: string) {
+  const htmlPath = `${outDir}/index.html`;
+  if (!existsSync(htmlPath)) {
+    throw new Error(`[native-static] Missing ${htmlPath}; cannot verify packaged resources.`);
+  }
+
+  const html = readFileSync(htmlPath, 'utf8');
+  const externalResourceTags = html.match(/<(?:script|link)\b[^>]+\b(?:src|href)=["']https?:\/\/[^"']+["'][^>]*>/gi) || [];
+  const blockedInlineChecks = [
+    {
+      label: 'browser Tailwind runtime',
+      pattern: /(?:window\.tailwind|tailwind\.config|cdn\.tailwindcss\.com|vendor\/tailwindcss\.js)/i,
+    },
+    {
+      label: 'Google font or analytics bootstrap',
+      pattern: /(?:fonts\.googleapis\.com|fonts\.gstatic\.com|gtag\(|googletagmanager\.com|google-analytics\.com)/i,
+    },
+  ];
+  const failures = [
+    ...externalResourceTags.map(tag => `external script/link tag: ${tag.slice(0, 180)}`),
+    ...blockedInlineChecks
+      .filter(check => check.pattern.test(html))
+      .map(check => `blocked inline resource hint: ${check.label}`),
+  ];
+
+  if (existsSync(`${outDir}/vendor/tailwindcss.js`)) {
+    failures.push('stale Tailwind browser runtime: vendor/tailwindcss.js');
+  }
+  for (const fontFile of LOCAL_NATIVE_FONT_FILES) {
+    if (!existsSync(`${outDir}/${fontFile}`)) {
+      failures.push(`missing local decorative font: ${fontFile}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`[native-static] Native build still contains network-bound startup resources:\n- ${failures.join('\n- ')}`);
+  }
+}
 
 function readBranch(): string {
   if (process.env.GITHUB_REF_NAME) return process.env.GITHUB_REF_NAME;
@@ -51,9 +97,17 @@ export default defineConfig(({ command, mode }) => {
       : []),
     {
       name: 'moro-native-prune-browser-runtime',
+      generateBundle(_, bundle) {
+        if (buildTarget !== 'native') return;
+        for (const item of Object.values(bundle)) {
+          if (item.type !== 'chunk') continue;
+          item.code = item.code.split(TWEMOJI_CDN_BASE).join(LOCAL_TWEMOJI_BASE);
+        }
+      },
       closeBundle() {
         if (buildTarget !== 'native') return;
         rmSync('dist-native/vendor/tailwindcss.js', { force: true });
+        assertNativeStaticResources('dist-native');
       },
     },
     {

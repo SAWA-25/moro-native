@@ -13,6 +13,7 @@ Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普�
 ```dotenv
 VITE_MORO_RELEASE_OWNER=SAWA-25
 VITE_MORO_RELEASE_REPO=moro-native
+VITE_MORO_RELEASE_BRANCH=native-main
 ```
 
 也可以直接指定完整的 GitHub Release API 地址，适合走自己的代理或镜像。指定完整地址后 App 会按这个地址返回的 release 读取，不再自动跳过 iOS-only release：
@@ -38,6 +39,7 @@ PowerShell 临时打包示例：
 ```powershell
 $env:VITE_MORO_RELEASE_OWNER="SAWA-25"
 $env:VITE_MORO_RELEASE_REPO="moro-native"
+$env:VITE_MORO_RELEASE_BRANCH="native-main"
 pnpm build
 pnpm cap:sync
 ```
@@ -83,7 +85,7 @@ iPhone 安装版会按 iOS 平台单独查找 GitHub Releases：优先选择最�
 
 `moro-ios-install.plist` 里的 `software-package` URL 必须指向同一版 IPA，`bundle-identifier` 要和 Xcode 工程里的 Bundle ID 一致。当前默认 Bundle ID 是 `wb.uniusc9734.tool7`。
 
-如果 release 里暂时没有 plist，App 会退回读取仓库里的 `release/moro-ios-install.plist`。这能兜住现有发布，但正式发包仍建议把 plist 作为 release asset 一起上传，避免 main 分支 plist 和旧 release 版本不一致。
+如果 release 里暂时没有 plist，App 会退回读取 `native-main` 分支里的 `release/moro-ios-install.plist`。这能兜住现有发布，但正式发包仍建议把 plist 作为 release asset 一起上传，避免分支里的 plist 和旧 release 版本不一致。
 
 也可以在打包前显式指定 iOS 安装清单或完整安装链接：
 
@@ -106,7 +108,7 @@ VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A
     "buildNumber": 10,
     "bundleId": "wb.uniusc9734.tool7",
     "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa",
-    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/moro-ios-install.plist",
+    "plistUrl": "https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-ios-install.plist",
     "releaseNotes": "修复 iPhone 安装版稳定性"
   }
 }

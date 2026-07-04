@@ -8,17 +8,17 @@ on:
         required: false
         type: string
       bundle_id:
-        description: Fixed iOS bundle identifier for the verified 1.0.6 signing route.
+        description: Fixed iOS bundle identifier for the verified signing route.
         required: false
         default: wb.uniusc9734.tool7
         type: string
       export_method:
-        description: Fixed Xcode export method for the verified 1.0.6 signing route. Use release-ios-unsigned.yml for unsigned builds.
+        description: Fixed Xcode export method for the verified signing route. Use release-ios-unsigned.yml for unsigned builds.
         required: false
         default: release-testing
         type: string
       code_sign_identity:
-        description: Fixed code signing identity for the verified 1.0.6 signing route.
+        description: Fixed code signing identity for the verified signing route.
         required: false
         default: Apple Distribution
         type: string

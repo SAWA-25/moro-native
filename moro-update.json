@@ -13,7 +13,7 @@
     "buildNumber": 10,
     "bundleId": "wb.uniusc9734.tool7",
     "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa?bundle=wb.uniusc9734.tool7&v=1072",
-    "plistUrl": "https://raw.githubusercontent.com/SAWA-25/moro-native/main/release/moro-ios-install.plist",
+    "plistUrl": "https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-ios-install.plist",
     "releaseNotes": "修复 iPhone 安装版启动稳定性，并让文具盒可以打开 IPA 安装确认页。"
   }
 }
