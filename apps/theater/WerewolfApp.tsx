@@ -700,7 +700,7 @@ const WerewolfApp: React.FC<Props> = ({ onExit }) => {
                 {seatsStrip(g)}
                 {myHand(g)}
                 {logFeed(g)}
-                <div className="relative z-10 shrink-0 px-3 py-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)', borderTop: '1px dashed rgba(150,144,132,0.5)' }}>
+                <div className="relative z-10 shrink-0 px-3 py-3" style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 12px)', borderTop: '1px dashed rgba(150,144,132,0.5)' }}>
                     {actionPanel(g)}
                 </div>
             </PaperShell>

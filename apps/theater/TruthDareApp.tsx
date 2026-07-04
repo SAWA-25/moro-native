@@ -348,7 +348,7 @@ const TruthDareApp: React.FC<Props> = ({ onExit }) => {
                     right={<WashiTape color="ink" rotate={-3} className="px-2 py-0.5 rounded-[3px] text-[9px] tracking-[0.2em]" style={{ fontFamily: 'var(--font-label)' }}>🍾 SPIN</WashiTape>} />
                 {circle(s)}
                 {feed(s)}
-                <div className="relative z-10 shrink-0 px-3 py-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)', borderTop: '1px dashed rgba(150,144,132,0.5)' }}>
+                <div className="relative z-10 shrink-0 px-3 py-3" style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 12px)', borderTop: '1px dashed rgba(150,144,132,0.5)' }}>
                     {actionPanel(s)}
                 </div>
             </PaperShell>

@@ -336,7 +336,7 @@ const TalkTherapyApp: React.FC<Props> = ({ onExit }) => {
                     </div>
                 )}
 
-                <div className="relative z-10 shrink-0 px-3 py-3 flex items-end gap-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
+                <div className="relative z-10 shrink-0 px-3 py-3 flex items-end gap-2" style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 12px)' }}>
                     <textarea
                         value={input}
                         onChange={e => setInput(e.target.value)}

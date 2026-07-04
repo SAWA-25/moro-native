@@ -21,6 +21,13 @@ const DRAG_THRESHOLD = 4; // 像素：超过这个位移算拖动，不触发点
 
 type Pos = { x: number; y: number } | null;
 
+const readRootPxVar = (name: string): number => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 0;
+  const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+  const value = parseFloat(raw);
+  return Number.isFinite(value) ? value : 0;
+};
+
 const readPos = (): Pos => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -122,8 +129,11 @@ const GlobalMiniPlayer: React.FC = () => {
     if (!ds.moved && Math.abs(dy) > DRAG_THRESHOLD) ds.moved = true;
     if (!ds.moved) return;
     let nextBottom = ds.startBottom - dy;
-    const maxBottom = Math.max(0, ds.parentH - ds.selfH - EDGE_PAD);
-    nextBottom = Math.max(EDGE_PAD, Math.min(maxBottom, nextBottom));
+    const safeTop = readRootPxVar('--safe-top');
+    const safeBottom = readRootPxVar('--safe-bottom');
+    const minBottom = EDGE_PAD + safeBottom;
+    const maxBottom = Math.max(minBottom, ds.parentH - ds.selfH - EDGE_PAD - safeTop);
+    nextBottom = Math.max(minBottom, Math.min(maxBottom, nextBottom));
     setExpandedBottom(nextBottom);
   }, []);
 
@@ -194,8 +204,12 @@ const GlobalMiniPlayer: React.FC = () => {
     const parentRect = parent.getBoundingClientRect();
     let x = e.clientX - parentRect.left - ds.offX;
     let y = e.clientY - parentRect.top - ds.offY;
-    x = Math.max(EDGE_PAD, Math.min(ds.parentW - BUBBLE_SIZE - EDGE_PAD, x));
-    y = Math.max(EDGE_PAD, Math.min(ds.parentH - BUBBLE_SIZE - EDGE_PAD, y));
+    const safeTop = readRootPxVar('--safe-top');
+    const safeRight = readRootPxVar('--safe-right');
+    const safeBottom = readRootPxVar('--safe-bottom');
+    const safeLeft = readRootPxVar('--safe-left');
+    x = Math.max(EDGE_PAD + safeLeft, Math.min(ds.parentW - BUBBLE_SIZE - EDGE_PAD - safeRight, x));
+    y = Math.max(EDGE_PAD + safeTop, Math.min(ds.parentH - BUBBLE_SIZE - EDGE_PAD - safeBottom, y));
     setPos({ x, y });
   }, []);
 
@@ -225,7 +239,7 @@ const GlobalMiniPlayer: React.FC = () => {
   if (!expanded) {
     const positional: React.CSSProperties = pos
       ? { left: pos.x, top: pos.y }
-      : { right: 12, bottom: 12 };
+      : { right: 'calc(var(--safe-right, 0px) + 12px)', bottom: 'calc(var(--safe-bottom, 0px) + 12px)' };
     return (
       <div
         ref={wrapRef}
@@ -280,7 +294,7 @@ const GlobalMiniPlayer: React.FC = () => {
     <div
       ref={expandedRef}
       className="absolute left-3 right-3 z-[55] pointer-events-none"
-      style={{ bottom: expandedBottom != null ? expandedBottom : 12 }}
+      style={{ bottom: expandedBottom != null ? expandedBottom : 'calc(var(--safe-bottom, 0px) + 12px)' }}
     >
       <div
         className="pointer-events-auto flex items-center gap-2.5 rounded-2xl pl-1.5 pr-2.5 py-2 relative overflow-hidden animate-fade-in"

@@ -687,7 +687,7 @@ Style: intimate, casual, in character. Do not say you are an AI. Do not merely d
                 </div>
             </div>
 
-            <div className="shrink-0 w-full z-40" style={{ background: '#fff', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingBottom: 'max(env(safe-area-inset-bottom), 12px)', boxShadow: '0 -18px 40px -22px rgba(0,0,0,0.6)' }}>
+            <div className="shrink-0 w-full z-40" style={{ background: '#fff', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingBottom: 'max(var(--safe-bottom, 0px), 12px)', boxShadow: '0 -18px 40px -22px rgba(0,0,0,0.6)' }}>
                 <div className="p-5 animate-slide-up">
                     <div className="flex items-start gap-3">
                         <StoryRing src={activeChar?.avatar} size={42} active fallback={activeChar?.name?.charAt(0)} />

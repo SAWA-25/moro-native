@@ -281,7 +281,7 @@ const EncounterChat: React.FC<{
                 {isReplying && <div className="flex items-center gap-1.5 pl-9 font-hand animate-pulse" style={{ fontSize: 12, color: '#a79c8e' }}><span>对方正在回复</span><span className="tracking-widest">···</span></div>}
                 <div ref={endRef} />
             </div>
-            <div className="shrink-0 p-2.5 flex items-center gap-2" style={{ borderTop: '1px dashed rgba(167,162,151,0.5)', background: 'rgba(251,250,247,0.85)', paddingBottom: 'max(10px, env(safe-area-inset-bottom, 10px))' }}>
+            <div className="shrink-0 p-2.5 flex items-center gap-2" style={{ borderTop: '1px dashed rgba(167,162,151,0.5)', background: 'rgba(251,250,247,0.85)', paddingBottom: 'max(10px, var(--safe-bottom, 0px))' }}>
                 <input
                     value={draft} onChange={e => setDraft(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') submit(); }}

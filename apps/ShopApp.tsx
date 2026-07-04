@@ -1107,7 +1107,7 @@ const ShopApp: React.FC = () => {
             })()}
 
             {/* 底部导航栏（纸面贴纸条） */}
-            <div className="relative z-10 shrink-0 flex items-stretch" style={{ borderTop: '1px dashed rgba(150,144,132,0.6)', background: 'rgba(251,249,242,0.95)', paddingBottom: 'env(safe-area-inset-bottom,0px)' }}>
+            <div className="relative z-10 shrink-0 flex items-stretch" style={{ borderTop: '1px dashed rgba(150,144,132,0.6)', background: 'rgba(251,249,242,0.95)', paddingBottom: 'var(--safe-bottom, 0px)' }}>
                 {navItems.map(n => {
                     const active = tab === n.id && !sub;
                     const badge = n.id === 'cart' && cartNum > 0 ? cartNum : 0;
@@ -1787,7 +1787,7 @@ const ProductDetail: React.FC<{
                     )}
                 </div>
             </div>
-            <div className="relative z-10 shrink-0 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+10px)] pt-2.5 flex items-center gap-2" style={{ borderTop: '1px dashed rgba(150,144,132,0.6)', background: 'rgba(246,243,236,0.92)' }}>
+            <div className="relative z-10 shrink-0 px-4 pb-[calc(var(--safe-bottom,0px)+10px)] pt-2.5 flex items-center gap-2" style={{ borderTop: '1px dashed rgba(150,144,132,0.6)', background: 'rgba(246,243,236,0.92)' }}>
                 <button onClick={() => onToggleFav(item.id)} className="flex flex-col items-center justify-center px-1 shrink-0 w-11" style={{ color: INK }}>
                     <Heart size={20} weight={faved ? 'fill' : 'bold'} />
                     <span className="text-[8px] mt-0.5">{faved ? '已收' : '收藏'}</span>

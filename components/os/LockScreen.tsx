@@ -250,7 +250,7 @@ const LockScreen: React.FC = () => {
             <div
                 className="moro-lock-clock absolute top-[5.5rem] w-full flex flex-col items-center pointer-events-none px-8"
                 style={{
-                    top: `${clockTop}%`,
+                    top: `max(${clockTop}%, calc(var(--safe-top, 0px) + 1rem))`,
                     transform: `scale(${clockScale})`,
                     transformOrigin: 'top center',
                 }}
@@ -272,7 +272,15 @@ const LockScreen: React.FC = () => {
 
             {/* 角色偷看手机试错解锁的提醒横幅（锁手机·双向试错的用户提醒侧） */}
             {charReminders.length > 0 && (
-                <div className="absolute top-[26%] left-3 right-3 z-10" onClick={e => e.stopPropagation()}>
+                <div
+                    className="absolute z-10"
+                    style={{
+                        top: 'max(26%, calc(var(--safe-top, 0px) + 7.5rem))',
+                        left: 'calc(var(--safe-left, 0px) + 0.75rem)',
+                        right: 'calc(var(--safe-right, 0px) + 0.75rem)',
+                    }}
+                    onClick={e => e.stopPropagation()}
+                >
                     <div className={`moro-lock-notif ${notifCardClass} p-3.5 flex items-start gap-3`} style={{ animation: `lockNotifIn 420ms cubic-bezier(0.2,0.9,0.3,1.2) both` }}>
                         <span className="shrink-0 text-[18px] leading-none mt-0.5">🔓</span>
                         <div className="min-w-0 flex-1">
@@ -291,7 +299,15 @@ const LockScreen: React.FC = () => {
             {/* 消息通知（仿 iPhone 锁屏）：每条消息气泡一张卡片竖向排列，新消息在上；
                 排不下（超过 MAX_FULL_CARDS）时其余通知折叠成覆盖在最新一批下方的堆叠 */}
             {showNotifications && notifications.length > 0 && (
-                <div className="absolute top-[34%] left-3 right-3 space-y-2 max-h-[44%] overflow-y-auto no-scrollbar pb-4">
+                <div
+                    className="absolute space-y-2 overflow-y-auto no-scrollbar pb-4"
+                    style={{
+                        top: 'max(34%, calc(var(--safe-top, 0px) + 10rem))',
+                        left: 'calc(var(--safe-left, 0px) + 0.75rem)',
+                        right: 'calc(var(--safe-right, 0px) + 0.75rem)',
+                        maxHeight: 'calc(100% - max(34%, calc(var(--safe-top, 0px) + 10rem)) - var(--safe-bottom, 0px) - 7rem)',
+                    }}
+                >
                     {notifications.slice(0, MAX_FULL_CARDS).map((n, i) => (
                         <div
                             key={n.key}
@@ -333,7 +349,10 @@ const LockScreen: React.FC = () => {
 
             {/* 底部解锁手柄：上跳雪佛龙 + 中文提示 + 玻璃 home 条 */}
             {!showPad && (
-                <div className="absolute bottom-11 w-full flex flex-col items-center gap-2.5 drop-shadow-md pointer-events-none">
+                <div
+                    className="absolute w-full flex flex-col items-center gap-2.5 drop-shadow-md pointer-events-none"
+                    style={{ bottom: 'calc(var(--safe-bottom, 0px) + 2.75rem)' }}
+                >
                     <div style={{ animation: 'lockSwipeBob 1.8s ease-in-out infinite' }}>
                         <svg width="22" height="13" viewBox="0 0 22 13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10 L11 3 L20 10" /></svg>
                     </div>
@@ -347,8 +366,14 @@ const LockScreen: React.FC = () => {
             {/* 密码键盘 */}
             {showPad && (
                 <div
-                    className="moro-lock-passcode absolute inset-0 z-20 flex flex-col items-center justify-end pb-10 animate-fade-in"
-                    style={passcodeTheme.overlay}
+                    className="moro-lock-passcode absolute inset-0 z-20 flex flex-col items-center justify-end animate-fade-in"
+                    style={{
+                        ...passcodeTheme.overlay,
+                        paddingTop: 'var(--safe-top, 0px)',
+                        paddingBottom: 'calc(var(--safe-bottom, 0px) + 2.5rem)',
+                        paddingLeft: 'var(--safe-left, 0px)',
+                        paddingRight: 'var(--safe-right, 0px)',
+                    }}
                     onClick={(e) => { e.stopPropagation(); setShowPad(false); }}
                 >
                     <div className="w-full max-w-[300px] px-4" onClick={e => e.stopPropagation()}>

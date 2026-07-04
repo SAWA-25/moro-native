@@ -69,7 +69,7 @@ const BuildBadge: React.FC = () => {
             className="fixed pointer-events-none select-none"
             style={{
                 bottom: 'calc(var(--safe-bottom) + 4px)',
-                right: 'calc(env(safe-area-inset-right, 0px) + 6px)',
+                right: 'calc(var(--safe-right, 0px) + 6px)',
                 zIndex: 2147483647,
                 touchAction: 'none',
             }}

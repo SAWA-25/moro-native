@@ -217,11 +217,13 @@
         --primary-hue: 248;
         --primary-sat: 16%;
         --primary-lightness: 36%;
-        /* 安全区单一来源：原生 env 与 JS 探测值 --standalone-safe-area-*（见 utils/iosStandalone.ts）取大，
-           iOS 全屏 PWA 下原生 env 偶发返回 0 时由探测值兜底。新增 App 一律引用这三个变量。 */
+        /* 安全区单一来源：原生 env 与 JS 探测值 --standalone-safe-area-*（见 utils/iosStandalone.ts / nativeRuntime.ts）取大，
+           iOS 全屏 PWA / Capacitor WebView 下原生 env 偶发返回 0 时由探测值兜底。新增 App 一律引用这组变量。 */
         --safe-top: max(env(safe-area-inset-top, 0px), var(--standalone-safe-area-top, 0px));
+        --safe-right: max(env(safe-area-inset-right, 0px), var(--standalone-safe-area-right, 0px));
         --cutout-top: max(var(--safe-top), 10px);
         --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--standalone-safe-area-bottom, 0px));
+        --safe-left: max(env(safe-area-inset-left, 0px), var(--standalone-safe-area-left, 0px));
         /* 全屏界面顶栏让开「安全区 + Moro 顶部状态栏(时间/电量, 约 1.5rem)」；背景仍铺满，只挪控件。 */
         --chrome-top: calc(var(--cutout-top) + 1.5rem);
         --app-height: 100lvh;
@@ -239,6 +241,14 @@
         --glass-bg: rgba(255, 255, 255, 0.88);
         --glass-border: rgba(236, 233, 226, 0.9);
         --glass-shadow: 0 16px 36px -20px rgba(50, 48, 60, 0.22);
+      }
+      @supports (padding: constant(safe-area-inset-top)) {
+        :root {
+          --safe-top: max(constant(safe-area-inset-top), var(--standalone-safe-area-top, 0px));
+          --safe-right: max(constant(safe-area-inset-right), var(--standalone-safe-area-right, 0px));
+          --safe-bottom: max(constant(safe-area-inset-bottom), var(--standalone-safe-area-bottom, 0px));
+          --safe-left: max(constant(safe-area-inset-left), var(--standalone-safe-area-left, 0px));
+        }
       }
       html, body, #root {
         width: 100%;
@@ -292,10 +302,8 @@
         overscroll-behavior: none;
       }
       html.moro-native-app {
-        --safe-top: 0px;
-        --cutout-top: 8px;
-        --safe-bottom: 0px;
-        --chrome-top: 1.35rem;
+        --cutout-top: max(var(--safe-top), 8px);
+        --chrome-top: calc(var(--cutout-top) + 1.35rem);
         background-color: #f4f2ed;
         color-scheme: light;
       }
@@ -411,8 +419,31 @@
         outline: none;
       }
       /* Utility for Safe Area —— 统一引用单一来源变量 */
+      .pt-safe {
+        padding-top: var(--safe-top);
+      }
       .pb-safe {
         padding-bottom: var(--safe-bottom);
+      }
+      .pl-safe {
+        padding-left: var(--safe-left);
+      }
+      .pr-safe {
+        padding-right: var(--safe-right);
+      }
+      .px-safe {
+        padding-left: var(--safe-left);
+        padding-right: var(--safe-right);
+      }
+      .py-safe {
+        padding-top: var(--safe-top);
+        padding-bottom: var(--safe-bottom);
+      }
+      .safe-fixed-inset {
+        top: var(--safe-top);
+        right: var(--safe-right);
+        bottom: var(--safe-bottom);
+        left: var(--safe-left);
       }
       /* ===== 默认全局美化：纸感毛玻璃设计系统 =====
          .glass-card / .glass-pill 是全局通用的毛玻璃表面；各 App 直接套用以保持一致观感。 */
@@ -1646,12 +1677,12 @@
       html.moro-native-app .moro-native-shell .moro-desktop-root {
         --moro-desktop-page-x: 1rem;
         --moro-desktop-page-top: calc(var(--chrome-top) + 1.45rem);
-        --moro-desktop-page-bottom: 5.55rem;
+        --moro-desktop-page-bottom: calc(var(--safe-bottom) + 5.55rem);
         --moro-desktop-grid-gap-x: 0.72rem;
         --moro-desktop-grid-gap-y: 0.68rem;
         --moro-desktop-icon-size: 3.25rem;
         --moro-desktop-label-size: 8px;
-        --moro-launcher-bottom-inset: 0.95rem;
+        --moro-launcher-bottom-inset: calc(var(--safe-bottom) + 0.95rem);
         --moro-dock-icon-size: 3.25rem;
         --moro-dock-gap: 1.25rem;
         --moro-dock-pad-x: 1.35rem;
@@ -1727,7 +1758,7 @@
       @media (max-height: 760px) {
         html.moro-native-app .moro-native-shell .moro-desktop-root {
           --moro-desktop-page-top: calc(var(--chrome-top) + 1.15rem);
-          --moro-desktop-page-bottom: 5.2rem;
+          --moro-desktop-page-bottom: calc(var(--safe-bottom) + 5.2rem);
           --moro-desktop-grid-gap-y: 0.5rem;
         }
       }
@@ -1735,12 +1766,12 @@
         html.moro-native-app .moro-native-shell .moro-desktop-root {
           --moro-desktop-page-x: 0.82rem;
           --moro-desktop-page-top: calc(var(--chrome-top) + 1rem);
-          --moro-desktop-page-bottom: 4.95rem;
+          --moro-desktop-page-bottom: calc(var(--safe-bottom) + 4.95rem);
           --moro-desktop-grid-gap-x: 0.54rem;
           --moro-desktop-grid-gap-y: 0.46rem;
           --moro-desktop-icon-size: 3rem;
           --moro-desktop-label-size: 7.5px;
-          --moro-launcher-bottom-inset: 0.78rem;
+          --moro-launcher-bottom-inset: calc(var(--safe-bottom) + 0.78rem);
           --moro-dock-icon-size: 3rem;
           --moro-dock-gap: 1rem;
           --moro-dock-pad-x: 1rem;

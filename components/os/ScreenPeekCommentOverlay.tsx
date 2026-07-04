@@ -28,12 +28,27 @@ const PANEL_H = 186;
 
 const appNameFor = (id: AppID) => INSTALLED_APPS.find(app => app.id === id)?.name || id;
 
+const readRootPxVar = (name: string): number => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 0;
+  const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+  const value = parseFloat(raw);
+  return Number.isFinite(value) ? value : 0;
+};
+
 const clampPos = (pos: { x: number; y: number }) => {
   const w = typeof window === 'undefined' ? 390 : window.innerWidth;
   const h = typeof window === 'undefined' ? 844 : window.innerHeight;
+  const safeTop = readRootPxVar('--safe-top');
+  const safeRight = readRootPxVar('--safe-right');
+  const safeBottom = readRootPxVar('--safe-bottom');
+  const safeLeft = readRootPxVar('--safe-left');
+  const minX = 8 + safeLeft;
+  const maxX = Math.max(minX, w - 72 - safeRight);
+  const minY = Math.max(56, 8 + safeTop);
+  const maxY = Math.max(minY, h - 74 - safeBottom);
   return {
-    x: Math.max(8, Math.min(w - 72, Number.isFinite(pos.x) ? pos.x : w - PANEL_W - 16)),
-    y: Math.max(56, Math.min(h - 74, Number.isFinite(pos.y) ? pos.y : h - PANEL_H - 120)),
+    x: Math.max(minX, Math.min(maxX, Number.isFinite(pos.x) ? pos.x : w - PANEL_W - 16 - safeRight)),
+    y: Math.max(minY, Math.min(maxY, Number.isFinite(pos.y) ? pos.y : h - PANEL_H - 120 - safeBottom)),
   };
 };
 

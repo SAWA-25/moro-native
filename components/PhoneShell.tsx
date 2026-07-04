@@ -157,7 +157,7 @@ import { App as CapApp } from '@capacitor/app';
 import { StatusBar as CapStatusBar, Style as StatusBarStyle } from '@capacitor/status-bar';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { isIOSStandaloneWebApp } from '../utils/iosStandalone';
-import { isNativeAppRuntime } from '../utils/nativeRuntime';
+import { isNativeAppRuntime, isNativeIOSRuntime } from '../utils/nativeRuntime';
 import AppErrorBoundary from './os/AppErrorBoundary';
 import LockScreen from './os/LockScreen';
 import IncomingCallOverlay from './os/IncomingCallOverlay';
@@ -599,6 +599,7 @@ const PhoneShell: React.FC = () => {
   const { theme, isLocked, activeApp, closeApp, openApp, isDataLoaded, toasts, handleBack, suspendedCall, resumeCall, suspendedVideoCall, resumeVideoCall, suspendedOfflineSession, resumeOfflineSession, activeCharacterId, errorDialog, dismissError, forceReplyRequest, openForceReplyRequest } = useOS();
   const useIOSStandaloneLayout = isIOSStandaloneWebApp();
   const nativeRuntime = isNativeAppRuntime();
+  const nativeIOSRuntime = isNativeIOSRuntime();
   const previousLockedRef = useRef(isLocked);
   const manualNoticeSeenThisSessionRef = useRef<Set<string>>(new Set());
   // 冷启动「世界入场」是否已结束。结束前由 BootSequence 接管整屏（同时取代旧的黑屏 spinner）。
@@ -612,31 +613,31 @@ const PhoneShell: React.FC = () => {
     setMountedApps(prev => prev.includes(activeApp) ? prev : [...prev, activeApp]);
   }, [activeApp]);
 
-  // 从根本上消除「每次进 App 都要加载」：数据一就绪就在后台按优先级逐个预热各 App 的代码块。
-  // 关键：不等开机动画（bootDone）结束就开始 —— 否则用户在开机那 ~2 秒内点开 Chat 时 chunk 还没热，
-  // 会现下载+解析 300KB+，首次进聊天卡好几秒。预热与开机动画并行（只下载/解析负载、不挂载、无副作用）。
+  // 从根本上消除「每次进 App 都要加载」：网页/PWA 仍在数据就绪后后台预热；
+  // native iOS/Android 则等开机动画结束且用户解锁后再慢慢预热，避免锁屏首屏与 WebView 冷启动抢主线程/内存。
   // 逐个、空闲触发（requestIdleCallback），不与首屏交互抢主线程/带宽。
   useEffect(() => {
     if (!isDataLoaded) return;
+    if (nativeRuntime && (!bootDone || isLocked)) return;
     let cancelled = false;
     let idx = 0;
     const preloadOrder = nativeRuntime ? NATIVE_APP_PRELOAD_ORDER : APP_PRELOAD_ORDER;
-    const idleTimeout = nativeRuntime ? 2500 : 1500;
-    const startDelay = nativeRuntime ? 1200 : 150;
+    const idleTimeout = nativeRuntime ? 4000 : 1500;
+    const startDelay = nativeRuntime ? 2600 : 150;
     const ric: (cb: () => void) => number = (window as any).requestIdleCallback
       ? (cb) => (window as any).requestIdleCallback(cb, { timeout: idleTimeout })
-      : (cb) => window.setTimeout(cb, nativeRuntime ? 900 : 200);
+      : (cb) => window.setTimeout(cb, nativeRuntime ? 1200 : 200);
     const step = () => {
       if (cancelled || idx >= preloadOrder.length) return;
       warmLazy(preloadOrder[idx++]); // 下载 chunk + 解析 React.lazy 负载 → 首次打开不再 suspend、无底色闪烁
       if (!cancelled) {
-        if (nativeRuntime) window.setTimeout(() => ric(step), 280);
+        if (nativeRuntime) window.setTimeout(() => ric(step), 850);
         else ric(step);
       }
     };
     const startId = window.setTimeout(() => ric(step), startDelay);
     return () => { cancelled = true; window.clearTimeout(startId); };
-  }, [isDataLoaded, nativeRuntime]);
+  }, [bootDone, isDataLoaded, isLocked, nativeRuntime]);
 
   // 免责声明弹窗已按需求移除：首次进入时静默写入接受标记，
   // 保持依赖 DISCLAIMER_KEY 的下游逻辑（导入恢复检测等）不变
@@ -908,7 +909,7 @@ const PhoneShell: React.FC = () => {
     AppID.Takeout,
     AppID.Forum,
   ]);
-  const shellHandlesSafeArea = !nativeRuntime && !selfManagedSafeAreaApps.has(activeApp);
+  const shellHandlesSafeArea = (!nativeRuntime || nativeIOSRuntime) && !selfManagedSafeAreaApps.has(activeApp);
   const appCustomCssEntries = Object.entries(theme.appCustomCss || {}).filter(([, css]) => typeof css === 'string' && css.trim());
   const hasUserShellCss = !!theme.globalCustomCss || appCustomCssEntries.length > 0;
 
@@ -951,7 +952,7 @@ const PhoneShell: React.FC = () => {
         className="absolute top-0 left-0 right-0 z-10 overflow-hidden bg-transparent overscroll-none flex flex-col"
         style={
           shellHandlesSafeArea
-            ? { bottom: 0, paddingTop: 'var(--cutout-top)', paddingBottom: 'var(--safe-bottom)' }
+            ? { bottom: 0, paddingTop: 'var(--cutout-top)', paddingRight: 'var(--safe-right)', paddingBottom: 'var(--safe-bottom)', paddingLeft: 'var(--safe-left)' }
             : { bottom: nativeRuntime ? 0 : 'var(--standalone-safe-area-bottom, 0px)' }
         }
       >
@@ -1011,7 +1012,8 @@ const PhoneShell: React.FC = () => {
           {suspendedCall && activeApp !== AppID.Call && (
             <button
               onClick={resumeCall}
-              className="absolute top-7 left-0 w-full z-[55] flex items-center justify-center gap-2 bg-emerald-500 text-white text-xs font-bold py-1.5 animate-pulse cursor-pointer active:bg-emerald-600 transition-colors"
+              className="absolute left-0 w-full z-[55] flex items-center justify-center gap-2 bg-emerald-500 text-white text-xs font-bold py-1.5 animate-pulse cursor-pointer active:bg-emerald-600 transition-colors"
+              style={{ top: 'calc(var(--safe-top, 0px) + 1.75rem)' }}
             >
               <span className="w-2 h-2 rounded-full bg-white animate-ping" />
               <span>通话中 · {suspendedCall.charName}</span>

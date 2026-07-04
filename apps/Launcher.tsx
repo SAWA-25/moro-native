@@ -1089,8 +1089,7 @@ const Launcher: React.FC = () => {
           boxShadow: '0 18px 36px -24px rgba(43,41,51,0.34)',
           backdropFilter: 'blur(16px)',
       };
-  // 已迁移 App 外壳已收回到可见 viewport 底边，dock 仅需自留视觉间距，无需再 + safe-bottom
-  // （否则会比 home 条上方多让 34px，dock 看起来悬空）。
+  // Dock 底距由 CSS 变量统一注入；iOS native 下变量会自动叠加 safe-bottom，网页/PWA 保持原视觉间距。
   const launcherBottomInset = 'var(--moro-launcher-bottom-inset, 1.25rem)';
 
   const totalUnread = Object.values(unreadMessages).reduce((a, b) => a + b, 0);
@@ -1282,8 +1281,8 @@ const Launcher: React.FC = () => {
                 data-page-index={idx}
                 className="moro-desktop-page w-full flex-shrink-0 snap-center snap-always px-5 pt-[calc(var(--chrome-top)+2.35rem)] pb-7 h-full relative overflow-hidden"
                 style={{
-                    paddingLeft: 'var(--moro-desktop-page-x, 1.25rem)',
-                    paddingRight: 'var(--moro-desktop-page-x, 1.25rem)',
+                    paddingLeft: 'calc(var(--safe-left, 0px) + var(--moro-desktop-page-x, 1.25rem))',
+                    paddingRight: 'calc(var(--safe-right, 0px) + var(--moro-desktop-page-x, 1.25rem))',
                     paddingTop: 'var(--moro-desktop-page-top, calc(var(--chrome-top) + 2.35rem))',
                     paddingBottom: 'var(--moro-desktop-page-bottom, 1.75rem)',
                     transform: 'translateZ(0)',

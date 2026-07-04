@@ -30,6 +30,13 @@ const SHORTCUT_APPS: AppID[] = [AppID.GroupChat, AppID.Shop, AppID.Gallery, AppI
 type Tuck = 'left' | 'right' | null;
 interface Pos { x: number; y: number; }
 
+const readRootPxVar = (name: string): number => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return 0;
+    const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+    const value = parseFloat(raw);
+    return Number.isFinite(value) ? value : 0;
+};
+
 // 可爱猫爪印（四颗肉垫 + 大脚掌），颜色用 currentColor，由外层决定奶白/粉。
 const CatPaw: React.FC<{ className?: string }> = ({ className }) => (
     <svg viewBox="0 0 64 64" className={className} fill="currentColor" aria-hidden="true">
@@ -81,15 +88,27 @@ const FloatingQuickMenu: React.FC = () => {
 
     const clamp = (p: Pos): Pos => {
         const r = parentRect();
+        const safeTop = readRootPxVar('--safe-top');
+        const safeRight = readRootPxVar('--safe-right');
+        const safeBottom = readRootPxVar('--safe-bottom');
+        const safeLeft = readRootPxVar('--safe-left');
         const x = Number.isFinite(Number(p.x)) ? Number(p.x) : r.width - BUBBLE - 14;
         const y = Number.isFinite(Number(p.y)) ? Number(p.y) : r.height - BUBBLE - 120;
-        return { x: Math.max(6, Math.min(r.width - BUBBLE - 6, x)), y: Math.max(40, Math.min(r.height - BUBBLE - 6, y)) };
+        const minX = 6 + safeLeft;
+        const maxX = Math.max(minX, r.width - BUBBLE - 6 - safeRight);
+        const minY = Math.max(40, 6 + safeTop);
+        const maxY = Math.max(minY, r.height - BUBBLE - 6 - safeBottom);
+        return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) };
     };
 
     // 贴边时的视觉落点（大半藏到屏幕外，只露 PEEK）
     const tuckedPos = (side: 'left' | 'right', y: number): Pos => {
         const r = parentRect();
-        const yy = Math.max(40, Math.min(r.height - BUBBLE - 6, y));
+        const safeTop = readRootPxVar('--safe-top');
+        const safeBottom = readRootPxVar('--safe-bottom');
+        const minY = Math.max(40, 6 + safeTop);
+        const maxY = Math.max(minY, r.height - BUBBLE - 6 - safeBottom);
+        const yy = Math.max(minY, Math.min(maxY, y));
         return side === 'left'
             ? { x: -Math.round(BUBBLE * (1 - PEEK)), y: yy }
             : { x: r.width - Math.round(BUBBLE * PEEK), y: yy };

@@ -313,7 +313,7 @@ export const ScheduleFullscreenViewer: React.FC<ScheduleFullscreenViewerProps> =
         >
             {/* Header */}
             <div
-                className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 shrink-0"
+                className="flex items-center justify-between px-5 pt-[calc(var(--safe-top)+1rem)] pb-3 shrink-0"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div>
@@ -369,7 +369,7 @@ export const ScheduleFullscreenViewer: React.FC<ScheduleFullscreenViewerProps> =
 
             {/* Schedule card */}
             <div
-                className="flex-1 min-h-0 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] no-scrollbar"
+                className="flex-1 min-h-0 overflow-y-auto px-5 pb-[calc(var(--safe-bottom)+1.5rem)] no-scrollbar"
                 onClick={(e) => e.stopPropagation()}
             >
                 <ScheduleCard

@@ -540,7 +540,7 @@ const MomentsFeed: React.FC<MomentsFeedProps> = ({ embedded, onBack, backHandler
             {commentDraft && (
                 <>
                     <div className="absolute inset-0 z-30" onClick={() => setCommentDraft(null)} />
-                    <div className="absolute bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-3 py-2.5 flex items-center gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]" style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
+                    <div className="absolute bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-3 py-2.5 flex items-center gap-2 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]" style={{ paddingBottom: 'max(10px, var(--safe-bottom, 0px))' }}>
                         <input
                             autoFocus
                             value={commentText}

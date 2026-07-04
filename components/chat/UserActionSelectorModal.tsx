@@ -109,7 +109,7 @@ const UserActionSelectorModal: React.FC<Props> = ({ char, userProfile, recent, a
         >
             <div
                 className="relative w-full rounded-t-[22px] shadow-2xl flex flex-col max-h-[78%]"
-                style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)', background: 'linear-gradient(180deg,#fffdfa,#fff4f7)', borderTop: '1px solid #eed6df', color: '#5a3140' }}
+                style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 12px)', background: 'linear-gradient(180deg,#fffdfa,#fff4f7)', borderTop: '1px solid #eed6df', color: '#5a3140' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* 抓手 + 标题 */}

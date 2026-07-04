@@ -1006,7 +1006,7 @@ const RegexApp: React.FC = () => {
                 </ToolCard>
             </div>
 
-            <div className="absolute bottom-0 inset-x-0 z-20 px-3 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)', background: 'linear-gradient(180deg, transparent, rgba(247,245,242,0.96) 36%, #f7f5f2)' }}>
+            <div className="absolute bottom-0 inset-x-0 z-20 px-3 pt-3" style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 14px)', background: 'linear-gradient(180deg, transparent, rgba(247,245,242,0.96) 36%, #f7f5f2)' }}>
                 <button
                     onClick={handleNewScript}
                     disabled={scope === 'preset' && !preset}

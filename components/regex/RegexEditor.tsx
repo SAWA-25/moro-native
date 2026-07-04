@@ -433,7 +433,7 @@ const RegexEditor: React.FC<RegexEditorProps> = ({ script, isNew, userName, char
                 </Page>
             </div>
 
-            <div className="absolute bottom-0 inset-x-0 z-20 px-3 pt-3 flex gap-2.5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)', background: 'linear-gradient(180deg, transparent, rgba(247,245,242,0.96) 36%, #f7f5f2)' }}>
+            <div className="absolute bottom-0 inset-x-0 z-20 px-3 pt-3 flex gap-2.5" style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 14px)', background: 'linear-gradient(180deg, transparent, rgba(247,245,242,0.96) 36%, #f7f5f2)' }}>
                 <button
                     onClick={onClose}
                     className="flex-1 rounded-full py-3 text-[13px] font-bold active:scale-[0.98] transition-transform"

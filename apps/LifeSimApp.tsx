@@ -1298,7 +1298,7 @@ const SJStyles: React.FC<{ accent: string; tape: string; tape2: string }> = ({ a
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 8px;
+            padding: calc(10px + var(--safe-top, 0px)) 12px 8px;
             background: rgba(248, 250, 252, 0.9);
             border-bottom: 1px solid rgba(226, 232, 240, 0.96);
             backdrop-filter: blur(16px);
@@ -1541,7 +1541,7 @@ const SJStyles: React.FC<{ accent: string; tape: string; tape2: string }> = ({ a
         .sj-map-dock {
             position: absolute;
             left: 50%;
-            bottom: max(10px, env(safe-area-inset-bottom, 0px));
+            bottom: max(10px, var(--safe-bottom, 0px));
             z-index: 35;
             transform: translateX(-50%);
             display: grid;

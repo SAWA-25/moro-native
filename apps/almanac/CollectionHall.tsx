@@ -155,7 +155,7 @@ const CollectionHall: React.FC<Props> = ({ onExit }) => {
             {/* 转发对象选择 */}
             {forwardItem && (
                 <div className="absolute inset-0 z-[60] flex flex-col justify-end" style={{ background: 'rgba(60,45,40,0.4)' }} onClick={() => setForwardItem(null)}>
-                    <div className="bg-[#fffdf7] rounded-t-[20px] px-5 pt-4 pb-6 shadow-2xl max-h-[70%] flex flex-col" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+                    <div className="bg-[#fffdf7] rounded-t-[20px] px-5 pt-4 pb-6 shadow-2xl max-h-[70%] flex flex-col" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'max(var(--safe-bottom, 0px), 16px)' }}>
                         <div className="flex items-center justify-between mb-1 shrink-0">
                             <div className="text-[15px] font-black" style={{ fontFamily: HAND_FONT, color: '#5b4636' }}>转发给谁？</div>
                             <button onClick={() => setForwardItem(null)} className="w-7 h-7 rounded-full bg-[#f0e6d8] text-[#a98e6f] text-[14px] flex items-center justify-center active:scale-90">✕</button>

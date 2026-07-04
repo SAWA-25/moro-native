@@ -223,8 +223,13 @@ const BootSequence: React.FC<Props> = ({ dataReady, wallpaper, onDone }) => {
 
       {/* 轻触跳过提示（仅完整版、过 1.8s 后；极淡，不打扰） */}
       {cinematic && !exiting && (
-        <div className="absolute bottom-10 left-0 right-0 text-center text-[10px] tracking-[0.3em] text-white/40"
-             style={{ animation: 'bootHintIn 800ms ease-out 1800ms both' }}>
+        <div
+          className="absolute left-0 right-0 text-center text-[10px] tracking-[0.3em] text-white/40"
+          style={{
+            bottom: 'calc(var(--safe-bottom, 0px) + 2.5rem)',
+            animation: 'bootHintIn 800ms ease-out 1800ms both',
+          }}
+        >
           轻触进入
         </div>
       )}
