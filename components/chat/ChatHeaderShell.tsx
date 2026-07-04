@@ -207,12 +207,20 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
                         : chromeStyle === 'floating'
                           ? 'bg-white/85 backdrop-blur-xl border-b border-white/70 shadow-sm'
                           : 'bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm';
-    const headerBaseHeight = headerDensity === 'compact' ? '5rem' : headerDensity === 'airy' ? '7rem' : '6rem';
+    const headerBaseHeight = sinkAvatar
+        ? (headerDensity === 'compact' ? '4.25rem' : headerDensity === 'airy' ? '5.75rem' : '5rem')
+        : (headerDensity === 'compact' ? '5rem' : headerDensity === 'airy' ? '7rem' : '6rem');
     // 两种对齐都用对称 py，让内容垂直居中（原标准布局只给 pb → 底贴、上方留白、整体不居中）。
     const headerDensityClass = headerDensity === 'compact' ? 'px-4 py-2' : headerDensity === 'airy' ? 'px-6 py-4' : 'px-5 py-3';
     // safe-top 已由外层 spacer 单独让位（见 return：透明 + backdrop-blur 的状态栏占位条），
     // header 主体不再把 --safe-top 算进高度（否则会让两次）；内容在 headerBaseHeight 内垂直居中。
     const headerSafeStyle: React.CSSProperties = { minHeight: headerBaseHeight };
+    const centeredTopOffset = sinkAvatar ? 'calc(var(--safe-top) + 1.75rem)' : 'calc(var(--safe-top) + 2.5rem)';
+    const centeredSpacerStyle: React.CSSProperties = {
+        height: useCenteredLayout ? centeredTopOffset : 'var(--safe-top)',
+    };
+    const centeredRowHeightClass = sinkAvatar ? 'min-h-[44px]' : 'min-h-[56px]';
+    const centeredControlBottomClass = sinkAvatar ? 'bottom-5' : 'bottom-2';
     const primaryTextClass = isDarkHeader ? 'text-white' : isPixelHeader ? 'text-[#fff7ed]' : 'text-slate-800';
     const secondaryTextClass = isDarkHeader ? 'text-slate-400' : isPixelHeader ? 'text-[#f3ddc7]' : 'text-slate-400';
     // 顶栏图标按钮统一带按压回弹（active:scale）+ 过渡，手感更跟手。
@@ -332,7 +340,7 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
                     <img
                         src={activeCharacter.avatar}
                         onClick={handleAvatarClick}
-                        className={`moro-chat-avatar w-16 h-16 object-cover ${avatarRadiusClass} ring-[3px] ring-white shadow-[0_12px_26px_-8px_rgba(50,48,60,0.45)] translate-y-[26px] ${handleAvatarClick ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        className={`moro-chat-avatar w-16 h-16 object-cover ${avatarRadiusClass} ring-[3px] ring-white shadow-[0_12px_26px_-8px_rgba(50,48,60,0.45)] translate-y-[18px] ${handleAvatarClick ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
                         alt="avatar"
                     />
                 </div>
@@ -395,7 +403,7 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
         {decorText && !selectionMode ? (
             <div
                 className="moro-chat-topdecor flex justify-center items-end pb-1 px-8 bg-transparent backdrop-blur-xl"
-                style={{ paddingTop: 'calc(var(--safe-top) + 2.5rem)' }}
+                style={{ paddingTop: centeredTopOffset }}
             >
                 <span className={`text-[12px] font-bold tracking-wide truncate max-w-full ${isDarkHeader ? 'text-slate-300' : 'text-slate-500'}`}>{decorText}</span>
             </div>
@@ -403,7 +411,7 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
             // 没有页眉小字时：居中布局（极简皮肤）也要给「灵动岛」让位——否则居中的情绪 buff /
             // 头像会顶到 safe-top+26px 的灵动岛底下（参考反馈图：buff 被灵动岛劈成左右两半）。
             // 与上面页眉小字同样下沉 2.5rem 到灵动岛底缘之下；左对齐布局内容在两侧、不压岛，保持 safe-top。
-            <div className="bg-transparent backdrop-blur-xl" style={{ height: useCenteredLayout ? 'calc(var(--safe-top) + 2.5rem)' : 'var(--safe-top)' }} />
+            <div className="bg-transparent backdrop-blur-xl" style={centeredSpacerStyle} />
         )}
         {/* header 主体：moro-chat-header 钩子 + 内容垂直居中（items-center）；safe-top 已由上面 spacer 让位 */}
         <div
@@ -418,8 +426,8 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
                     <div className="w-10" />
                 </div>
             ) : useCenteredLayout ? (
-                <div className="relative w-full min-h-[56px] flex items-end justify-center">
-                    <button onClick={onClose} className={`moro-chat-back absolute left-0 bottom-2 p-2 ${iconButtonClass}`}>
+                <div className={`relative w-full ${centeredRowHeightClass} flex items-end justify-center`}>
+                    <button onClick={onClose} className={`moro-chat-back absolute left-0 ${centeredControlBottomClass} p-2 ${iconButtonClass}`}>
                         <CaretLeft className="w-5 h-5" weight="bold" />
                     </button>
 
@@ -433,12 +441,12 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
                     </div>
 
                     {onOpenChatSettings && (
-                        <button onClick={onOpenChatSettings} className={`moro-chat-settings absolute ${onOpenSettings ? 'right-9' : 'right-0'} bottom-2 p-2 ${actionButtonClass}`} title="聊天设置">
+                        <button onClick={onOpenChatSettings} className={`moro-chat-settings absolute ${onOpenSettings ? 'right-9' : 'right-0'} ${centeredControlBottomClass} p-2 ${actionButtonClass}`} title="聊天设置">
                             <GearSix className="w-5 h-5" weight="bold" />
                         </button>
                     )}
                     {onOpenSettings && (
-                        <button onClick={onOpenSettings} className={`moro-chat-settings absolute right-0 bottom-2 p-2 ${iconButtonClass}`} title="聊天设置">
+                        <button onClick={onOpenSettings} className={`moro-chat-settings absolute right-0 ${centeredControlBottomClass} p-2 ${iconButtonClass}`} title="聊天设置">
                             {isMinimalHeader ? <List className="w-5 h-5" weight="bold" /> : <DotsThreeVertical className="w-5 h-5" weight="bold" />}
                         </button>
                     )}

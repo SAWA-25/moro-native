@@ -71,6 +71,32 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-04-chat-minimal-header-lift',
+    date: '2026-07-04',
+    title: '聊天顶部头像和按钮更贴近上方了',
+    kind: 'improvement',
+    summary: '调整极简聊天皮肤的顶部白色栏，让返回键、菜单键和居中头像整体上移，减少上方留白。',
+    items: [
+      '默认居中顶栏会更紧凑，头像仍会轻轻叠在白色栏下缘，但不会像之前那样压得太低。',
+      'iPhone 13 Pro 这类带灵动岛的机型仍会保留必要安全距离，避免按钮或头像贴到系统区域。',
+      '只调整聊天顶部布局，不影响消息气泡、聊天记录、输入栏内容或角色资料。',
+    ],
+  },
+  {
+    id: '2026-07-04-ios-persona-character-stability',
+    date: '2026-07-04',
+    title: 'iPhone 安装版 1.0.7.1 打开登场人物更稳了',
+    kind: 'fix',
+    summary: '修复 iPhone 13 Pro 等机型上，进入剪影集的登场人物并点开角色资料后，页面可能突然白屏并回到锁屏的问题。',
+    items: [
+      '进入角色编辑页时，后台准备工作会避开正在操作的界面，不再和剪影集抢占资源。',
+      '首次安装或升级后，本地记忆整理会更晚、更小批量地进行，减少刚打开角色资料时被卡退的机会。',
+      '安装包准备时也补齐了窥屏卡片记录的兼容信息，避免旧记录影响更新检查。',
+      'iOS 安装包继续沿用已验证的签名路线，并会在出包前检查内部标识是否重复，减少安装时报 duplicateidentifier 的风险。',
+      '1.0.7.1 是稳定性补丁包，不会改动已有角色资料、聊天记录、记忆或设置。',
+    ],
+  },
+  {
     id: '2026-07-04-native-install-107-release',
     date: '2026-07-04',
     title: '安装版 1.0.7 把新玩具都装进小手机啦',

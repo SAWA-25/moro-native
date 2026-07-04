@@ -8,17 +8,17 @@ on:
         required: false
         type: string
       bundle_id:
-        description: iOS bundle identifier.
+        description: Fixed iOS bundle identifier for the verified 1.0.6 signing route.
         required: false
         default: wb.uniusc9734.tool7
         type: string
       export_method:
-        description: Xcode export method, such as unsigned, release-testing, app-store-connect, enterprise, or debugging.
+        description: Fixed Xcode export method for the verified 1.0.6 signing route. Use release-ios-unsigned.yml for unsigned builds.
         required: false
         default: release-testing
         type: string
       code_sign_identity:
-        description: Code signing identity. Use Apple Distribution for release-testing/app-store-connect/enterprise, Apple Development for debugging.
+        description: Fixed code signing identity for the verified 1.0.6 signing route.
         required: false
         default: Apple Distribution
         type: string
@@ -58,6 +58,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          required_bundle_id="wb.uniusc9734.tool7"
+          required_export_method="release-testing"
+          required_code_sign_identity="Apple Distribution"
 
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             tag_name="${GITHUB_REF_NAME}"
@@ -67,9 +70,25 @@ jobs:
             tag_name="ios-${GITHUB_RUN_NUMBER}"
           fi
 
-          bundle_id="${INPUT_BUNDLE_ID:-wb.uniusc9734.tool7}"
-          export_method="${INPUT_EXPORT_METHOD:-release-testing}"
-          code_sign_identity="${INPUT_CODE_SIGN_IDENTITY:-Apple Distribution}"
+          requested_bundle_id="${INPUT_BUNDLE_ID:-${required_bundle_id}}"
+          requested_export_method="${INPUT_EXPORT_METHOD:-${required_export_method}}"
+          requested_code_sign_identity="${INPUT_CODE_SIGN_IDENTITY:-${required_code_sign_identity}}"
+          if [[ "${requested_bundle_id}" != "${required_bundle_id}" ]]; then
+            echo "::error::iOS release IPA must use Bundle ID ${required_bundle_id}; got ${requested_bundle_id}."
+            exit 1
+          fi
+          if [[ "${requested_export_method}" != "${required_export_method}" ]]; then
+            echo "::error::iOS release IPA must use export_method ${required_export_method}; got ${requested_export_method}."
+            exit 1
+          fi
+          if [[ "${requested_code_sign_identity}" != "${required_code_sign_identity}" ]]; then
+            echo "::error::iOS release IPA must use code_sign_identity ${required_code_sign_identity}; got ${requested_code_sign_identity}."
+            exit 1
+          fi
+
+          bundle_id="${required_bundle_id}"
+          export_method="${required_export_method}"
+          code_sign_identity="${required_code_sign_identity}"
           safe_tag="$(printf '%s' "${tag_name}" | tr '/ ' '--')"
           if [[ "${export_method}" == "unsigned" ]]; then
             ipa_name="Moro-${safe_tag}-unsigned.ipa"
@@ -185,6 +204,10 @@ jobs:
           security default-keychain -s "${keychain_path}"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychain_password}" "${keychain_path}"
           security find-identity -v -p codesigning "${keychain_path}"
+          if ! security find-identity -v -p codesigning "${keychain_path}" | grep -F "${CODE_SIGN_IDENTITY}" >/dev/null; then
+            echo "::error::Imported signing certificate does not expose a ${CODE_SIGN_IDENTITY} identity."
+            exit 1
+          fi
 
           security cms -D -i "${profile_path}" > "${profile_plist}"
           profile_uuid="$(/usr/libexec/PlistBuddy -c 'Print UUID' "${profile_plist}")"
@@ -382,6 +405,51 @@ jobs:
             "${unsigned_ipa}"
 
           test -s "release/${IPA_NAME}"
+
+          signed_check_dir="${RUNNER_TEMP}/signed-ipa-check"
+          rm -rf "${signed_check_dir}"
+          mkdir -p "${signed_check_dir}"
+          unzip -q "release/${IPA_NAME}" -d "${signed_check_dir}"
+          signed_app_path="$(find "${signed_check_dir}/Payload" -maxdepth 1 -type d -name '*.app' -print -quit)"
+          if [[ -z "${signed_app_path}" ]]; then
+            echo "::error::Signed IPA does not contain a Payload/*.app bundle."
+            exit 1
+          fi
+          SIGNED_APP_PATH="${signed_app_path}" python3 - <<'PY'
+          import os
+          import plistlib
+          from collections import defaultdict
+          from pathlib import Path
+
+          app_path = Path(os.environ["SIGNED_APP_PATH"])
+          bundle_id = os.environ["BUNDLE_ID"]
+          main_info = app_path / "Info.plist"
+          with main_info.open("rb") as fh:
+              main_bundle_id = plistlib.load(fh).get("CFBundleIdentifier")
+          if main_bundle_id != bundle_id:
+              raise SystemExit(f"Signed IPA bundle id {main_bundle_id} does not match {bundle_id}.")
+
+          seen = defaultdict(list)
+          for info_path in app_path.rglob("Info.plist"):
+              try:
+                  with info_path.open("rb") as fh:
+                      info = plistlib.load(fh)
+              except Exception:
+                  continue
+              bundle = info.get("CFBundleIdentifier")
+              if bundle:
+                  seen[bundle].append(str(info_path.relative_to(app_path)))
+
+          duplicates = {bundle: paths for bundle, paths in seen.items() if len(paths) > 1}
+          if duplicates:
+              for bundle, paths in duplicates.items():
+                  print(f"Duplicate CFBundleIdentifier {bundle}:")
+                  for path in paths:
+                      print(f"  - {path}")
+              raise SystemExit("duplicateidentifier guard failed: duplicate CFBundleIdentifier values remain in the signed IPA.")
+
+          print(f"Signed IPA bundle identifiers are unique under {bundle_id}.")
+          PY
 
       - name: Package unsigned IPA
         if: ${{ steps.release_settings.outputs.export_method == 'unsigned' }}

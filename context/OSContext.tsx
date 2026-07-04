@@ -113,6 +113,7 @@ import {
   DEFAULT_LOCK_SCREEN_WALLPAPER,
   PAPER_DEFAULT_WALLPAPER,
 } from '../utils/defaultWallpapers';
+import { isNativeAppRuntime, isNativeIOSRuntime } from '../utils/nativeRuntime';
 
 const normalizeProactiveAiContent = (raw: string): string => {
   let cleaned = raw;
@@ -702,9 +703,19 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   // 让用户知道发生了什么。重复调用幂等，下次启动如果没有老数据就立刻退出。
   useEffect(() => {
       let cancelled = false;
+      const nativeRuntime = isNativeAppRuntime();
+      const nativeIOS = isNativeIOSRuntime();
+      if (nativeRuntime && isLocked) return;
+      const abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      let startTimer: number | null = null;
+      let idleHandle: number | null = null;
+      const scheduleIdle = (cb: () => void): number => {
+          const ric = (window as any).requestIdleCallback;
+          if (typeof ric === 'function') return ric(cb, { timeout: nativeIOS ? 12000 : 5000 });
+          return window.setTimeout(cb, nativeIOS ? 3000 : 1000);
+      };
       const run = async () => {
           try {
-              await new Promise(r => setTimeout(r, 2000)); // 让首屏渲染先呼吸一下
               if (cancelled) return;
               const { MemoryVectorDB } = await import('../utils/memoryPalace/db');
               const migrated = await MemoryVectorDB.scanAndMigrateLegacy((m, s) => {
@@ -716,6 +727,11 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                           progress: 0,
                       });
                   }
+              }, {
+                  batchSize: nativeIOS ? 35 : nativeRuntime ? 100 : 500,
+                  pauseMs: nativeIOS ? 300 : nativeRuntime ? 150 : 50,
+                  signal: abort?.signal,
+                  shouldContinue: () => !cancelled && (!nativeRuntime || document.visibilityState !== 'hidden'),
               });
               if (cancelled) return;
               if (migrated > 0) {
@@ -726,11 +742,24 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               console.warn('[memory] vector migration scan failed', e);
           }
       };
-      run();
-      return () => { cancelled = true; };
+      const startDelay = nativeIOS ? 12000 : nativeRuntime ? 7000 : 2000;
+      startTimer = window.setTimeout(() => {
+          if (cancelled) return;
+          idleHandle = scheduleIdle(() => { void run(); });
+      }, startDelay);
+      return () => {
+          cancelled = true;
+          abort?.abort();
+          if (startTimer !== null) window.clearTimeout(startTimer);
+          if (idleHandle !== null) {
+              const cancelIdle = (window as any).cancelIdleCallback;
+              if (typeof cancelIdle === 'function') cancelIdle(idleHandle);
+              else window.clearTimeout(idleHandle);
+          }
+      };
   // addToast / setSysOperation 是稳定引用，跑一次即可
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLocked]);
 
   const [characters, setCharacters] = useState<CharacterProfile[]>([]);
   const [activeCharacterId, setActiveCharacterId] = useState<string>('');

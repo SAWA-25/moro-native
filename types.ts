@@ -2885,6 +2885,81 @@ export interface XunjiSettings {
   reportRules: Record<XunjiReportType, boolean>;
 }
 
+export type ScreenPeekViewTarget = 'character_phone' | 'user_phone';
+
+export type ScreenPeekCommentTone = 'soft' | 'tease' | 'curious' | 'alert' | 'quiet';
+
+export type ScreenPeekCommentTrigger = 'session_start' | 'app_switch' | 'dwell' | 'manual' | 'resume' | 'permission';
+
+export interface ScreenPeekObservedApp {
+  appId?: string;
+  appName: string;
+  packageName?: string;
+  isMoro?: boolean;
+  isSystem?: boolean;
+  durationMinutes?: number;
+  lastTimeUsed?: number;
+  startedAt?: number;
+  endedAt?: number;
+  category?: string;
+  note?: string;
+}
+
+export interface ScreenPeekCaptureFrame {
+  source: 'android_media_projection';
+  capturedAt: number;
+  width?: number;
+  height?: number;
+  dataUrl: string;
+  mimeType?: string;
+}
+
+export type ScreenPeekDeviceSnapshotSource =
+  | 'android_screen_capture'
+  | 'screen_capture_permission_required'
+  | 'android_usage_stats'
+  | 'permission_required'
+  | 'unsupported';
+
+export interface ScreenPeekDeviceSnapshot {
+  source: ScreenPeekDeviceSnapshotSource;
+  native?: boolean;
+  platform?: string;
+  packageName?: string;
+  capturedAt?: number;
+  rangeStart?: number;
+  rangeEnd?: number;
+  usageAccessGranted?: boolean;
+  canOpenUsageAccessSettings?: boolean;
+  currentForegroundApp?: ScreenPeekObservedApp;
+  lastExternalApp?: ScreenPeekObservedApp;
+  appUsage?: ScreenPeekObservedApp[];
+  batteryLevel?: number;
+  isCharging?: boolean;
+  networkLabel?: string;
+  deviceLabel?: string;
+  screenTimeMinutes?: number;
+  unlockCount?: number;
+  unavailableReason?: string;
+  screenCaptureActive?: boolean;
+  overlayPermissionGranted?: boolean;
+  canOpenOverlaySettings?: boolean;
+  screenFrame?: ScreenPeekCaptureFrame;
+}
+
+export interface ScreenPeekLiveComment {
+  id: string;
+  createdAt: number;
+  trigger: ScreenPeekCommentTrigger;
+  text: string;
+  tone?: ScreenPeekCommentTone;
+  observedAppId?: string;
+  observedAppName?: string;
+  observedPackageName?: string;
+  observedScreenCapturedAt?: number;
+  deviceSnapshotSource?: ScreenPeekDeviceSnapshotSource;
+}
+
 export interface ScreenPeekCard {
   id: string;
   charId: string;
@@ -2892,6 +2967,7 @@ export interface ScreenPeekCard {
   generatedAt: number;
   title: string;
   narrative: string;
+  viewTarget?: ScreenPeekViewTarget;
   screen?: {
     appKind: 'chat' | 'takeout' | 'browser' | 'notes' | 'gallery' | 'music' | 'map' | 'social' | 'calendar' | 'app' | 'home';
     appName: string;
@@ -2918,6 +2994,23 @@ export interface ScreenPeekCard {
   notes: { id: string; time: number; text: string }[];
   moments?: XunjiGeneratedMoment[];
   sourceRunId?: string;
+  deviceSnapshot?: ScreenPeekDeviceSnapshot;
+  liveComments?: ScreenPeekLiveComment[];
+}
+
+export interface ScreenPeekCommentSession {
+  id: string;
+  messageId: number;
+  charId: string;
+  charName: string;
+  charAvatar?: string;
+  startedAt: number;
+  card: ScreenPeekCard;
+  status: 'idle' | 'thinking' | 'error';
+  error?: string;
+  collapsed: boolean;
+  commentCount: number;
+  lastCommentAt?: number;
 }
 
 export interface UserScreenWatchSettings {

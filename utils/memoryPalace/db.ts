@@ -216,6 +216,13 @@ function isLegacyVec(vec: unknown): boolean {
     return Array.isArray(vec);
 }
 
+type LegacyVectorMigrationOptions = {
+    batchSize?: number;
+    pauseMs?: number;
+    signal?: AbortSignal;
+    shouldContinue?: () => boolean;
+};
+
 // ─── MemoryVector CRUD ────────────────────────────────
 
 export const MemoryVectorDB = {
@@ -363,18 +370,25 @@ export const MemoryVectorDB = {
      */
     scanAndMigrateLegacy: async (
         onProgress?: (migrated: number, scanned: number) => void,
+        options: LegacyVectorMigrationOptions = {},
     ): Promise<number> => {
-        const BATCH_SIZE = 500;
+        const batchSize = Math.max(1, Math.floor(options.batchSize || 500));
+        const pauseMs = Math.max(0, Math.floor(options.pauseMs ?? 50));
         let migrated = 0;
         let scanned = 0;
         let lastKey: IDBValidKey | null = null;
         let done = false;
 
         while (!done) {
+            if (options.signal?.aborted || options.shouldContinue?.() === false) break;
             const batch = await new Promise<{
                 migrated: number; scanned: number; lastKey: IDBValidKey | null; done: boolean;
             }>(async (resolve, reject) => {
                 try {
+                    if (options.signal?.aborted || options.shouldContinue?.() === false) {
+                        resolve({ migrated: 0, scanned: 0, lastKey, done: true });
+                        return;
+                    }
                     const db = await openDB();
                     const tx = db.transaction(STORE_MEMORY_VECTORS, 'readwrite');
                     const store = tx.objectStore(STORE_MEMORY_VECTORS);
@@ -389,7 +403,7 @@ export const MemoryVectorDB = {
                     req.onsuccess = () => {
                         const cursor = req.result;
                         if (!cursor) { bDone = true; return; }
-                        if (bScan >= BATCH_SIZE) return; // 不再 continue，等 tx 自己关
+                        if (bScan >= batchSize) return; // 不再 continue，等 tx 自己关
                         const v = cursor.value;
                         bScan++;
                         bLast = cursor.primaryKey;
@@ -415,7 +429,7 @@ export const MemoryVectorDB = {
             if (onProgress) onProgress(migrated, scanned);
 
             // 让其他 IDB tx 有机会插队
-            if (!done) await new Promise(r => setTimeout(r, 50));
+            if (!done && pauseMs > 0) await new Promise(r => setTimeout(r, pauseMs));
         }
         return migrated;
     },

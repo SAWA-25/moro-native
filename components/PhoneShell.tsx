@@ -619,6 +619,7 @@ const PhoneShell: React.FC = () => {
   useEffect(() => {
     if (!isDataLoaded) return;
     if (nativeRuntime && (!bootDone || isLocked)) return;
+    if (nativeRuntime && activeApp !== AppID.Launcher) return;
     let cancelled = false;
     let idx = 0;
     const preloadOrder = nativeRuntime ? NATIVE_APP_PRELOAD_ORDER : APP_PRELOAD_ORDER;
@@ -637,7 +638,7 @@ const PhoneShell: React.FC = () => {
     };
     const startId = window.setTimeout(() => ric(step), startDelay);
     return () => { cancelled = true; window.clearTimeout(startId); };
-  }, [bootDone, isDataLoaded, isLocked, nativeRuntime]);
+  }, [activeApp, bootDone, isDataLoaded, isLocked, nativeRuntime]);
 
   // 免责声明弹窗已按需求移除：首次进入时静默写入接受标记，
   // 保持依赖 DISCLAIMER_KEY 的下游逻辑（导入恢复检测等）不变
