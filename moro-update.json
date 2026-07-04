@@ -1,7 +1,7 @@
 {
   "versionCode": 8,
   "versionName": "1.0.7",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/latest/download/moro.apk",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/moro.apk",
   "sha256": "a3d8077caed09a0527f67f2bb9f464ebc426d98e0dd8b7461a39c5ee47282e7f",
   "sizeBytes": 274020755,
   "releaseNotes": "正式版 1.0.7：\n- 上游的新内容已经装进安装版，共览、幕间集、见闻簿、补丁铺、剪报夹、絮语和音乐等入口都在啦。\n- iPhone 刘海、灵动岛和底部小横条的避让更稳，标题、按钮、输入栏、弹窗和悬浮按钮会乖乖待在能点到的地方。\n- iPhone 13 Pro 打开安装版停在锁屏时会更轻一点，减少卡很久或突然回到锁屏的机会。\n- Android 可以从 1.0.6 直接覆盖升级，右下角的小开发标记在正式版里会乖乖藏好。\n- TA 窥屏、观屏评论、查岗和落脚点这些轻互动继续守好授权边界，需要你点头的地方都会明说。\n- 安装包已经用正式签名重新打好，适合放心更新。",

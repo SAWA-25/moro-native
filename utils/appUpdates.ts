@@ -3,8 +3,9 @@ import { APP_VERSION } from './buildInfo';
 
 const GITHUB_RELEASE_MANIFEST_ASSET = 'moro-update.json';
 const DEFAULT_RELEASE_OWNER = 'SAWA-25';
-const DEFAULT_RELEASE_REPO = 'moro';
+const DEFAULT_RELEASE_REPO = 'moro-native';
 const DEFAULT_GITHUB_PROXY_URL = 'https://sullymeow.ccwu.cc/github?url=';
+const GITHUB_RELEASES_PAGE_SIZE = 20;
 
 export interface NativeAppInfo {
   native: boolean;
@@ -103,6 +104,15 @@ const isGithubUrl = (url: string): boolean => {
   try {
     const host = new URL(url).hostname.toLowerCase();
     return host === 'github.com' || host === 'api.github.com' || host === 'uploads.github.com' || host.endsWith('.githubusercontent.com');
+  } catch {
+    return false;
+  }
+};
+
+const isGithubLatestDownloadUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.toLowerCase() === 'github.com' && /\/releases\/latest\/download\//i.test(parsed.pathname);
   } catch {
     return false;
   }
@@ -237,11 +247,15 @@ const parseAppUpdateManifest = (data: any, baseUrl: string, fallbackApkUrl?: str
   if (!Number.isFinite(versionCode) || versionCode <= 0) throw new Error('更新信息缺少有效版本号');
   if (!rawApkUrl) throw new Error('更新包暂不可用');
 
-  const apkUrl = new URL(rawApkUrl, baseUrl).href;
+  const parsedApkUrl = new URL(rawApkUrl, baseUrl).href;
+  const parsedFallbackApkUrl = fallbackApkUrl ? new URL(fallbackApkUrl, baseUrl).href : '';
+  const apkUrl = parsedFallbackApkUrl && isGithubLatestDownloadUrl(parsedApkUrl)
+    ? parsedFallbackApkUrl
+    : parsedApkUrl;
   const explicitDomesticApkUrl = rawDomesticApkUrl ? new URL(rawDomesticApkUrl, baseUrl).href : '';
   const domesticApkUrl = explicitDomesticApkUrl && !isDefaultGithubProxyUrl(explicitDomesticApkUrl)
     ? explicitDomesticApkUrl
-    : undefined;
+    : proxifyGithubUrl(apkUrl);
   const sizeBytes = pickNumber(data?.sizeBytes, data?.size_bytes, android.sizeBytes, android.size_bytes);
   const sha256 = pickString(data?.sha256, data?.sha256sum, android.sha256, android.sha256sum).replace(/\s+/g, '').toLowerCase();
 
@@ -309,25 +323,43 @@ const parseVersionCodeFromText = (...values: unknown[]): number => {
   return NaN;
 };
 
-async function fetchGithubLatestRelease(): Promise<GitHubRelease> {
+const githubReleaseHeaders = {
+  Accept: 'application/vnd.github+json',
+  'X-GitHub-Api-Version': '2022-11-28',
+};
+
+const hasAndroidUpdateAsset = (release: GitHubRelease): boolean => {
+  const assets = Array.isArray(release.assets) ? release.assets : [];
+  return assets.some(asset => (asset.name || '').toLowerCase() === GITHUB_RELEASE_MANIFEST_ASSET && !!asset.browser_download_url)
+    || !!findApkAsset(assets);
+};
+
+async function fetchGithubAndroidRelease(): Promise<GitHubRelease> {
   const explicitApi = envReleaseApiUrl();
-  const apiUrl = explicitApi || `https://api.github.com/repos/${encodeURIComponent(envReleaseOwner())}/${encodeURIComponent(envReleaseRepo())}/releases/latest`;
   if (!explicitApi && (!envReleaseOwner() || !envReleaseRepo())) {
     throw new Error('更新通道暂未接入');
   }
 
   try {
-    return await fetchGithubJsonNoStore(apiUrl, {
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    });
+    if (explicitApi) return await fetchGithubJsonNoStore(explicitApi, githubReleaseHeaders);
+
+    const owner = encodeURIComponent(envReleaseOwner());
+    const repo = encodeURIComponent(envReleaseRepo());
+    const releasesUrl = `https://api.github.com/repos/${owner}/${repo}/releases?per_page=${GITHUB_RELEASES_PAGE_SIZE}`;
+    const releases = await fetchGithubJsonNoStore(releasesUrl, githubReleaseHeaders);
+    if (Array.isArray(releases)) {
+      const androidRelease = releases.find(hasAndroidUpdateAsset);
+      if (androidRelease) return androidRelease;
+    }
+
+    return await fetchGithubJsonNoStore(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, githubReleaseHeaders);
   } catch {
     throw new Error('更新信息读取失败，请稍后再试');
   }
 }
 
 async function fetchGithubReleaseUpdateManifest(): Promise<AppUpdateManifest> {
-  const release = await fetchGithubLatestRelease();
+  const release = await fetchGithubAndroidRelease();
   const assets = Array.isArray(release.assets) ? release.assets : [];
   const manifestAsset = assets.find(asset => (asset.name || '').toLowerCase() === GITHUB_RELEASE_MANIFEST_ASSET && !!asset.browser_download_url);
   const apk = findApkAsset(assets);

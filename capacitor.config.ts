@@ -20,7 +20,9 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 0,
+      launchShowDuration: 1800,
+      backgroundColor: '#f4f2ed',
+      showSpinner: false,
     },
     Keyboard: {
       resize: 'native',

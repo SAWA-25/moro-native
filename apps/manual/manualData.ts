@@ -71,6 +71,33 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-android-apk-update-channel-fix',
+    date: '2026-07-05',
+    title: 'Android 文具盒可以重新检查安装包更新了',
+    kind: 'fix',
+    summary: '修复 Android 安装版在文具盒里检查更新时提示“更新信息读取失败”的问题，并让下载新版指向正确的 APK。',
+    items: [
+      '应用更新会查找最近真正带 Android 安装包的发布，不会被单独发布的 iPhone 安装包挡住。',
+      '更新清单里的 APK 下载地址会固定到对应 Android 版本，避免“下载新版”误跳到没有 APK 的 latest 发布。',
+      '从 1.0.6 检查 1.0.7 这类覆盖升级时，仍会下载 APK 并打开 Android 系统安装器，需要你按系统提示手动确认安装。',
+    ],
+  },
+  {
+    id: '2026-07-05-ios-1072-native-stability',
+    date: '2026-07-05',
+    title: 'iPhone 安装版 1.0.7.2 继续修白屏退锁屏',
+    kind: 'fix',
+    summary: '这一版继续针对 iPhone 13 Pro 等机型的白屏、退回锁屏和权限触发崩溃做加固，安装包仍沿用已验证的 iOS 签名路线。',
+    items: [
+      '安装版会保留更短但稳定的启动图缓冲，减少 WebView 还没准备好时露出白屏的机会。',
+      '定位、相机、麦克风、语音识别和相册权限都补齐了系统用途说明，主动使用天气、拍照、语音或视频通话时不应再因为缺少说明被 iOS 直接关闭。',
+      'iPhone 安装包不再打进网页旧浏览器用的 legacy 脚本，也移除了首屏的 Google 统计、Google 字体和浏览器 Tailwind 运行时，冷启动更轻。',
+      'iOS 版本号更新为 1.0.7.2，Bundle ID 继续使用 wb.uniusc9734.tool7，并保留出包时的内部标识去重检查，降低安装时报 duplicateidentifier 的风险。',
+      'Android 应用更新会跳过只有 iPhone 安装包的发布页，单独发布 iOS 测试包时不会挡住 Android 用户继续检查 APK 更新。',
+      '这次只处理安装包稳定性和权限声明，不会改动已有角色、聊天记录、记忆、主题或 API 设置。',
+    ],
+  },
+  {
     id: '2026-07-04-ios-lockscreen-startup-stability',
     date: '2026-07-04',
     title: 'iPhone 安装包打开锁屏更稳了',

@@ -84,12 +84,13 @@ const buildPetSystemPrompt = (roleName: string, customPrompt?: string) => [
 ].join('\n');
 
 export const DesktopPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { apiConfig, auxApiConfig, userProfile } = useOS();
+  const { apiConfig, auxApiConfig, userProfile, isLocked } = useOS();
   const [manifest, setManifest] = useState<DesktopPetManifest | null>(null);
   const [state, setState] = useState<DesktopPetState>(() => createDefaultDesktopPetState());
   const [currentActionId, setCurrentActionId] = useState(DESKTOP_PET_DEFAULT_ROLE);
   const [isReady, setIsReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const deferNativeInitialLoad = Capacitor.isNativePlatform() && isLocked && !isReady;
   const stateRef = useRef(state);
   const manifestRef = useRef<DesktopPetManifest | null>(null);
   const persistTimerRef = useRef<number | null>(null);
@@ -107,6 +108,7 @@ export const DesktopPetProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   useEffect(() => {
+    if (deferNativeInitialLoad) return;
     let cancelled = false;
     const load = async () => {
       try {
@@ -138,7 +140,7 @@ export const DesktopPetProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       cancelled = true;
       if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     };
-  }, []);
+  }, [deferNativeInitialLoad]);
 
   const activeRoleId = state.activeRoleId;
 
