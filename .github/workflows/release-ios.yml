@@ -121,6 +121,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build web app and sync Capacitor iOS
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: pnpm build:ios
 
       - name: Install CocoaPods dependencies
