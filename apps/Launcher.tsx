@@ -6,6 +6,8 @@ import AppIcon from '../components/os/AppIcon';
 import { DB } from '../utils/db';
 import { CharacterProfile, AppID, DailySchedule } from '../types';
 import { ScheduleHomeWidget, ScheduleFullscreenViewer } from '../components/schedule/ScheduleHomeWidget';
+import { loadScheduleLifeNotes, type ScheduleLifeNotesBySlot } from '../utils/scheduleLifeSync';
+import { CHAR_LIFE_EVENT_UPDATED_EVENT, DAILY_SCHEDULE_UPDATED_EVENT } from '../utils/scheduleEvents';
 import NowPlayingSquareWidget from '../components/os/NowPlayingSquareWidget';
 import WeatherWidget from '../components/os/WeatherWidget';
 import { isImageWallpaper } from '../utils/defaultWallpapers';
@@ -413,7 +415,7 @@ const buildDefaultDeskLayout = (items: DeskItem[], orderedKeys: string[]): Recor
         AppID.Harem,
         AppID.Forum,
         AppID.DesktopPet,
-        AppID.XhsFreeRoam,
+        AppID.CoView,
         AppID.XhsStock,
         AppID.Manual,
     ];
@@ -553,6 +555,7 @@ const Launcher: React.FC = () => {
   const [widgetChar, setWidgetChar] = useState<CharacterProfile | null>(null);
   const [lastMessage, setLastMessage] = useState<string>('');
   const [scheduleData, setScheduleData] = useState<DailySchedule | null>(null);
+  const [scheduleLifeNotes, setScheduleLifeNotes] = useState<ScheduleLifeNotesBySlot>({});
   const [scheduleCharId, setScheduleCharId] = useState<string | null>(null);
   const [scheduleViewerOpen, setScheduleViewerOpen] = useState(false);
 
@@ -944,9 +947,49 @@ const Launcher: React.FC = () => {
   }, [characters, scheduleCharId, activeCharacterId]);
 
   useEffect(() => {
-      if (!scheduleChar || !isDataLoaded) return;
+      if (!scheduleChar || !isDataLoaded) {
+          setScheduleData(null);
+          setScheduleLifeNotes({});
+          return;
+      }
+      let cancelled = false;
       const today = new Date().toISOString().split('T')[0];
-      DB.getDailySchedule(scheduleChar.id, today).then(s => setScheduleData(s)).catch(() => {});
+      const load = async () => {
+          const s = await DB.getDailySchedule(scheduleChar.id, today).catch(() => null);
+          if (cancelled) return;
+          setScheduleData(s);
+          if (!s) {
+              setScheduleLifeNotes({});
+              return;
+          }
+          const notes = await loadScheduleLifeNotes(s);
+          if (!cancelled) setScheduleLifeNotes(notes);
+      };
+      void load();
+      const onScheduleUpdated = (e: Event) => {
+          const detail = (e as CustomEvent<{ charId?: string; date?: string; deleted?: boolean }>).detail || {};
+          if (detail.charId !== scheduleChar.id) return;
+          if (detail.date && detail.date !== today) return;
+          if (detail.deleted) {
+              setScheduleData(null);
+              setScheduleLifeNotes({});
+              return;
+          }
+          void load();
+      };
+      const onLifeEventUpdated = (e: Event) => {
+          const detail = (e as CustomEvent<{ charId?: string; scheduleDate?: string }>).detail || {};
+          if (detail.charId !== scheduleChar.id) return;
+          if (detail.scheduleDate && detail.scheduleDate !== today) return;
+          void load();
+      };
+      window.addEventListener(DAILY_SCHEDULE_UPDATED_EVENT, onScheduleUpdated);
+      window.addEventListener(CHAR_LIFE_EVENT_UPDATED_EVENT, onLifeEventUpdated);
+      return () => {
+          cancelled = true;
+          window.removeEventListener(DAILY_SCHEDULE_UPDATED_EVENT, onScheduleUpdated);
+          window.removeEventListener(CHAR_LIFE_EVENT_UPDATED_EVENT, onLifeEventUpdated);
+      };
   }, [scheduleChar, isDataLoaded]);
 
   // Restore scroll position BEFORE paint to avoid visible flash/slide
@@ -1048,7 +1091,7 @@ const Launcher: React.FC = () => {
       };
   // 已迁移 App 外壳已收回到可见 viewport 底边，dock 仅需自留视觉间距，无需再 + safe-bottom
   // （否则会比 home 条上方多让 34px，dock 看起来悬空）。
-  const launcherBottomInset = '1.25rem';
+  const launcherBottomInset = 'var(--moro-launcher-bottom-inset, 1.25rem)';
 
   const totalUnread = Object.values(unreadMessages).reduce((a, b) => a + b, 0);
   const widgetUnread = widgetChar && unreadMessages[widgetChar.id] ? unreadMessages[widgetChar.id] : 0;
@@ -1087,6 +1130,7 @@ const Launcher: React.FC = () => {
                   <div className="w-full h-full flex flex-col justify-center overflow-hidden">
                       <ScheduleHomeWidget
                           schedule={scheduleData}
+                          lifeNotes={scheduleLifeNotes}
                           character={scheduleChar}
                           contentColor={contentColor}
                           onOpen={() => setScheduleViewerOpen(true)}
@@ -1238,6 +1282,10 @@ const Launcher: React.FC = () => {
                 data-page-index={idx}
                 className="moro-desktop-page w-full flex-shrink-0 snap-center snap-always px-5 pt-[calc(var(--chrome-top)+2.35rem)] pb-7 h-full relative overflow-hidden"
                 style={{
+                    paddingLeft: 'var(--moro-desktop-page-x, 1.25rem)',
+                    paddingRight: 'var(--moro-desktop-page-x, 1.25rem)',
+                    paddingTop: 'var(--moro-desktop-page-top, calc(var(--chrome-top) + 2.35rem))',
+                    paddingBottom: 'var(--moro-desktop-page-bottom, 1.75rem)',
                     transform: 'translateZ(0)',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
@@ -1270,7 +1318,11 @@ const Launcher: React.FC = () => {
                   <div
                       data-desk-grid="true"
                       className="moro-desktop-grid w-full h-full grid grid-cols-4 gap-x-3 gap-y-3"
-                      style={{ gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))` }}
+                      style={{
+                          gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
+                          columnGap: 'var(--moro-desktop-grid-gap-x, 0.75rem)',
+                          rowGap: 'var(--moro-desktop-grid-gap-y, 0.75rem)',
+                      }}
                   >
                       {placed.map(({ item, col, row }, itemIndex) => (
                           <div
@@ -1321,7 +1373,14 @@ const Launcher: React.FC = () => {
       >
            <div
              className="moro-dock glass-pill rounded-full px-8 py-3.5 flex gap-7 sm:gap-10 items-center mx-auto max-w-full justify-between overflow-x-auto no-scrollbar transform-gpu transition-[background,border-color,box-shadow] duration-300"
-             style={dockShellStyle}
+             style={{
+                 ...dockShellStyle,
+                 gap: 'var(--moro-dock-gap, 1.75rem)',
+                 paddingLeft: 'var(--moro-dock-pad-x, 2rem)',
+                 paddingRight: 'var(--moro-dock-pad-x, 2rem)',
+                 paddingTop: 'var(--moro-dock-pad-y, 0.875rem)',
+                 paddingBottom: 'var(--moro-dock-pad-y, 0.875rem)',
+             }}
             >
                {dockAppsConfig.map(app => (
                    <div key={app.id} className="relative">
@@ -1343,6 +1402,7 @@ const Launcher: React.FC = () => {
           activeCharId={scheduleChar?.id || null}
           onSwitchCharacter={(id) => setScheduleCharId(id)}
           schedule={scheduleData}
+          lifeNotes={scheduleLifeNotes}
           activeCharacter={scheduleChar}
           contentColor={contentColor}
       />
