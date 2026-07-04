@@ -1,6 +1,6 @@
 # 应用更新（GitHub Releases + Appflow）
 
-Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、下载新版 APK、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
+Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、下载 / 安装新版、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
 
 ## APK 更新发布流程
 
@@ -71,6 +71,48 @@ pnpm cap:sync
 没有 `moro-update.json` 时，App 会尝试从 Release 标题、tag、正文或 APK 文件名里解析 `versionCode`，但这只是兜底；正式发布请始终附带 `moro-update.json`。
 
 Android 不允许普通 App 静默安装 APK。Moro 会下载 APK、校验可选的 SHA-256，然后打开系统安装器；用户仍需手动确认安装，并按系统提示允许 Moro 安装未知来源应用。
+
+## iPhone IPA 更新发布流程
+
+iPhone 安装版会按 iOS 平台单独查找 GitHub Releases：优先选择最近带 `.ipa` 或 `moro-ios-install.plist` 的 release，不会误用 Android APK release。文具盒里的按钮会打开 `itms-services://` 安装确认页，用户仍需按 iOS 系统提示继续安装。
+
+推荐在 iOS release 里同时上传：
+
+- `Moro-ios-x.y.z.ipa`
+- `moro-ios-install.plist`
+
+`moro-ios-install.plist` 里的 `software-package` URL 必须指向同一版 IPA，`bundle-identifier` 要和 Xcode 工程里的 Bundle ID 一致。当前默认 Bundle ID 是 `wb.uniusc9734.tool7`。
+
+如果 release 里暂时没有 plist，App 会退回读取仓库里的 `release/moro-ios-install.plist`。这能兜住现有发布，但正式发包仍建议把 plist 作为 release asset 一起上传，避免 main 分支 plist 和旧 release 版本不一致。
+
+也可以在打包前显式指定 iOS 安装清单或完整安装链接：
+
+```dotenv
+VITE_MORO_IOS_INSTALL_PLIST_URL=https://example.com/moro-ios-install.plist
+VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A%2F%2Fexample.com%2Fmoro-ios-install.plist
+```
+
+如果使用固定 `moro-update.json`，可以把 iOS 信息放到 `ios` 字段：
+
+```json
+{
+  "android": {
+    "versionCode": 8,
+    "versionName": "1.0.7",
+    "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/moro.apk"
+  },
+  "ios": {
+    "versionName": "1.0.7.2",
+    "buildNumber": 10,
+    "bundleId": "wb.uniusc9734.tool7",
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/moro-ios-install.plist",
+    "releaseNotes": "修复 iPhone 安装版稳定性"
+  }
+}
+```
+
+只有 `ipaUrl` 而没有 `plistUrl` / `installUrl` 时，iOS 不能直接安装 IPA；文具盒会提示安装清单不可用，而不是打开一个无法安装的 IPA 下载页。
 
 ## Ionic Appflow Live Updates
 

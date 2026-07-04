@@ -1,5 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const capState = vi.hoisted(() => ({
+  platform: 'web',
+  native: false,
+  pluginAvailable: false,
+}));
+
+const appInfoState = vi.hoisted(() => ({
+  info: {
+    id: 'wb.uniusc9734.tool7',
+    name: 'Moro',
+    version: '1.0.7.0',
+    build: '8',
+  },
+}));
+
 vi.mock('./buildInfo', () => ({
   APP_VERSION: 'test',
   BUILD_LABEL: 'test@0000000',
@@ -7,15 +22,21 @@ vi.mock('./buildInfo', () => ({
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
-    getPlatform: () => 'web',
-    isNativePlatform: () => false,
-    isPluginAvailable: () => false,
+    getPlatform: () => capState.platform,
+    isNativePlatform: () => capState.native,
+    isPluginAvailable: () => capState.pluginAvailable,
   },
   CapacitorHttp: {
     get: vi.fn(),
     request: vi.fn(),
   },
   registerPlugin: vi.fn(() => ({})),
+}));
+
+vi.mock('@capacitor/app', () => ({
+  App: {
+    getInfo: vi.fn(async () => appInfoState.info),
+  },
 }));
 
 const latestRelease = {
@@ -54,6 +75,15 @@ const releaseList = [iosOnlyRelease, latestRelease];
 
 describe('app update manifest', () => {
   afterEach(() => {
+    capState.platform = 'web';
+    capState.native = false;
+    capState.pluginAvailable = false;
+    appInfoState.info = {
+      id: 'wb.uniusc9734.tool7',
+      name: 'Moro',
+      version: '1.0.7.0',
+      build: '8',
+    };
     vi.unstubAllGlobals();
     vi.clearAllMocks();
     vi.resetModules();
@@ -142,5 +172,46 @@ describe('app update manifest', () => {
         method: 'POST',
       }),
     );
+  });
+
+  it('selects an iOS IPA release and opens through an install manifest', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases?per_page=20')) {
+        return Response.json(releaseList);
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { fetchConfiguredAppUpdateManifest } = await import('./appUpdates');
+    const manifest = await fetchConfiguredAppUpdateManifest('ios');
+
+    expect(manifest.platform).toBe('ios');
+    expect(manifest.packageType).toBe('ipa');
+    expect(manifest.versionName).toBe('1.0.7.1');
+    expect(manifest.ipaUrl).toBe('https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.1/Moro-ios-1.0.7.1.ipa');
+    expect(manifest.plistUrl).toBe('https://raw.githubusercontent.com/SAWA-25/moro-native/main/release/moro-ios-install.plist');
+    expect(manifest.installUrl).toMatch(/^itms-services:\/\/\?action=download-manifest&url=/);
+  });
+
+  it('checks iOS updates against the native app version name', async () => {
+    capState.platform = 'ios';
+    capState.native = true;
+    const { CapacitorHttp } = await import('@capacitor/core');
+    vi.mocked(CapacitorHttp.get).mockImplementation(async (options: any) => {
+      const url = String(options?.url || '');
+      if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases?per_page=20')) {
+        return { status: 200, data: releaseList, headers: {}, url };
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+
+    const { checkConfiguredAppUpdate } = await import('./appUpdates');
+    const result = await checkConfiguredAppUpdate();
+
+    expect(result.current.platform).toBe('ios');
+    expect(result.latest.platform).toBe('ios');
+    expect(result.latest.versionName).toBe('1.0.7.1');
+    expect(result.updateAvailable).toBe(true);
   });
 });

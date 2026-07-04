@@ -32,7 +32,7 @@ import {
 } from '../utils/contextBudget';
 import {
     checkConfiguredAppUpdate,
-    downloadAndInstallApk,
+    downloadAndInstallApp,
     getNativeAppInfo,
     openInstallerPermissionSettings,
     type AppUpdateCheckResult,
@@ -331,11 +331,11 @@ const DiagRow: React.FC<{ label: string; value: string; bad?: boolean }> = ({ la
     </div>
 );
 
-const formatApkVersion = (versionName?: string, versionCode?: number | string) =>
-    `${versionName || 'unknown'}（${versionCode || 0}）`;
+const formatAppPackageVersion = (versionName?: string, versionCode?: number | string, platform?: string) =>
+    platform === 'ios' ? (versionName || 'unknown') : `${versionName || 'unknown'}（${versionCode || 0}）`;
 
 const formatApkNoUpdateStatus = (result: AppUpdateCheckResult) =>
-    `当前已是最新版：本机 ${formatApkVersion(result.current.versionName, result.current.versionCode)} · 远端 ${formatApkVersion(result.latest.versionName, result.latest.versionCode)}`;
+    `当前已是最新版：本机 ${formatAppPackageVersion(result.current.versionName, result.current.versionCode, result.current.platform)} · 远端 ${formatAppPackageVersion(result.latest.versionName, result.latest.versionCode, result.latest.platform)}`;
 
 /** 界面全屏开关（文具盒）：用 Fullscreen API 让整机网页铺满屏幕、藏起浏览器地址栏等 chrome。 */
 const FullscreenCard: React.FC<{ addToast: (m: string, t: 'info' | 'success' | 'error') => void }> = ({ addToast }) => {
@@ -777,7 +777,7 @@ const Settings: React.FC = () => {
           setNativeAppInfo(result.current);
           setApkUpdateCheck(result);
           setApkUpdateStatus(result.updateAvailable
-              ? `发现新版本 ${result.latest.versionName}（${result.latest.versionCode}）`
+              ? `发现新版本 ${formatAppPackageVersion(result.latest.versionName, result.latest.versionCode, result.latest.platform)}`
               : formatApkNoUpdateStatus(result));
       } catch (e: any) {
           console.warn('[Settings] check app update failed', e);
@@ -814,14 +814,15 @@ const Settings: React.FC = () => {
           return;
       }
 
+      const isIosPackage = latest.platform === 'ios' || latest.packageType === 'ipa';
       setApkUpdateBusy(true);
-      setApkUpdateStatus(useDomesticLine ? '正在通过国内线路下载更新包...' : '正在下载更新包...');
+      setApkUpdateStatus(isIosPackage ? '正在打开 iPhone 安装确认...' : useDomesticLine ? '正在通过国内线路下载更新包...' : '正在下载更新包...');
       setApkDownloadProgress(null);
       try {
           const downloadTarget = useDomesticLine && latest.domesticApkUrl
               ? { ...latest, apkUrl: latest.domesticApkUrl }
               : latest;
-          await downloadAndInstallApk(downloadTarget, progress => {
+          await downloadAndInstallApp(downloadTarget, progress => {
               setApkDownloadProgress(progress);
               if (progress.status === 'downloading') {
                   setApkUpdateStatus(`正在下载更新包：${Math.round(progress.progress * 100)}%`);
@@ -831,7 +832,7 @@ const Settings: React.FC = () => {
                   setApkUpdateStatus('正在打开系统安装器...');
               }
           });
-          setApkUpdateStatus('系统安装器已打开，请按提示确认安装。');
+          setApkUpdateStatus(isIosPackage ? 'iPhone 安装确认已打开，请按系统提示继续安装。' : '系统安装器已打开，请按提示确认安装。');
       } catch (e: any) {
           console.warn('[Settings] download app update failed', e);
           const message = e?.message || '下载或安装失败';
@@ -1485,21 +1486,23 @@ const Settings: React.FC = () => {
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-black text-[#2f3437]">当前安装包</p>
                                     <p className="text-[10px] text-[#69716d] font-mono truncate">
-                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · code ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入 Android App'}
+                                        {nativeAppInfo?.native ? `${nativeAppInfo.versionName || '?'} · ${nativeAppInfo.platform === 'ios' ? 'build' : 'code'} ${nativeAppInfo.versionCode || 0}` : '网页版 / 未进入手机安装版'}
                                     </p>
                                 </div>
-                                {nativeAppInfo?.native && !nativeAppInfo.canRequestPackageInstalls && (
+                                {nativeAppInfo?.native && nativeAppInfo.platform === 'android' && !nativeAppInfo.canRequestPackageInstalls && (
                                     <button type="button" onClick={handleOpenInstallPermission} className={`shrink-0 px-2.5 py-1.5 text-[10px] font-black ${STICKER}`}>
                                         安装权限
                                     </button>
                                 )}
                             </div>
                             <p className="text-[10px] text-[#69716d] mt-2 leading-relaxed">
-                                有新版本时会下载安装包并打开 Android 系统安装器，仍需你手动确认安装。
+                                {nativeAppInfo?.platform === 'ios'
+                                    ? '有新版本时会打开 iPhone 安装确认页，仍需你按系统提示继续安装。'
+                                    : '有新版本时会下载安装包并打开 Android 系统安装器，仍需你手动确认安装。'}
                             </p>
                         </div>
 
-                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.domesticApkUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
+                        <div className={`grid gap-3 ${apkUpdateCheck?.latest.packageType === 'apk' && apkUpdateCheck.latest.domesticApkUrl ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2'}`}>
                             <button
                                 type="button"
                                 disabled={apkUpdateBusy}
@@ -1514,9 +1517,9 @@ const Settings: React.FC = () => {
                                 onClick={() => handleDownloadApkUpdate(false)}
                                 className={`py-2.5 text-xs font-black disabled:opacity-40 ${apkUpdateCheck?.updateAvailable ? INK_BTN : STICKER}`}
                             >
-                                下载新版
+                                {apkUpdateCheck?.latest.packageType === 'ipa' ? '安装新版' : '下载新版'}
                             </button>
-                            {apkUpdateCheck?.latest.domesticApkUrl && (
+                            {apkUpdateCheck?.latest.packageType === 'apk' && apkUpdateCheck.latest.domesticApkUrl && (
                                 <button
                                     type="button"
                                     disabled={apkUpdateBusy || !apkUpdateCheck?.updateAvailable}

@@ -71,6 +71,18 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-ios-ipa-settings-update-install-fix',
+    date: '2026-07-05',
+    title: 'iPhone 安装版可以从文具盒安装 IPA 更新了',
+    kind: 'fix',
+    summary: '修复 iPhone 安装版在文具盒检查更新后误走 Android APK 下载、无法继续安装新版的问题。',
+    items: [
+      '文具盒会按当前手机平台查找更新：iPhone 只看 iOS / IPA 发布，Android 继续只看 APK 发布。',
+      'iPhone 点“安装新版”会打开系统安装确认页，不再下载或跳转到 Android 安装包。',
+      '更新判断会读取 iPhone 安装包自己的版本号，避免网页版本号和 IPA 版本号混在一起导致误判。',
+    ],
+  },
+  {
     id: '2026-07-05-android-apk-update-channel-fix',
     date: '2026-07-05',
     title: 'Android 文具盒可以重新检查安装包更新了',
@@ -5221,7 +5233,7 @@ const BASE_MANUAL_ENTRIES: ManualEntry[] = [
         answer: '支持流式的服务商可以开，回复会一边生成一边显示；如果经常半路断、乱码或空白，先关闭流式输出再试。',
       },
     ],
-    tips: ['手机安装版更新需要系统确认安装；备份文件和 API 凭据只保存在你的设备或你自己的云端账号下。'],
+    tips: ['手机安装版更新需要系统确认安装；iPhone 会打开安装确认页，Android 会打开系统安装器。备份文件和 API 凭据只保存在你的设备或你自己的云端账号下。'],
     settingSections: [
       {
         id: 'settings-basic',
@@ -5254,7 +5266,7 @@ const BASE_MANUAL_ENTRIES: ManualEntry[] = [
           {
             id: 'settings-apk-update',
             title: '应用更新',
-            description: '检查开发者发布的新版本，下载新版安装包；国内线路只是下载通道不同，版本相同。',
+            description: '检查开发者发布的新版本；iPhone 打开 IPA 安装确认，Android 下载新版 APK，国内线路只是下载通道不同。',
             path: ['文具盒', '基础与安全', '应用更新'],
             deepLink: settingsLink('manual-settings-update', 'group:basic'),
             nativeOnly: true,
