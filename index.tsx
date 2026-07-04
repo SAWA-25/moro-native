@@ -1,51 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './styles/tailwind.css';
-import App from './App';
-import { ActiveMsgRuntime } from './utils/activeMsgRuntime';
-import { KeepAlive } from './utils/keepAlive';
-import { ProactiveChat } from './utils/proactiveChat';
-import { VRScheduler } from './utils/vrWorld/scheduler';
-import { installIOSStandaloneWorkaround } from './utils/iosStandalone';
-import { installNativeAppRuntimeClass, isNativeAppRuntime, NATIVE_APP_READY_EVENT } from './utils/nativeRuntime';
-import { installWakeListener } from './utils/proactivePushConfig';
+import {
+  installRootErrorFallback,
+  isRootErrorFallbackVisible,
+  reportRootError,
+} from './utils/rootErrorFallback';
 
-const nativeRuntime = installNativeAppRuntimeClass();
-if (!nativeRuntime) installIOSStandaloneWorkaround();
+installRootErrorFallback();
 
-// Register the keep-alive Service Worker early so it's ready before any AI calls.
-// Native Android WebView does not need the browser SW wake path; keeping it out
-// avoids startup work and web-only side effects inside the packaged app.
-const runtimeReady = isNativeAppRuntime() ? Promise.resolve() : KeepAlive.init();
-let backgroundRuntimesStarted = false;
-const startBackgroundRuntimes = () => {
-  if (backgroundRuntimesStarted) return;
-  backgroundRuntimesStarted = true;
-  // Resume any active proactive schedule after SW is ready
-  ProactiveChat.resume();
-  // Resume 「页外」 autonomous-login schedules
-  VRScheduler.resume();
-  void ActiveMsgRuntime.init();
-  // Record every wake the SW reports so the diagnostic panel can show "last received".
-  installWakeListener();
-};
+void import('./bootstrap').catch((error) => {
+  if (isRootErrorFallbackVisible()) return;
+  reportRootError(error, { source: 'bootstrap-import' });
+});
 
-if (nativeRuntime) {
-  window.addEventListener(NATIVE_APP_READY_EVENT, () => {
-    window.setTimeout(startBackgroundRuntimes, 600);
-  }, { once: true });
-} else {
-  runtimeReady.then(startBackgroundRuntimes);
-}
-
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);

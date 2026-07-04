@@ -25,6 +25,12 @@ const lazyApp = (factory: () => Promise<{ default: React.ComponentType<any> }>):
   return Comp;
 };
 
+const preloadSilently = (Comp: PreloadableLazy): void => {
+  void Comp.preload().catch(() => {
+    // Background prewarm is opportunistic; the visible AppErrorBoundary handles a real open failure.
+  });
+};
+
 // 预热 React.lazy 的「负载」本身：不仅下载模块，还把 lazy 内部状态推进到 resolved，
 // 使首次渲染该 App 时不再 suspend —— 杜绝切换瞬间露出外壳粉紫底色（深色 App 上尤其扎眼）的那一帧闪烁。
 // _payload / _init 为 React.lazy 内部结构（本项目锁定 React 18，形态稳定）；带防御，取不到则退化为仅预热 Vite 模块。
@@ -37,7 +43,7 @@ const warmLazy = (Comp: PreloadableLazy): void => {
     const payload: any = (Comp as any)?._payload;
     const init: any = (Comp as any)?._init;
     if (!payload || typeof init !== 'function' || payload._status !== LAZY_UNINITIALIZED) {
-      Comp.preload(); // 已在加载/已加载，或拿不到内部结构 → 仅预热 Vite 模块
+      preloadSilently(Comp); // 已在加载/已加载，或拿不到内部结构 → 仅预热 Vite 模块
       return;
     }
     init(payload); // 触发下载 + 解析负载
@@ -53,7 +59,7 @@ const warmLazy = (Comp: PreloadableLazy): void => {
       });
     }
   } catch {
-    try { Comp.preload(); } catch { /* ignore */ }
+    try { preloadSilently(Comp); } catch { /* ignore */ }
   }
 };
 

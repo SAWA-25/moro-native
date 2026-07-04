@@ -22,6 +22,139 @@
 
     <script>
       (function () {
+        if (window.__moroPrebootFallbackInstalled) return;
+        window.__moroPrebootFallbackInstalled = true;
+        var ERROR_ID = 'moro-preboot-error';
+        var assetErrors = window.__moroStaticAssetErrors = window.__moroStaticAssetErrors || [];
+        var text = {
+          title: '\u542f\u52a8\u6587\u4ef6\u6ca1\u6709\u52a0\u8f7d\u6210\u529f',
+          timeoutTitle: '\u542f\u52a8\u7b49\u5f85\u8d85\u65f6',
+          hint: '\u8bf7\u590d\u5236\u8bca\u65ad\u4fe1\u606f\u53d1\u7ed9\u5f00\u53d1\u8005\uff0c\u7136\u540e\u5c1d\u8bd5\u91cd\u65b0\u6253\u5f00\u3002',
+          copy: '\u590d\u5236\u8bca\u65ad',
+          copied: '\u5df2\u590d\u5236',
+          reload: '\u91cd\u65b0\u52a0\u8f7d'
+        };
+        var isStartupTarget = function (target) {
+          if (!target || !target.tagName) return null;
+          var tag = String(target.tagName).toLowerCase();
+          if (tag === 'script') {
+            return { tag: tag, url: target.src || target.getAttribute('src') || '', time: new Date().toISOString() };
+          }
+          if (tag !== 'link') return null;
+          var rel = String(target.rel || target.getAttribute('rel') || '').toLowerCase();
+          if (!/(modulepreload|preload|stylesheet)/.test(rel)) return null;
+          return { tag: tag, rel: rel, url: target.href || target.getAttribute('href') || '', time: new Date().toISOString() };
+        };
+        var diagnosticText = function (payload) {
+          var lines = [
+            'Moro preboot diagnostic',
+            'Time: ' + new Date().toISOString(),
+            'Source: ' + (payload.source || 'preboot'),
+            'URL: ' + window.location.href,
+            'User agent: ' + navigator.userAgent,
+            'Message: ' + (payload.message || 'Startup failed before React mounted.')
+          ];
+          if (payload.detail) lines.push('Detail: ' + payload.detail);
+          if (assetErrors.length) {
+            try { lines.push('Startup asset errors: ' + JSON.stringify(assetErrors, null, 2).slice(0, 4000)); }
+            catch (e) { lines.push('Startup asset errors: ' + String(assetErrors)); }
+          }
+          return lines.join('\n');
+        };
+        var copyWithTextarea = function (value, button) {
+          try {
+            var textarea = document.createElement('textarea');
+            textarea.value = value;
+            textarea.setAttribute('readonly', 'true');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            if (document.execCommand('copy')) {
+              button.textContent = text.copied;
+              window.setTimeout(function () { button.textContent = text.copy; }, 1800);
+            }
+            document.body.removeChild(textarea);
+          } catch (e) {
+            window.prompt('\u8bf7\u624b\u52a8\u590d\u5236\u8bca\u65ad\u4fe1\u606f', value);
+          }
+        };
+        var copyText = function (value, button) {
+          var done = function () {
+            button.textContent = text.copied;
+            window.setTimeout(function () { button.textContent = text.copy; }, 1800);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(done).catch(function () { copyWithTextarea(value, button); });
+            return;
+          }
+          copyWithTextarea(value, button);
+        };
+        var render = function (payload) {
+          if (document.documentElement.dataset.moroRootMounted === 'true') return;
+          if (!document.body) {
+            document.addEventListener('DOMContentLoaded', function () { render(payload); }, { once: true });
+            return;
+          }
+          var diagnostic = diagnosticText(payload || {});
+          var node = document.getElementById(ERROR_ID);
+          if (!node) {
+            node = document.createElement('div');
+            node.id = ERROR_ID;
+            document.body.appendChild(node);
+          }
+          node.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:24px;background:#0f172a;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:auto;';
+          node.textContent = '';
+          var panel = document.createElement('div');
+          panel.style.cssText = 'width:min(720px,100%);box-sizing:border-box;padding:22px;border-radius:24px;background:rgba(15,23,42,.96);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 80px rgba(0,0,0,.35);';
+          var title = document.createElement('h1');
+          title.textContent = payload && payload.source === 'startup-timeout' ? text.timeoutTitle : text.title;
+          title.style.cssText = 'font-size:22px;line-height:1.25;margin:0 0 10px;font-weight:800;color:#fff;';
+          var hint = document.createElement('p');
+          hint.textContent = text.hint;
+          hint.style.cssText = 'font-size:13px;line-height:1.7;margin:0 0 16px;color:#cbd5e1;';
+          var pre = document.createElement('pre');
+          pre.textContent = diagnostic;
+          pre.style.cssText = 'box-sizing:border-box;width:100%;max-height:45vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;margin:0 0 16px;padding:14px;border-radius:16px;background:rgba(2,6,23,.78);border:1px solid rgba(148,163,184,.25);font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e2e8f0;';
+          var actions = document.createElement('div');
+          actions.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;';
+          var copy = document.createElement('button');
+          copy.type = 'button';
+          copy.textContent = text.copy;
+          copy.style.cssText = 'appearance:none;border:0;border-radius:999px;padding:11px 16px;background:#2563eb;color:#fff;font-size:13px;font-weight:800;cursor:pointer;';
+          copy.onclick = function () { copyText(diagnostic, copy); };
+          var reload = document.createElement('button');
+          reload.type = 'button';
+          reload.textContent = text.reload;
+          reload.style.cssText = 'appearance:none;border:0;border-radius:999px;padding:11px 16px;background:#475569;color:#fff;font-size:13px;font-weight:800;cursor:pointer;';
+          reload.onclick = function () { window.location.reload(); };
+          actions.appendChild(copy);
+          actions.appendChild(reload);
+          panel.appendChild(title);
+          panel.appendChild(hint);
+          panel.appendChild(pre);
+          panel.appendChild(actions);
+          node.appendChild(panel);
+        };
+        window.__moroRenderStartupError = render;
+        window.addEventListener('error', function (event) {
+          var asset = isStartupTarget(event.target);
+          if (!asset) return;
+          assetErrors.push(asset);
+          render({ source: 'startup-asset', message: '\u542f\u52a8\u8d44\u6e90\u52a0\u8f7d\u5931\u8d25', detail: asset.url });
+        }, true);
+        window.setTimeout(function () {
+          if (document.documentElement.dataset.moroRootMounted === 'true') return;
+          var root = document.getElementById('root');
+          if (root && root.childElementCount === 0) {
+            render({ source: 'startup-timeout', message: 'React did not mount within 12 seconds.' });
+          }
+        }, 12000);
+      })();
+    </script>
+    <script>
+      (function () {
         var cdnHost = 'cdnjs' + '.cloudflare' + '.com';
         var cdnBase = 'https://' + cdnHost + '/ajax/libs/twemoji/14.0.2/72x72/';
         var localBase = new URL('%BASE_URL%vendor/twemoji/72x72/', window.location.href).href;

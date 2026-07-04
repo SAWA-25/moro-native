@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo } from 'react';
+import { isChunkLoadError as isRootChunkLoadError } from '../../utils/rootErrorFallback';
 
 const ERROR_COPY_LABEL = '\u590d\u5236\u62a5\u9519\u4fe1\u606f';
 const ERROR_COPIED_LABEL = '\u5df2\u590d\u5236';
@@ -121,19 +122,14 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
         window.location.reload();
     };
 
-    private isChunkLoadError = () => {
-        const text = `${this.state.error?.message || ''}\n${this.state.error?.stack || ''}`;
-        return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError/i.test(text);
-    };
-
     render() {
         if (!this.state.hasError) {
             return this.props.children;
         }
-        const isChunkLoadError = this.isChunkLoadError();
+        const isChunkLoadError = isRootChunkLoadError(this.state.error);
 
         return (
-            <div className="relative isolate z-[120] w-full h-full flex flex-col items-center justify-center bg-slate-900/95 text-white p-6 text-center space-y-4 pointer-events-auto">
+            <div data-moro-app-error-boundary="active" className="relative isolate z-[120] w-full h-full flex flex-col items-center justify-center bg-slate-900/95 text-white p-6 text-center space-y-4 pointer-events-auto">
                 <img
                     src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f635.png"
                     alt="error"

@@ -71,6 +71,20 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-ios-1072-white-screen-diagnostics',
+    date: '2026-07-05',
+    title: 'iPhone 白屏时会显示可复制诊断了',
+    kind: 'fix',
+    summary: '针对 iPhone 安装版 1.0.7.2 打开后白屏的问题，启动阶段会尽量显示错误诊断和重新加载按钮，方便定位而不是只停在空白页。',
+    items: [
+      '如果启动文件、样式文件或后续页面模块没有加载成功，会出现可复制的诊断信息，里面包含时间、设备环境和出错来源。',
+      'React 还没挂载、挂载失败或遇到未处理的启动错误时，也会显示诊断页并提供重新加载入口。',
+      '安装包发布前的配置检查也更完整，减少启动兜底相关问题漏到用户手机上的机会。',
+      '已经进入某个 App 后的页面崩溃仍由原来的 App 错误页处理，不会被新的启动诊断覆盖。',
+      '这次只增强错误提示和启动兜底，不会改动已有角色、聊天记录、主题、记忆或 API 设置。',
+    ],
+  },
+  {
     id: '2026-07-05-native-cold-start-static-assets',
     date: '2026-07-05',
     title: '安装版冷启动少等外部资源了',

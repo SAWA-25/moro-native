@@ -1,8 +1,9 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { bakeVoiceMiddleware } from './server/bake-voice-middleware';
 import worker from './worker/index.js';
 
@@ -14,6 +15,11 @@ const LOCAL_NATIVE_FONT_FILES = [
   'fonts/moro/playfair-display-latin.woff2',
   'fonts/moro/playfair-display-italic-latin.woff2',
 ];
+type MutableBundleItem = {
+  type?: string;
+  code?: string;
+};
+type MutableOutputBundle = Record<string, MutableBundleItem>;
 
 function assertNativeStaticResources(outDir: string) {
   const htmlPath = `${outDir}/index.html`;
@@ -97,10 +103,10 @@ export default defineConfig(({ command, mode }) => {
       : []),
     {
       name: 'moro-native-prune-browser-runtime',
-      generateBundle(_, bundle) {
+      generateBundle(_: unknown, bundle: MutableOutputBundle) {
         if (buildTarget !== 'native') return;
         for (const item of Object.values(bundle)) {
-          if (item.type !== 'chunk') continue;
+          if (item.type !== 'chunk' || typeof item.code !== 'string') continue;
           item.code = item.code.split(TWEMOJI_CDN_BASE).join(LOCAL_TWEMOJI_BASE);
         }
       },
@@ -112,14 +118,14 @@ export default defineConfig(({ command, mode }) => {
     },
     {
       name: 'bake-voice-middleware',
-      configureServer(server) {
+      configureServer(server: ViteDevServer) {
         server.middlewares.use('/api/minimax/bake-voice', bakeVoiceMiddleware);
       },
     },
     {
       name: 'moro-worker-dev-routes',
-      configureServer(server) {
-        server.middlewares.use('/qqmusic', async (req, res) => {
+      configureServer(server: ViteDevServer) {
+        server.middlewares.use('/qqmusic', async (req: IncomingMessage, res: ServerResponse) => {
           try {
             const chunks: Buffer[] = [];
             for await (const chunk of req) {
