@@ -163,6 +163,35 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
 
   // Race Condition Guards
   const editingIdRef = useRef<string | null>(null);
+  const formDataRef = useRef<CharacterProfile | null>(null);
+  const updateCharacterRef = useRef(updateCharacter);
+  const formDataDirtyRef = useRef(false);
+  const saveTimerRef = useRef<number | null>(null);
+
+  const clearScheduledSave = () => {
+      if (saveTimerRef.current !== null) {
+          window.clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+      }
+  };
+
+  const flushPendingFormData = (reason: string, requireActive = true) => {
+      const current = formDataRef.current;
+      if (!formDataDirtyRef.current || !current?.id) {
+          clearScheduledSave();
+          return;
+      }
+      if (requireActive && editingIdRef.current && current.id !== editingIdRef.current) {
+          console.warn(`[Character] Skip stale ${reason}: ${current.id} is not active ${editingIdRef.current}`);
+          clearScheduledSave();
+          return;
+      }
+      clearScheduledSave();
+      formDataDirtyRef.current = false;
+      void updateCharacterRef.current(current.id, current).catch(e => {
+          console.warn(`[Character] ${reason} save failed:`, e);
+      });
+  };
 
   // Modals
   const [showImportModal, setShowImportModal] = useState(false);
@@ -287,6 +316,21 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
       editingIdRef.current = editingId;
   }, [editingId]);
 
+  useEffect(() => {
+      formDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+      updateCharacterRef.current = updateCharacter;
+  }, [updateCharacter]);
+
+  useEffect(() => {
+      return () => {
+          flushPendingFormData('unmount', false);
+          clearScheduledSave();
+      };
+  }, []);
+
   // CRITICAL FIX: Breaking the render loop.
   // We only sync from global 'characters' to local 'formData' when:
   // 1. We enter edit mode (view becomes detail)
@@ -296,10 +340,15 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
         // Only if formData is not set OR the ID doesn't match
         if (!formData || formData.id !== editingId) {
             const target = characters.find(c => c.id === editingId);
-            if (target) setFormData(target);
+            if (target) {
+                formDataDirtyRef.current = false;
+                clearScheduledSave();
+                formDataRef.current = target;
+                setFormData(target);
+            }
         }
     }
-  }, [editingId, view]);
+  }, [characters, editingId, formData?.id, view]);
 
   // 切换角色时把 URL draft 同步成该角色当前 https 头像 (若有), 否则清空.
   // 不监听 formData.avatar 的每次变化 —— 文件上传走 data URL 路径时 draft 应保持原样.
@@ -322,35 +371,49 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
     const localRefKeys = Object.keys(formData.refinedMemories || {}).length;
     if (latestMemCount > localMemCount || latestRefKeys > localRefKeys) {
         setFormData(prev => prev && prev.id === editingId
-            ? { ...prev, memories: latest.memories, refinedMemories: latest.refinedMemories }
+            ? (() => {
+                const next = { ...prev, memories: latest.memories, refinedMemories: latest.refinedMemories };
+                formDataRef.current = next;
+                return next;
+            })()
             : prev);
     }
   }, [characters, editingId]);
 
   // Auto-save Effect with Safety Guard
   useEffect(() => {
-    if (formData && editingId) {
-        // SAFETY GUARD: Only save if the formData ID matches the currently active editing ID.
-        // This prevents overwriting Character B with Character A's data if a delayed async call updates formData.
-        if (formData.id === editingId) {
-            updateCharacter(editingId, formData);
-        } else {
-            console.warn(`Race condition prevented: Tried to save data for ${formData.id} into slot ${editingId}`);
-        }
+    if (!formData || !editingId || !formDataDirtyRef.current) return;
+    // SAFETY GUARD: Only save if the formData ID matches the currently active editing ID.
+    // This prevents overwriting Character B with Character A's data if a delayed async call updates formData.
+    if (formData.id !== editingId) {
+        console.warn(`Race condition prevented: Tried to save data for ${formData.id} into slot ${editingId}`);
+        return;
     }
+    clearScheduledSave();
+    saveTimerRef.current = window.setTimeout(() => {
+        flushPendingFormData('debounced edit');
+    }, 700);
+    return clearScheduledSave;
   }, [formData]);
 
   const handleBack = () => {
+      flushPendingFormData('leave editor', false);
       // 从聊天 App 深链进来的：返回键直接回到来源页面（聊天/聊天列表），不落回本 App 列表或桌面
       if (returnAppRef.current) {
           const target = returnAppRef.current;
           returnAppRef.current = null;
+          setView('list');
+          setEditingId(null);
+          formDataRef.current = null;
+          setFormData(null);
           openApp(target);
           return;
       }
       if (view === 'detail') {
           setView('list');
           setEditingId(null);
+          formDataRef.current = null;
+          setFormData(null);
       } else closeApp();
   };
 
@@ -358,8 +421,22 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
       // Functional update to prevent stale state issues in simple closures
       setFormData(prev => {
           if (!prev) return null;
-          return { ...prev, [field]: value };
+          if (Object.is(prev[field], value)) return prev;
+          formDataDirtyRef.current = true;
+          const next = { ...prev, [field]: value };
+          formDataRef.current = next;
+          return next;
       });
+  };
+
+  const openCharacterDetail = (char: CharacterProfile) => {
+      flushPendingFormData('switch character', false);
+      formDataDirtyRef.current = false;
+      clearScheduledSave();
+      formDataRef.current = char;
+      setFormData(char);
+      setEditingId(char.id);
+      setView('detail');
   };
 
   // 生活侧写：用副 API（没开就回退主 API）依据人设 + 记忆生成一份「帮 TA 更了解自己」的速写。
@@ -1075,7 +1152,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                        <CharacterCard
                            key={char.id}
                            char={char}
-                           onClick={() => { setEditingId(char.id); setView('detail'); }}
+                           onClick={() => openCharacterDetail(char)}
                            onDelete={(e) => {
                                e.stopPropagation();
                                setDeleteConfirmTarget(char.id);
@@ -1149,7 +1226,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                    onClick={() => fileInputRef.current?.click()}
                                    title="上传头像"
                                >
-                                   <img src={formData.avatar} className={`w-20 h-20 object-cover rounded-[12px] group-hover:opacity-75 transition-opacity ${isCompressing ? 'opacity-50 blur-sm' : ''}`} alt="角色头像" />
+                                   <img src={formData.avatar || undefined} className={`w-20 h-20 object-cover rounded-[12px] group-hover:opacity-75 transition-opacity ${isCompressing ? 'opacity-50 blur-sm' : ''}`} alt="角色头像" />
                                    <span className="absolute inset-x-2 bottom-2 rounded-full bg-white/88 text-[9px] text-center py-0.5" style={{ color: ROSE_DARK }}>上传</span>
                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                </div>

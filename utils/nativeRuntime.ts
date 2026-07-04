@@ -1,5 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 
+export const NATIVE_APP_READY_EVENT = 'moro-native-app-ready';
+
 type SafeAreaInsets = { top: number; right: number; bottom: number; left: number };
 type SafeAreaEdge = keyof SafeAreaInsets;
 

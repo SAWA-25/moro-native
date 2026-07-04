@@ -676,6 +676,12 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [apiConfig, setApiConfig] = useState<APIConfig>(defaultApiConfig);
   const [auxApiConfig, setAuxApiConfig] = useState<AuxApiConfig>(defaultAuxApiConfig);
   const [isLocked, setIsLocked] = useState(true);
+  const nativeStartupBackgroundUnlockedRef = useRef(!isNativeAppRuntime());
+  const deferNativeStartupBackground = isNativeAppRuntime() && isLocked && !nativeStartupBackgroundUnlockedRef.current;
+
+  useEffect(() => {
+    if (!isLocked) nativeStartupBackgroundUnlockedRef.current = true;
+  }, [isLocked]);
   
   const getRealTime = (): VirtualTime => {
       const now = new Date();
@@ -1510,7 +1516,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   activeCharIdScheduleRef.current = activeCharacterId;
 
   useEffect(() => {
-      if (!isDataLoaded || characters.length === 0) return;
+      if (!isDataLoaded || characters.length === 0 || deferNativeStartupBackground) return;
       let cancelled = false;
       const checkAllSchedules = async () => {
           if (cancelled) return;
@@ -1612,7 +1618,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       schedulerRef.current = setInterval(checkAllSchedules, 5000);
       checkAllSchedules();
       return () => { cancelled = true; if (schedulerRef.current) clearInterval(schedulerRef.current); };
-  }, [isDataLoaded, characters]);
+  }, [isDataLoaded, characters, deferNativeStartupBackground]);
 
   const clearUnread = useCallback((charId: string) => {
       setUnreadMessages(prev => {
@@ -1630,7 +1636,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   }, []);
 
   useEffect(() => {
-      if (!isDataLoaded) return;
+      if (!isDataLoaded || deferNativeStartupBackground) return;
 
       const tickRelationshipNetwork = async () => {
           if (relationshipNetworkAutoRunningRef.current) return;
@@ -1742,7 +1748,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           document.removeEventListener('visibilitychange', visible);
       };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDataLoaded, markUnread]);
+  }, [isDataLoaded, markUnread, deferNativeStartupBackground]);
 
   // Listen for proactive messages to show unread red dot
   useEffect(() => {
@@ -2234,7 +2240,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   }, [characters, persistForceReplyRequest]);
 
   useEffect(() => {
-      if (!isDataLoaded) return;
+      if (!isDataLoaded || deferNativeStartupBackground) return;
       const run = (trigger: string, charIds?: string[]) => {
           void maybeRunMomentsAutoPost({
               characters: charactersRef.current,
@@ -2270,10 +2276,10 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           window.removeEventListener('proactive-message-sent', onProactive);
           window.removeEventListener('autonomous-life-catchup', onCatchup);
       };
-  }, [isDataLoaded]);
+  }, [isDataLoaded, deferNativeStartupBackground]);
 
   useEffect(() => {
-      if (!isDataLoaded) return;
+      if (!isDataLoaded || deferNativeStartupBackground) return;
 
       const drainQueuedProactive = () => {
           const nextQueued = proactiveQueueRef.current.shift();
@@ -3579,14 +3585,14 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           clearInterval(takeoutReactTimer);
       };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDataLoaded]);
+  }, [isDataLoaded, deferNativeStartupBackground]);
 
   // ─── 离线自主生活·回看补齐 ───────────────────────────────────────
   // 用户离线一段时间回来时，为开启了「自主生活」的角色补齐这段时间发生的小事，
   // 攒成「你不在时 TA 经历了…」的回顾时间线（LifeRecapModal 读 char_life_events 渲染）。
   // 用 localStorage 记上次活跃时刻；gap ≥ CATCHUP_MIN_GAP_MS 才补，且每段 gap 只补一次。
   useEffect(() => {
-      if (!isDataLoaded) return;
+      if (!isDataLoaded || deferNativeStartupBackground) return;
       const LAST_SEEN_KEY = 'autonomous_life_last_seen';
       const BUSY_KEY = 'autonomous_life_catchup_busy';
       const LEAVE_GEN_KEY = 'autonomous_life_leave_gen'; // 每角色「离线即生成」的上次时刻（防快速切后台刷爆 API）
@@ -3706,7 +3712,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           window.removeEventListener('blur', onBlur);
       };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDataLoaded]);
+  }, [isDataLoaded, deferNativeStartupBackground]);
 
   // ─── 离线主动消息·快照镜像 ───────────────────────────────────────
   // 把「开了主动消息的角色」的紧凑生成上下文（人设 + 当下日常 + 最近对话 + 解析好的副 API）
@@ -3714,7 +3720,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   // 主动消息（取材 ta 的日常）。每 5 分钟刷新一次保持新鲜；回前台时先对账（回填 SW 离线期间
   // 已发过的时间）避免本地定时器重复触发，再刷一次快照。失败全吞，绝不影响主流程。
   useEffect(() => {
-      if (!isDataLoaded) return;
+      if (!isDataLoaded || deferNativeStartupBackground) return;
       const mirror = () => { void mirrorProactiveSnapshots(charactersRef.current, apiConfigRef.current, auxApiConfigRef.current); };
       const onVisible = () => { if (document.visibilityState === 'visible') { void reconcileProactiveFires(); mirror(); } };
       void reconcileProactiveFires();
@@ -3726,7 +3732,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           document.removeEventListener('visibilitychange', onVisible);
       };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDataLoaded]);
+  }, [isDataLoaded, deferNativeStartupBackground]);
 
   const updateTheme = async (updates: Partial<OSTheme>) => {
     const { wallpaper, launcherWidgetImage, launcherWidgets, desktopDecorations, customFont, ...styleUpdates } = updates;

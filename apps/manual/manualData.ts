@@ -71,6 +71,19 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-04-ios-lockscreen-startup-stability',
+    date: '2026-07-04',
+    title: 'iPhone 安装包打开锁屏更稳了',
+    kind: 'fix',
+    summary: '修复 iPhone 13 Pro 等机型安装后容易卡在锁屏、进 App 白屏或反复重进的问题，并降低冷启动与角色编辑页的发热压力。',
+    items: [
+      '锁屏出来前不会再抢先预热一串后台 App，点开安装包后应先稳定进入锁屏界面。',
+      '主动消息、离线生活、闹钟、外卖反应和页外调度会等首次解锁后再接上，减少刚打开时卡住或手机变烫的机会。',
+      '剪影集进入登场人物的角色编辑页时，不会再刚打开就整份保存角色资料，降低两秒后白屏退回锁屏的概率。',
+      '这次只调整启动顺序和冷启动负载，不会改动已有角色、聊天记录、记忆、主题或 API 设置。',
+    ],
+  },
+  {
     id: '2026-07-04-chat-minimal-header-lift',
     date: '2026-07-04',
     title: '聊天顶部头像和按钮更贴近上方了',

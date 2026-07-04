@@ -157,7 +157,7 @@ import { App as CapApp } from '@capacitor/app';
 import { StatusBar as CapStatusBar, Style as StatusBarStyle } from '@capacitor/status-bar';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { isIOSStandaloneWebApp } from '../utils/iosStandalone';
-import { isNativeAppRuntime, isNativeIOSRuntime } from '../utils/nativeRuntime';
+import { isNativeAppRuntime, isNativeIOSRuntime, NATIVE_APP_READY_EVENT } from '../utils/nativeRuntime';
 import AppErrorBoundary from './os/AppErrorBoundary';
 import LockScreen from './os/LockScreen';
 import IncomingCallOverlay from './os/IncomingCallOverlay';
@@ -602,6 +602,7 @@ const PhoneShell: React.FC = () => {
   const nativeIOSRuntime = isNativeIOSRuntime();
   const previousLockedRef = useRef(isLocked);
   const manualNoticeSeenThisSessionRef = useRef<Set<string>>(new Set());
+  const nativeReadyEventSentRef = useRef(false);
   // 冷启动「世界入场」是否已结束。结束前由 BootSequence 接管整屏（同时取代旧的黑屏 spinner）。
   const [bootDone, setBootDone] = useState(false);
   // 已打开 App 保活栈：回桌面时只隐藏、不卸载，让正在生成的回复/番外/评论继续跑完。
@@ -639,6 +640,13 @@ const PhoneShell: React.FC = () => {
     const startId = window.setTimeout(() => ric(step), startDelay);
     return () => { cancelled = true; window.clearTimeout(startId); };
   }, [activeApp, bootDone, isDataLoaded, isLocked, nativeRuntime]);
+
+  useEffect(() => {
+    if (!nativeRuntime || nativeReadyEventSentRef.current) return;
+    if (!bootDone || isLocked || !isDataLoaded) return;
+    nativeReadyEventSentRef.current = true;
+    window.dispatchEvent(new CustomEvent(NATIVE_APP_READY_EVENT));
+  }, [bootDone, isDataLoaded, isLocked, nativeRuntime]);
 
   // 免责声明弹窗已按需求移除：首次进入时静默写入接受标记，
   // 保持依赖 DISCLAIMER_KEY 的下游逻辑（导入恢复检测等）不变
