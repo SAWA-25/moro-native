@@ -402,39 +402,43 @@ jobs:
 
           test -s "release/${IPA_NAME}"
 
-          signed_check_dir="${RUNNER_TEMP}/signed-ipa-check"
-          rm -rf "${signed_check_dir}"
-          mkdir -p "${signed_check_dir}"
-          unzip -q "release/${IPA_NAME}" -d "${signed_check_dir}"
-          signed_app_path="$(find "${signed_check_dir}/Payload" -maxdepth 1 -type d -name '*.app' -print -quit)"
-          if [[ -z "${signed_app_path}" ]]; then
-            echo "::error::Signed IPA does not contain a Payload/*.app bundle."
-            exit 1
-          fi
-          SIGNED_APP_PATH="${signed_app_path}" python3 - <<'PY'
+          IPA_PATH="release/${IPA_NAME}" python3 - <<'PY'
           import os
           import plistlib
+          import zipfile
           from collections import defaultdict
-          from pathlib import Path
 
-          app_path = Path(os.environ["SIGNED_APP_PATH"])
+          ipa_path = os.environ["IPA_PATH"]
           bundle_id = os.environ["BUNDLE_ID"]
-          main_info = app_path / "Info.plist"
-          with main_info.open("rb") as fh:
-              main_bundle_id = plistlib.load(fh).get("CFBundleIdentifier")
+
+          with zipfile.ZipFile(ipa_path) as ipa:
+              names = ipa.namelist()
+              app_roots = sorted({
+                  name.split("/", 2)[1]
+                  for name in names
+                  if name.startswith("Payload/") and ".app/" in name
+              })
+              if not app_roots:
+                  raise SystemExit("Signed IPA does not contain a Payload/*.app bundle.")
+              app_prefix = f"Payload/{app_roots[0]}/"
+              main_info_name = f"{app_prefix}Info.plist"
+              if main_info_name not in names:
+                  raise SystemExit("Signed IPA app bundle does not contain Info.plist.")
+              main_bundle_id = plistlib.loads(ipa.read(main_info_name)).get("CFBundleIdentifier")
+              seen = defaultdict(list)
+              for name in names:
+                  if not name.startswith(app_prefix) or not name.endswith("Info.plist"):
+                      continue
+                  try:
+                      info = plistlib.loads(ipa.read(name))
+                  except Exception:
+                      continue
+                  bundle = info.get("CFBundleIdentifier")
+                  if bundle:
+                      seen[bundle].append(name[len(app_prefix):])
+
           if main_bundle_id != bundle_id:
               raise SystemExit(f"Signed IPA bundle id {main_bundle_id} does not match {bundle_id}.")
-
-          seen = defaultdict(list)
-          for info_path in app_path.rglob("Info.plist"):
-              try:
-                  with info_path.open("rb") as fh:
-                      info = plistlib.load(fh)
-              except Exception:
-                  continue
-              bundle = info.get("CFBundleIdentifier")
-              if bundle:
-                  seen[bundle].append(str(info_path.relative_to(app_path)))
 
           duplicates = {bundle: paths for bundle, paths in seen.items() if len(paths) > 1}
           if duplicates:
