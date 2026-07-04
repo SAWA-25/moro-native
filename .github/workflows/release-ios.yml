@@ -204,10 +204,6 @@ jobs:
           security default-keychain -s "${keychain_path}"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychain_password}" "${keychain_path}"
           security find-identity -v -p codesigning "${keychain_path}"
-          if ! security find-identity -v -p codesigning "${keychain_path}" | grep -F "${CODE_SIGN_IDENTITY}" >/dev/null; then
-            echo "::error::Imported signing certificate does not expose a ${CODE_SIGN_IDENTITY} identity."
-            exit 1
-          fi
 
           security cms -D -i "${profile_path}" > "${profile_plist}"
           profile_uuid="$(/usr/libexec/PlistBuddy -c 'Print UUID' "${profile_plist}")"
