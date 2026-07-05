@@ -69,6 +69,7 @@ export const HtmlPreviewBlock: React.FC<{
             if (!doc || !doc.body) return;
             // 同 JS-Slash-Runner adjust_iframe_height：量内容真实高度并把 iframe 调成等高，
             // ResizeObserver 跟随脚本动态改动内容后的高度变化；超长内容兜底内部滚动
+            let frameId: number | null = null;
             const fit = () => {
                 try {
                     const root = doc.documentElement;
@@ -77,10 +78,17 @@ export const HtmlPreviewBlock: React.FC<{
                     f.style.height = Math.min(2400, Math.max(48, natural + 4)) + 'px';
                 } catch { /* 读不到时静默 */ }
             };
+            const scheduleFit = () => {
+                if (frameId !== null) return;
+                frameId = window.requestAnimationFrame(() => {
+                    frameId = null;
+                    fit();
+                });
+            };
             fit();
             f.__richPreviewRO?.disconnect();
             if (typeof ResizeObserver !== 'undefined') {
-                const ro = new ResizeObserver(() => fit());
+                const ro = new ResizeObserver(scheduleFit);
                 ro.observe(doc.body);
                 if (doc.documentElement) ro.observe(doc.documentElement);
                 f.__richPreviewRO = ro;

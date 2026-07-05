@@ -61,6 +61,11 @@ export const isChunkLoadError = (error: unknown): boolean => {
     return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError|Loading chunk \d+ failed|Unable to preload CSS|vite:preloadError/i.test(text);
 };
 
+export const isBenignResizeObserverError = (error: unknown, message?: string): boolean => {
+    const text = [message, stringifyError(error)].filter(Boolean).join('\n');
+    return /ResizeObserver loop (?:completed with undelivered notifications|limit exceeded)/i.test(text);
+};
+
 export const isRootErrorFallbackVisible = (): boolean => {
     if (typeof document === 'undefined') return false;
     return !!document.getElementById(ROOT_ERROR_ID);
@@ -88,6 +93,11 @@ export const installRootErrorFallback = () => {
     };
 
     window.addEventListener('error', (event) => {
+        if (isBenignResizeObserverError(event.error, event.message)) {
+            event.preventDefault();
+            return;
+        }
+
         const asset = getStartupAssetError(event);
         if (asset) {
             pushStartupAssetError(asset);
@@ -130,6 +140,7 @@ export const installRootErrorFallback = () => {
 
 export const reportRootError = (error: unknown, report: Omit<RootErrorReport, 'error'>) => {
     if (typeof document === 'undefined') return;
+    if (isBenignResizeObserverError(error, report.message)) return;
     if (shouldDeferToAppBoundary()) return;
 
     const fullReport: RootErrorReport = { ...report, error };

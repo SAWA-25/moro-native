@@ -2309,6 +2309,7 @@ const MessageItem = React.memo(({
                             if (!doc || !doc.body) return;
                             // 量内容真实高度并把 iframe 调成等高，避免内部滚动。
                             // 上限放宽到 2400，足够长卡片完整展开；真正超长的才会兜底滚动。
+                            let frameId: number | null = null;
                             const fit = () => {
                                 try {
                                     const root = doc.documentElement;
@@ -2321,12 +2322,19 @@ const MessageItem = React.memo(({
                                     f.style.height = h + 'px';
                                 } catch { /* 同源读不到时静默 */ }
                             };
+                            const scheduleFit = () => {
+                                if (frameId !== null) return;
+                                frameId = window.requestAnimationFrame(() => {
+                                    frameId = null;
+                                    fit();
+                                });
+                            };
                             fit();
                             // 交互卡片（:checked 展开 / 折叠）、动画、字体晚到都会改变高度，
                             // 用 ResizeObserver 持续跟随，让高度始终自适应而不是只量一次。
                             f.__htmlCardRO?.disconnect();
                             if (typeof ResizeObserver !== 'undefined') {
-                                const ro = new ResizeObserver(() => fit());
+                                const ro = new ResizeObserver(scheduleFit);
                                 ro.observe(doc.body);
                                 if (doc.documentElement) ro.observe(doc.documentElement);
                                 f.__htmlCardRO = ro;

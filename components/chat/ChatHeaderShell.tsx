@@ -157,12 +157,20 @@ const ChatHeaderShell: React.FC<ChatHeaderShellProps> = ({
     useEffect(() => {
         const node = buffPreviewRef.current;
         if (!node || typeof ResizeObserver === 'undefined') return;
+        let frameId: number | null = null;
         const ro = new ResizeObserver(() => {
-            setCollapsedVisibleCount(Math.min(COLLAPSED_BUFF_MAX, buffs.length));
-            setBuffSizeTick((t) => t + 1);
+            if (frameId !== null) return;
+            frameId = window.requestAnimationFrame(() => {
+                frameId = null;
+                setCollapsedVisibleCount(Math.min(COLLAPSED_BUFF_MAX, buffs.length));
+                setBuffSizeTick((t) => t + 1);
+            });
         });
         ro.observe(node);
-        return () => ro.disconnect();
+        return () => {
+            if (frameId !== null) window.cancelAnimationFrame(frameId);
+            ro.disconnect();
+        };
     }, [buffs.length]);
 
     // 关键修复：用「真实渲染出来的那一行」的横向溢出来判断，而不是另测一行隐藏样本。

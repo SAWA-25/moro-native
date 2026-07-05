@@ -71,6 +71,18 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-chat-resizeobserver-crash-fix',
+    date: '2026-07-05',
+    title: '切换聊天时不再被误判为崩溃',
+    kind: 'fix',
+    summary: '修复 Android 安装版在切换不同聊天时，偶尔因为系统的 ResizeObserver 布局通知误弹崩溃诊断页的问题。',
+    items: [
+      '快速切换联系人、进入聊天页或加载带 HTML 预览的消息时，Moro 会把这类浏览器布局通知当作普通渲染抖动处理，不再直接盖住整个应用。',
+      '聊天顶栏和消息里的自适应高度计算改为下一帧执行，减少 Android WebView 在布局变化密集时触发循环通知。',
+      '如果之后仍看到崩溃诊断页，说明可能是另一类真实错误；请继续复制诊断信息反馈。',
+    ],
+  },
+  {
     id: '2026-07-05-native-108-release',
     date: '2026-07-05',
     title: '安装版 1.0.8 把新玩具都抱进来了',
