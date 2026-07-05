@@ -1,1 +1,4 @@
 release/** filter=lfs diff=lfs merge=lfs -text
+release/moro-update.json text eol=lf -filter -diff -merge
+release/moro-ios-install.plist text eol=lf -filter -diff -merge
+release/plist-check/moro-ios-install.plist text eol=lf -filter -diff -merge

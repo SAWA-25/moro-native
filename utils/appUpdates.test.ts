@@ -141,6 +141,32 @@ describe('app update manifest', () => {
     expect(manifest.releaseNotes).toBe('新清单');
   });
 
+  it('uses the branch update manifest before scanning releases', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.startsWith('https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-update.json')) {
+        return Response.json({
+          versionCode: 11,
+          versionName: '1.0.8',
+          apkUrl: 'https://github.com/SAWA-25/moro-native/releases/download/v1.0.8/moro.apk',
+          releaseNotes: '静态清单',
+        });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { fetchConfiguredAppUpdateManifest } = await import('./appUpdates');
+    const manifest = await fetchConfiguredAppUpdateManifest();
+
+    expect(manifest.versionCode).toBe(11);
+    expect(manifest.versionName).toBe('1.0.8');
+    expect(manifest.releaseNotes).toBe('静态清单');
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/api\.github\.com\/repos\/SAWA-25\/moro-native\/releases/),
+      expect.anything(),
+    );
+  });
+
   it('uses the POST GitHub proxy when the direct GitHub releases request fails', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.startsWith('https://api.github.com/repos/SAWA-25/moro-native/releases?per_page=20')) {

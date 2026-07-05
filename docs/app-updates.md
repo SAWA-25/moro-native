@@ -4,7 +4,7 @@ Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普�
 
 ## APK 更新发布流程
 
-推荐把 Android APK 和 `moro-update.json` 一起放到 GitHub Releases。当前安装包默认检查 [SAWA-25/moro-native](https://github.com/SAWA-25/moro-native) 最近发布中第一条带 `moro-update.json` 或 APK 的 release；单独发布 iOS 包时，即使它成为 GitHub latest，也不会挡住 Android 更新检查。
+推荐把 Android APK 和 `moro-update.json` 一起放到 GitHub Releases，同时维护 `release/moro-update.json` 这份静态清单。当前安装包会先读取 `native-main` 分支里的 `release/moro-update.json`（默认走 `https://sullymeow.ccwu.cc/github?url=` 代理），失败后再回退检查 [SAWA-25/moro-native](https://github.com/SAWA-25/moro-native) 最近发布中第一条带 `moro-update.json` 或 APK 的 release；单独发布 iOS 包时，即使它成为 GitHub latest，也不会挡住 Android 更新检查。
 
 为了让清单里的下载地址长期稳定，发布 Release 时建议把 APK asset 命名为 `moro.apk`。如果你想带版本号命名也可以，把下面清单里的 `apkUrl` / `cnApkUrl` 改成对应文件名即可。
 
@@ -22,7 +22,7 @@ VITE_MORO_RELEASE_BRANCH=native-main
 VITE_MORO_RELEASE_API_URL=https://api.github.com/repos/SAWA-25/moro-native/releases/tags/v1.0.7
 ```
 
-如果不想走 GitHub Release API，也可以指定固定更新清单：
+如果不想走默认静态清单或 GitHub Release API，也可以指定固定更新清单：
 
 ```dotenv
 VITE_MORO_UPDATE_MANIFEST_URL=https://example.com/moro-update.json
@@ -48,7 +48,7 @@ pnpm cap:sync
 
 ## moro-update.json
 
-仓库根目录已经放了一份可直接改的 [moro-update.json](../moro-update.json)。发布时把它作为 GitHub Release asset 上传。推荐格式：
+仓库根目录已经放了一份可直接改的 [moro-update.json](../moro-update.json)，`release/moro-update.json` 是安装版默认优先读取的静态清单。发布时两份都要同步更新，并把根目录这份作为 GitHub Release asset 上传。推荐格式：
 
 ```json
 {
@@ -68,6 +68,12 @@ pnpm cap:sync
 
 `cnApkUrl` 是给国内用户的下载线路，建议放你自己的国内 CDN、对象存储或网盘直链。字段也兼容 `domesticApkUrl`、`apkUrlCn`、`mirrorApkUrl`。如果不填且 APK asset 在 GitHub Releases 上，App 会自动生成一条 `https://sullymeow.ccwu.cc/github?url=...` 国内代理线路；显式填写 `cnApkUrl` 时优先用你自己的地址。
 
+如果要彻底减少用户开梯子的概率，发包后至少同步这几处：
+
+- `release/moro-update.json`：安装版自动提醒优先读这里。
+- `moro-update.json`：作为 GitHub Release asset 上传的清单。
+- `release/moro-ios-install.plist`：iPhone OTA 安装页，里面的 `software-package` URL 也要指向国内可访问的 IPA 地址。
+
 `releaseNotes` 是普通用户会看到的更新内容，别写开发维护步骤或密钥信息。`sha256` 可选但推荐填，填了以后 App 会在打开系统安装器前校验 APK。
 
 没有 `moro-update.json` 时，App 会尝试从 Release 标题、tag、正文或 APK 文件名里解析 `versionCode`，但这只是兜底；正式发布请始终附带 `moro-update.json`。
@@ -85,7 +91,7 @@ iPhone 安装版会按 iOS 平台单独查找 GitHub Releases：优先选择最�
 
 `moro-ios-install.plist` 里的 `software-package` URL 必须指向同一版 IPA，`bundle-identifier` 要和 Xcode 工程里的 Bundle ID 一致。当前默认 Bundle ID 是 `wb.uniusc9734.tool7`。
 
-如果 release 里暂时没有 plist，App 会退回读取 `native-main` 分支里的 `release/moro-ios-install.plist`。这能兜住现有发布，但正式发包仍建议把 plist 作为 release asset 一起上传，避免分支里的 plist 和旧 release 版本不一致。
+如果 release 里暂时没有 plist，App 会退回读取 `native-main` 分支里的 `release/moro-ios-install.plist`。这能兜住现有发布，但正式发包仍建议把 plist 作为 release asset 一起上传，避免分支里的 plist 和旧 release 版本不一致。默认静态清单里的 `ios.plistUrl` 已指向 release asset；如果你换成自己的国内 CDN，也要同步改 plist 里的 IPA 地址。
 
 也可以在打包前显式指定 iOS 安装清单或完整安装链接：
 
@@ -104,12 +110,12 @@ VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A
     "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/moro.apk"
   },
   "ios": {
-    "versionName": "1.0.7.2",
-    "buildNumber": 10,
+    "versionName": "1.0.8.1",
+    "buildNumber": 12,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa",
-    "plistUrl": "https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-ios-install.plist",
-    "releaseNotes": "修复 iPhone 安装版稳定性"
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/Moro-v1.0.8.1.ipa",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/moro-ios-install.plist",
+    "releaseNotes": "修复 iPhone 安装版稳定性，并合入上游新内容"
   }
 }
 ```

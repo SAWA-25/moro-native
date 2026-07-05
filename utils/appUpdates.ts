@@ -4,6 +4,7 @@ import { APP_VERSION } from './buildInfo';
 
 const GITHUB_RELEASE_MANIFEST_ASSET = 'moro-update.json';
 const IOS_INSTALL_PLIST_ASSET = 'moro-ios-install.plist';
+const DEFAULT_BRANCH_MANIFEST_PATH = 'release/moro-update.json';
 const DEFAULT_RELEASE_OWNER = 'SAWA-25';
 const DEFAULT_RELEASE_REPO = 'moro-native';
 const DEFAULT_RELEASE_BRANCH = 'native-main';
@@ -100,6 +101,14 @@ const defaultIosPlistUrl = (): string => {
   const branch = envReleaseBranch() || DEFAULT_RELEASE_BRANCH;
   if (!owner || !repo) return '';
   return `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/release/${IOS_INSTALL_PLIST_ASSET}`;
+};
+
+const defaultBranchManifestUrl = (): string => {
+  const owner = envReleaseOwner();
+  const repo = envReleaseRepo();
+  const branch = envReleaseBranch() || DEFAULT_RELEASE_BRANCH;
+  if (!owner || !repo) return '';
+  return `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${DEFAULT_BRANCH_MANIFEST_PATH}`;
 };
 
 export async function getNativeAppInfo(): Promise<NativeAppInfo> {
@@ -681,6 +690,16 @@ export async function fetchConfiguredAppUpdateManifest(
 ): Promise<AppUpdateManifest> {
   const manifestUrl = envManifestUrl();
   if (manifestUrl) return fetchAppUpdateManifest(manifestUrl, undefined, platform);
+  if (!envReleaseApiUrl()) {
+    const branchManifestUrl = defaultBranchManifestUrl();
+    if (branchManifestUrl) {
+      try {
+        return await fetchAppUpdateManifest(branchManifestUrl, undefined, platform);
+      } catch (manifestError) {
+        console.warn('[appUpdates] Branch update manifest failed; falling back to GitHub releases', manifestError);
+      }
+    }
+  }
   return fetchGithubReleaseUpdateManifest(platform);
 }
 

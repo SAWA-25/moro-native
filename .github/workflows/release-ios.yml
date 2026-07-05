@@ -479,6 +479,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          release_assets=("release/${IPA_NAME}")
+          if [[ -f "release/moro-ios-install.plist" ]]; then
+            release_assets+=("release/moro-ios-install.plist")
+          fi
+          if [[ -f "moro-update.json" ]]; then
+            release_assets+=("moro-update.json")
+          fi
+
           if [[ "${EXPORT_METHOD}" == "unsigned" ]]; then
             notes="Unsigned iOS IPA built by GitHub Actions run ${GITHUB_RUN_NUMBER}. This file will not install directly on iPhone or iPad until the user re-signs it with their own Apple account, certificate, and provisioning profile."
           else
@@ -486,9 +494,9 @@ jobs:
           fi
 
           if gh release view "${TAG_NAME}" >/dev/null 2>&1; then
-            gh release upload "${TAG_NAME}" "release/${IPA_NAME}" --clobber
+            gh release upload "${TAG_NAME}" "${release_assets[@]}" --clobber
           else
-            gh release create "${TAG_NAME}" "release/${IPA_NAME}" \
+            gh release create "${TAG_NAME}" "${release_assets[@]}" \
               --target "${GITHUB_SHA}" \
               --title "Moro ${TAG_NAME}" \
               --notes "${notes}"

@@ -1,3 +1,31 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:fbfe69046c350f1003456f1be89138588e6a5b707a78738138a7629f0d52e52d
-size 901
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>items</key>
+  <array>
+    <dict>
+      <key>assets</key>
+      <array>
+        <dict>
+          <key>kind</key>
+          <string>software-package</string>
+          <key>url</key>
+          <string>https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/Moro-v1.0.8.1.ipa?bundle=wb.uniusc9734.tool7</string>
+        </dict>
+      </array>
+      <key>metadata</key>
+      <dict>
+        <key>bundle-identifier</key>
+        <string>wb.uniusc9734.tool7</string>
+        <key>bundle-version</key>
+        <string>1.0.8.1</string>
+        <key>kind</key>
+        <string>software</string>
+        <key>title</key>
+        <string>Moro</string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>
