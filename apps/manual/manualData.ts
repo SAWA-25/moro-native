@@ -71,6 +71,18 @@ export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 's
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
+    id: '2026-07-05-android-1081-upstream-apk',
+    date: '2026-07-05',
+    title: 'Android 安装版 1.0.8.1 合入上游更新',
+    kind: 'improvement',
+    summary: 'Android APK 更新到 1.0.8.1：完整合入 upstream/master 的新内容，同时保留正式安装版的打包、签名、安装入口和隐藏构建角标适配。',
+    items: [
+      'APK 版本号升到 1.0.8.1，Android 系统会把它识别为比 1.0.8 更新的覆盖升级包。',
+      '这次只更新 Android APK；iPhone 安装页和 IPA 路线不跟着改动。',
+      '安装版仍默认隐藏构建角标，并继续使用原来的包名、release 签名配置和更新入口约定。',
+    ],
+  },
+  {
     id: '2026-07-05-ios-1081-stable-repack',
     date: '2026-07-05',
     title: 'iPhone 安装版 1.0.8.1 改走稳定包路线',

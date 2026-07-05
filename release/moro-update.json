@@ -1,12 +1,10 @@
 {
-  "versionCode": 11,
-  "versionName": "1.0.8",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8/moro.apk",
-  "sha256": "7993b464d9d479f4e9197f6914552390c586cfe28657a3688eaf86dd7586935c",
-  "sizeBytes": 270341479,
-  "releaseNotes": "正式版 1.0.8：\n- 上游的新内容已经装进安装版，人生拟多分店、相册拾光素材、线下见面续上聊天、回忆标本馆新能力等入口都在啦。\n- iPhone 安装请使用 1.0.8.1，它回到 1.0.7.2 已验证的稳定路线，并保留固定 Bundle ID、正式签名和安装页。\n- Android 仍保持 1.0.8 release 签名包，可以从旧安装版继续覆盖升级；更新前照旧建议先给重要数据做个小备份。\n- 正式安装版默认藏好构建角标，桌面、聊天和设置页不会多出一枚小标签。\n- 这次只更新安装包内容、入口和稳定性，不会主动清空你的角色、聊天、记忆、相册、店铺或 API 设置。",
+  "versionCode": 12,
+  "versionName": "1.0.8.1",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/moro.apk",
+  "releaseNotes": "Android 安装版 1.0.8.1：\n- 完整合入 upstream/master 的新内容，包含心意铺图片链接、茶话亭互动、人生拟经营等近期更新。\n- 保留 native-main 正式版适配：Android release 签名配置、安装版更新入口、安装页资源和隐藏构建角标都继续生效。\n- 这次只更新 APK；iPhone 安装页和 IPA 路线不随本次 APK 更新改动。\n- 更新不会主动清空角色、聊天、记忆、相册、店铺或 API 设置。",
   "mandatory": false,
-  "publishedAt": "2026-07-05T20:10:00+08:00",
+  "publishedAt": "2026-07-05T20:45:00+08:00",
   "ios": {
     "versionCode": 12,
     "versionName": "1.0.8.1",
