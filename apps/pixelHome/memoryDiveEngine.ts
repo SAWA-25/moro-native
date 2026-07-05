@@ -2,18 +2,17 @@
  * Memory Dive Engine (记忆潜行引擎)
  *
  * 负责：
- * 1. 从记忆宫殿 DB 检索房间/槽位相关记忆
+ * 1. 从回忆标本馆 DB 检索房间/槽位相关记忆
  * 2. 构建 prompt 并调用 LLM 生成探索对话
  * 3. 解析 LLM 响应为结构化对话数据
  * 4. 结算 buff
  */
 
-import type { MemoryRoom, RemoteVectorConfig } from '../../utils/memoryPalace/types';
+import type { MemoryRoom } from '../../utils/memoryPalace/types';
 import type { MemoryNode } from '../../utils/memoryPalace/types';
 import type { APIConfig, CharacterProfile, CharacterBuff } from '../../types';
 import { MemoryNodeDB } from '../../utils/memoryPalace/db';
 import { DB } from '../../utils/db';
-import { fetchRemoteByRoom } from '../../utils/memoryPalace/supabaseVector';
 import { ROOM_SLOTS, ROOM_META } from './roomTemplates';
 import { extractContent, extractJson } from '../../utils/safeApi';
 import { makeApiUsageMeta } from '../../utils/apiUsageCatalog';
@@ -28,43 +27,18 @@ import { BUFF_META } from './memoryDiveTypes';
 
 // ─── 记忆检索 ────────────────────────────────────────────
 
-/**
- * 合并本地 + 远程记忆，按 id 去重（本地优先，因为通常更新鲜、带更多字段）。
- * 当用户本地没有向量记忆但远程 Supabase 有时，这里能把远程的记忆拉回来，
- * 避免潜行对话里"什么都想不起来"。
- */
 async function loadRoomMemories(
   charId: string,
   room: MemoryRoom,
-  remoteConfig?: RemoteVectorConfig,
 ): Promise<MemoryNode[]> {
-  const local = await MemoryNodeDB.getByRoom(charId, room);
-
-  // 若远程未启用/未初始化，就只用本地
-  if (!remoteConfig?.enabled || !remoteConfig.initialized) return local;
-
-  // 本地已有不少节点时，不必再打一次远程（本地通常是超集）
-  // 空或很稀少（<3）才拉远程作为补充/兜底
-  if (local.length >= 3) return local;
-
-  try {
-    const remote = await fetchRemoteByRoom(remoteConfig, charId, room, 50);
-    if (remote.length === 0) return local;
-    const byId = new Map<string, MemoryNode>();
-    for (const n of remote) byId.set(n.id, n);
-    for (const n of local) byId.set(n.id, n); // 本地覆盖远程（字段更全）
-    return Array.from(byId.values());
-  } catch {
-    return local;
-  }
+  return MemoryNodeDB.getByRoom(charId, room);
 }
 
 /** 检索某个房间的记忆节点，按重要性排序，取前 N 条 */
 export async function fetchRoomMemories(
   charId: string, room: MemoryRoom, limit = 8,
-  remoteConfig?: RemoteVectorConfig,
 ): Promise<MemoryNode[]> {
-  const nodes = await loadRoomMemories(charId, room, remoteConfig);
+  const nodes = await loadRoomMemories(charId, room);
   return nodes
     .sort((a, b) => b.importance - a.importance || b.lastAccessedAt - a.lastAccessedAt)
     .slice(0, limit);
@@ -73,12 +47,11 @@ export async function fetchRoomMemories(
 /** 检索某个槽位类别相关的记忆 */
 export async function fetchSlotMemories(
   charId: string, room: MemoryRoom, slotId: string, limit = 5,
-  remoteConfig?: RemoteVectorConfig,
 ): Promise<MemoryNode[]> {
   const slot = ROOM_SLOTS[room]?.find(s => s.id === slotId);
   if (!slot) return [];
 
-  const roomNodes = await loadRoomMemories(charId, room, remoteConfig);
+  const roomNodes = await loadRoomMemories(charId, room);
   // 用 slot category 关键词匹配 tags/content
   const keyword = slot.category;
   const scored = roomNodes.map(n => {
@@ -185,7 +158,7 @@ ${slot ? `\n**用户正在靠近**: ${slot.name} — 这件家具承载的记忆
 
 **从这个位置浮现出的记忆碎片**:
 ${memoriesBlock}
-(这些是从你的记忆宫殿中检索到的真实记忆。请基于它们展开，不要凭空编造不存在的事。如果记忆碎片为空，你可以表达"这里好像什么都想不起来了"的茫然感。)
+(这些是从你的回忆标本馆中检索到的真实记忆。请基于它们展开，不要凭空编造不存在的事。如果记忆碎片为空，你可以表达"这里好像什么都想不起来了"的茫然感。)
 
 ${recentContext ? `**刚才的对话**:\n${recentContext}\n` : ''}${userChoiceBlock}
 
@@ -829,9 +802,8 @@ export async function planRoomVisit(
   params: PlanRoomParams,
   apiConfig: APIConfig,
   charContext: string,
-  remoteConfig?: RemoteVectorConfig,
 ): Promise<{ script: RoomScript; memoryTexts: string[] }> {
-  const memories = await fetchRoomMemories(params.charId, params.room, 8, remoteConfig);
+  const memories = await fetchRoomMemories(params.charId, params.room, 8);
   const memoryTexts = memories.map(m => m.content);
   const prompt = buildRoomScriptPrompt(params, memoryTexts, charContext);
 
@@ -882,7 +854,7 @@ interface EmitDiveEmotionParams {
   diveBuffs: DiveBuffValues;
   /** 走过的房间，按顺序 */
   visitedRooms: MemoryRoom[];
-  /** 情绪 API（来自 emotionConfig.api，未配置时由调用方回退到主 apiConfig） */
+  /** 心情 API（未配置时由调用方回退到主 apiConfig） */
   api: APIConfig;
 }
 

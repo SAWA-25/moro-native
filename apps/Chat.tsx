@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useOS } from '../context/OSContext';
 import { useMusic } from '../context/MusicContext';
 import { useUserScreenWatch } from '../context/UserScreenWatchContext';
@@ -14,12 +14,15 @@ import { processImage } from '../utils/file';
 import { extractContent } from '../utils/safeApi';
 import { callChatCompletion } from '../utils/llmClient';
 import { generateDailyScheduleForChar, isEmotionBuffFeatureOn, isScheduleFeatureOn, reconcileScheduleWithChat, chatHasScheduleSignal } from '../utils/scheduleGenerator';
+import { getCharacterModelId } from '../utils/characterIdentity';
 import { loadScheduleLifeNotes, type ScheduleLifeNotesBySlot } from '../utils/scheduleLifeSync';
 import { CHAR_LIFE_EVENT_UPDATED_EVENT, DAILY_SCHEDULE_UPDATED_EVENT } from '../utils/scheduleEvents';
 import { runRecenter, RECENTER_DEFAULT_TURNS, type RecenterResult } from '../utils/recenter';
 import { proposalResultHint, innerVoicePromptBody, phoneLockAttemptPromptBody, phoneLockChatPromptBody, parallelReplyPromptBody, livePrivateDraftPromptBody, blockPeekPrompt, privateCallDecisionPromptBody, musicShareAutoReplyHint, charPhoneCheckFollowupPrompt, type PrivateCallMode } from '../utils/laiwangPrompts';
-import { isAuxApiOn, resolveAuxApi, resolveOptionalCustomApi } from '../utils/auxApi';
+import { isAuxApiOn, resolveAuxApi } from '../utils/auxApi';
+import { cleanScheduleMoodApi, resolveScheduleApi } from '../utils/scheduleMoodApi';
 import { resolveMemoryPalaceAuxConfigs } from '../utils/memoryPalace/auxConfig';
+import { isMemoryFeatureEnabled } from '../utils/memoryPalace/cognitiveFlow';
 import { runMemoryPalaceCatchUp } from '../utils/memoryPalace';
 import { formatMessageWithTime } from '../utils/messageFormat';
 import { XhsMcpClient, extractNotesFromMcpData, normalizeNote } from '../utils/xhsMcpClient';
@@ -33,13 +36,13 @@ import CameraApp from './CameraApp';
 import CharPhoneCheckOverlay from '../components/chat/CharPhoneCheckOverlay';
 import OfflineModeModal from '../components/chat/OfflineModeModal';
 import UserActionSelectorModal from '../components/chat/UserActionSelectorModal';
-import { OFFLINE_FOLLOWUP_DELAY_MS, OFFLINE_START_EVENT, consumeOfflinePending, hasOfflineSession, type OfflineCommitInfo } from '../utils/offlineMode';
+import { OFFLINE_FOLLOWUP_DELAY_MS, OFFLINE_START_EVENT, consumeDueOfflineAutoStarts, consumeOfflinePending, consumeOfflinePendingScenario, hasOfflineSession, type OfflineCommitInfo } from '../utils/offlineMode';
 import { CHAR_PHONE_CHECK_EVENT, consumePhoneCheckPending } from '../utils/charPhoneCheck';
 import { CHAR_WITHDRAW_EVENT } from '../utils/messageWithdraw';
 import { toggleReaction, CHAR_REACT_EVENT } from '../utils/messageReactions';
 import { CHAR_PAT_EVENT, DEFAULT_PAT_SUFFIX } from '../utils/patSuffix';
 import { CHAR_USER_REMARK_EVENT, type UserRemarkEventDetail } from '../utils/userRemarkSystem';
-import { CHAR_AVATAR_FROM_USER_IMAGE_EVENT, type CharAvatarEventDetail } from '../utils/charAvatarSystem';
+import { CHAR_AVATAR_FROM_USER_IMAGE_EVENT, selectCharAvatarCandidateMessage, type CharAvatarEventDetail } from '../utils/charAvatarSystem';
 import { createMessageFollowup } from '../utils/chatFollowups';
 import { applyRegexToText, REGEX_SCRIPTS_UPDATED_EVENT } from '../utils/regex/store';
 import { regex_placement } from '../utils/regex/engine';
@@ -884,12 +887,12 @@ const parsePrivateChatArchiveImport = (fileName: string, rawText: string, char: 
 };
 
 const Chat: React.FC = () => {
-    const { characters, activeCharacterId, setActiveCharacterId, updateCharacter, apiConfig, auxApiConfig, apiPresets, addApiPreset, closeApp, openApp, activeApp, customThemes, addToast, showError, userProfile, updateUserProfile, adjustUserBalance, lastMsgTimestamp, groups, clearUnread, realtimeConfig, memoryPalaceConfig, syncEmotionApiToAllCharacters, theme: osTheme, proactiveComposingChars, forceReplyRequest, clearForceReplyRequest, suspendedOfflineSession, suspendOfflineSession, clearSuspendedOfflineSession, startScreenPeekCommentSession } = useOS();
+    const { characters, activeCharacterId, setActiveCharacterId, updateCharacter, apiConfig, auxApiConfig, apiPresets, addApiPreset, closeApp, openApp, activeApp, customThemes, addToast, showError, userProfile, updateUserProfile, adjustUserBalance, lastMsgTimestamp, groups, clearUnread, realtimeConfig, memoryPalaceConfig, syncScheduleMoodApisToAllCharacters, theme: osTheme, proactiveComposingChars, forceReplyRequest, clearForceReplyRequest, suspendedOfflineSession, suspendOfflineSession, clearSuspendedOfflineSession, startScreenPeekCommentSession } = useOS();
     const { cfg: musicCfg, current: musicCurrent, playing: musicPlaying, playSong: playMusicSong, togglePlay: toggleMusicPlay } = useMusic();
     const userScreenWatch = useUserScreenWatch();
     const isProactiveComposing = !!(activeCharacterId && proactiveComposingChars[activeCharacterId]);
 
-    // 记忆宫殿高水位（用于清空聊天时的安全检查）
+    // 回忆标本馆高水位（用于清空聊天时的安全检查）
     const getMemoryPalaceHWM = useCallback(async (charId: string): Promise<number> => {
         try {
             const { getMemoryPalaceHighWaterMark } = await import('../utils/memoryPalace/pipeline');
@@ -977,6 +980,16 @@ const Chat: React.FC = () => {
     // 角色给用户换备注弹窗（点开看动机）
     const [remarkChangeNotice, setRemarkChangeNotice] = useState<{ remark: string; motivation?: string } | null>(null);
     const [remarkMotivationOpen, setRemarkMotivationOpen] = useState(false);
+    // 角色把用户图片换成本会话头像后的提示卡：可撤回，也可同步到角色卡头像。
+    const [charAvatarNotice, setCharAvatarNotice] = useState<{
+        image: string;
+        reason?: string;
+        source?: CharAvatarEventDetail['source'];
+        sourceMessageId?: number;
+        previousOverride?: string;
+        at: number;
+    } | null>(null);
+    const [charAvatarNoticeBusy, setCharAvatarNoticeBusy] = useState<'undo' | 'sync' | null>(null);
     const userBlockNoticeShownRef = useRef<string | null>(null);
     // 被角色拉黑后重新发送好友验证
     const [showFriendVerify, setShowFriendVerify] = useState(false);
@@ -997,6 +1010,7 @@ const Chat: React.FC = () => {
 
     // ── 线下模式 ──「自动线下」开启 + 角色输出 [[OFFLINE_START]] 时弹出
     const [showOfflineMode, setShowOfflineMode] = useState(false);
+    const [offlineAutoStartScenario, setOfflineAutoStartScenario] = useState<string | undefined>(undefined);
 
     // 位置分享 modal
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -1026,7 +1040,7 @@ const Chat: React.FC = () => {
     const [settingsContextLimit, setSettingsContextLimit] = useState(500);
     const [settingsHtmlModeCustomPrompt, setSettingsHtmlModeCustomPrompt] = useState('');
     const [preserveContext, setPreserveContext] = useState(true);
-    const [isVectorizing, setIsVectorizing] = useState(false);
+    const [isMemoryOrganizing, setIsMemoryOrganizing] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [selectedEmoji, setSelectedEmoji] = useState<Emoji | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<EmojiCategory | null>(null); // For deletion modal
@@ -2431,11 +2445,8 @@ ${parallelReplyPromptBody({
         };
     }, []);
 
-    function resolveScheduleMoodApi(targetChar: CharacterProfile | null | undefined) {
-        return resolveOptionalCustomApi(targetChar?.emotionConfig?.api, apiConfig, {
-            customBinding: '今日作息日程 / 心情 API',
-            mainBinding: '今日作息 API 留空，使用主 API',
-        });
+    function resolveDailyScheduleApi(targetChar: CharacterProfile | null | undefined) {
+        return resolveScheduleApi(targetChar, apiConfig);
     }
 
     function clearScheduleRefreshTimer() {
@@ -2459,6 +2470,21 @@ ${parallelReplyPromptBody({
 
     async function applyScheduleState(targetChar: CharacterProfile, schedule: DailySchedule | null) {
         if (activeCharIdRef.current !== targetChar.id) return;
+        if (schedule) {
+            const targetModelId = getCharacterModelId(targetChar);
+            if (schedule.charId !== targetChar.id || (schedule.modelId && schedule.modelId !== targetModelId)) {
+                console.warn('[Schedule] Ignored schedule for another character', {
+                    targetCharId: targetChar.id,
+                    targetModelId,
+                    scheduleCharId: schedule.charId,
+                    scheduleModelId: schedule.modelId,
+                });
+                setScheduleData(null);
+                setScheduleLifeNotes({});
+                clearScheduleRefreshTimer();
+                return;
+            }
+        }
         setScheduleData(schedule);
         if (!schedule) {
             setScheduleLifeNotes({});
@@ -2481,7 +2507,7 @@ ${parallelReplyPromptBody({
             setScheduleLifeNotes({});
             return;
         }
-        const scheduleApi = resolveScheduleMoodApi(char);
+        const scheduleApi = resolveDailyScheduleApi(char);
         if (!scheduleApi.baseUrl || !scheduleApi.model) return;
         const targetChar = char;
         const today = new Date().toISOString().split('T')[0];
@@ -2510,6 +2536,9 @@ ${parallelReplyPromptBody({
         activeCharacterId,
         char?.scheduleFeatureEnabled,
         char?.scheduleStyle,
+        char?.emotionConfig?.scheduleApi?.baseUrl,
+        char?.emotionConfig?.scheduleApi?.apiKey,
+        char?.emotionConfig?.scheduleApi?.model,
         char?.emotionConfig?.api?.baseUrl,
         char?.emotionConfig?.api?.apiKey,
         char?.emotionConfig?.api?.model,
@@ -2565,7 +2594,7 @@ ${parallelReplyPromptBody({
         if (!char || !isScheduleFeatureOn(char)) return;
         if (!scheduleData || isTyping) return;                 // 还没今日日程 / 回复进行中：先不打扰
         if (messages.length === 0 || !chatHasScheduleSignal(messages)) return;
-        const scheduleApi = resolveScheduleMoodApi(char);
+        const scheduleApi = resolveDailyScheduleApi(char);
         if (!scheduleApi.baseUrl || !scheduleApi.model) return;
 
         const lastMsgId = messages[messages.length - 1]?.id ?? 0;
@@ -2598,6 +2627,9 @@ ${parallelReplyPromptBody({
     }, [
         messages,
         char?.id,
+        char?.emotionConfig?.scheduleApi?.baseUrl,
+        char?.emotionConfig?.scheduleApi?.apiKey,
+        char?.emotionConfig?.scheduleApi?.model,
         char?.emotionConfig?.api?.baseUrl,
         char?.emotionConfig?.api?.apiKey,
         char?.emotionConfig?.api?.model,
@@ -3295,14 +3327,38 @@ ${recent || '（你们相处了很久）'}
     // ── 线下模式：监听 [[OFFLINE_START]] 广播（applyAssistantPostProcessing 剥离指令后发出）──
     useEffect(() => {
         const handler = (e: Event) => {
-            const d = (e as CustomEvent).detail as { charId?: string };
+            const d = (e as CustomEvent).detail as { charId?: string; scenario?: string };
             if (!d?.charId || d.charId !== activeCharIdRef.current) return;
             consumeOfflinePending(d.charId); // 事件路径直接弹，吃掉 pending 防止下次重复弹
+            const scenario = (d.scenario || consumeOfflinePendingScenario(d.charId) || '').trim();
+            setOfflineAutoStartScenario(scenario || undefined);
             setShowOfflineMode(true);
         };
         window.addEventListener(OFFLINE_START_EVENT, handler);
         return () => window.removeEventListener(OFFLINE_START_EVENT, handler);
     }, []);
+
+    // ── 未来约定到点：例如“明天下午三点见”不会当场弹窗，到时间后再自动进入线下 ──
+    useEffect(() => {
+        if (!activeCharacterId || !char?.convoSettings?.autoOffline || char.convoSettings.longDistanceMode) return;
+        const checkDueOffline = () => {
+            if (!activeCharacterId || showOfflineMode || hasOfflineSession(activeCharacterId)) return;
+            const due = consumeDueOfflineAutoStarts({ mode: 'private', targetId: activeCharacterId })[0];
+            if (!due) return;
+            setOfflineAutoStartScenario(due.scenario);
+            setShowOfflineMode(true);
+            addToast('到了约好的见面时间，已打开线下模式', 'info');
+        };
+        checkDueOffline();
+        const timer = window.setInterval(checkDueOffline, 60 * 1000);
+        window.addEventListener('focus', checkDueOffline);
+        document.addEventListener('visibilitychange', checkDueOffline);
+        return () => {
+            window.clearInterval(timer);
+            window.removeEventListener('focus', checkDueOffline);
+            document.removeEventListener('visibilitychange', checkDueOffline);
+        };
+    }, [activeCharacterId, char?.convoSettings?.autoOffline, char?.convoSettings?.longDistanceMode, showOfflineMode, addToast]);
 
     // ── 角色查用户手机：监听 [[CHECK_PHONE]] 广播（系统命令指示角色发起，
     //    applyAssistantPostProcessing 剥离指令后发出）──
@@ -3402,31 +3458,52 @@ ${recent || '（你们相处了很久）'}
                     const liveChar = charRef.current;
                     if (!liveChar?.convoSettings?.allowCharAvatarFromUserImage) return;
                     const recent = await DB.getRecentMessagesByCharId(d.charId!, 80);
-                    const target = [...recent].reverse().find(m =>
-                        m.role === 'user' &&
-                        m.type === 'image' &&
-                        typeof m.content === 'string' &&
-                        (m.metadata?.charAvatarCandidate || isImageUrlLike(m.content))
-                    );
+                    const target = selectCharAvatarCandidateMessage(recent, d.sourceMessageId);
                     if (!target) {
-                        addToast('没找到刚才那张头像候选图', 'info');
+                        addToast('没找到你刚发的头像候选图', 'info');
                         return;
                     }
                     const reason = d.reason?.trim();
+                    const now = Date.now();
+                    const source = d.source || 'autonomous';
+                    const previousOverride = liveChar.convoSettings?.charAvatarOverride;
+                    const historyEntry = {
+                        sourceMessageId: target.id,
+                        reason,
+                        source,
+                        at: now,
+                    };
+                    const oldHistory = liveChar.convoSettings?.charAvatarHistory || [];
+                    const shouldAddHistory = oldHistory[0]?.sourceMessageId !== target.id || oldHistory[0]?.reason !== reason || oldHistory[0]?.source !== source;
+                    const nextHistory = (shouldAddHistory ? [historyEntry, ...oldHistory] : oldHistory).slice(0, 20);
                     await updateCharacter(d.charId!, {
-                        avatar: target.content,
                         convoSettings: {
-                            ...(liveChar.convoSettings || {}),
                             charAvatarOverride: target.content,
+                            charAvatarChangeReason: reason,
+                            charAvatarUpdatedAt: now,
+                            charAvatarChangeSource: source,
+                            charAvatarSourceMessageId: target.id,
+                            charAvatarPreviousOverride: previousOverride,
+                            charAvatarHistory: nextHistory,
                         },
                     });
                     await DB.saveMessage({
                         charId: d.charId!,
                         role: 'system',
                         type: 'text',
-                        content: `「${liveChar?.name || 'TA'}」把你刚发的图片设成了自己的头像${reason ? `：${reason}` : ''}`,
-                        metadata: { charAvatarChanged: true, sourceMessageId: target.id, reason },
+                        content: source === 'user_request'
+                            ? `「${liveChar?.name || 'TA'}」同意把你发来的图片换成本会话头像${reason ? `：${reason}` : ''}`
+                            : `「${liveChar?.name || 'TA'}」把你刚发的图片设成了自己的头像${reason ? `：${reason}` : ''}`,
+                        metadata: { charAvatarChanged: true, sourceMessageId: target.id, reason, source },
                     } as any);
+                    setCharAvatarNotice({
+                        image: target.content,
+                        reason,
+                        source,
+                        sourceMessageId: target.id,
+                        previousOverride,
+                        at: now,
+                    });
                     await reloadMessages(visibleCountRef.current);
                     addToast(`${liveChar?.name || 'TA'} 换上了自己的新头像`, 'success');
                 } catch (err) {
@@ -3439,6 +3516,79 @@ ${recent || '（你们相处了很久）'}
         return () => window.removeEventListener(CHAR_AVATAR_FROM_USER_IMAGE_EVENT, handler);
     }, [addToast, reloadMessages, updateCharacter]);
 
+    const handleUndoCharAvatarChange = useCallback(async () => {
+        if (!char || !charAvatarNotice) return;
+        setCharAvatarNoticeBusy('undo');
+        try {
+            await updateCharacter(char.id, {
+                convoSettings: {
+                    charAvatarOverride: charAvatarNotice.previousOverride,
+                    charAvatarChangeReason: undefined,
+                    charAvatarUpdatedAt: Date.now(),
+                    charAvatarChangeSource: undefined,
+                    charAvatarSourceMessageId: undefined,
+                    charAvatarPreviousOverride: undefined,
+                },
+            });
+            await DB.saveMessage({
+                charId: char.id,
+                role: 'system',
+                type: 'text',
+                content: `你撤回了「${char.convoSettings?.remarkName?.trim() || char.name}」这次头像更换`,
+                metadata: { charAvatarChangeUndone: true, sourceMessageId: charAvatarNotice.sourceMessageId },
+            } as any);
+            await reloadMessages(visibleCountRef.current);
+            setCharAvatarNotice(null);
+            addToast('已恢复之前的头像', 'success');
+        } catch (err) {
+            console.warn('[Chat] undo char avatar change failed', err);
+            addToast('撤回头像失败', 'error');
+        } finally {
+            setCharAvatarNoticeBusy(null);
+        }
+    }, [addToast, char, charAvatarNotice, reloadMessages, updateCharacter]);
+
+    const handleSyncCharAvatarToProfile = useCallback(async () => {
+        if (!char || !charAvatarNotice) return;
+        setCharAvatarNoticeBusy('sync');
+        try {
+            const now = Date.now();
+            const oldHistory = char.convoSettings?.charAvatarHistory || [];
+            const nextHistory = oldHistory.map((h, i) =>
+                i === 0 && h.sourceMessageId === charAvatarNotice.sourceMessageId
+                    ? { ...h, syncedToCharacter: true }
+                    : h
+            );
+            await updateCharacter(char.id, {
+                avatar: charAvatarNotice.image,
+                convoSettings: {
+                    charAvatarOverride: undefined,
+                    charAvatarChangeReason: charAvatarNotice.reason,
+                    charAvatarUpdatedAt: now,
+                    charAvatarChangeSource: charAvatarNotice.source,
+                    charAvatarSourceMessageId: charAvatarNotice.sourceMessageId,
+                    charAvatarPreviousOverride: undefined,
+                    charAvatarHistory: nextHistory,
+                },
+            });
+            await DB.saveMessage({
+                charId: char.id,
+                role: 'system',
+                type: 'text',
+                content: `你把「${char.convoSettings?.remarkName?.trim() || char.name}」这张新头像同步到了角色卡`,
+                metadata: { charAvatarSyncedToCharacter: true, sourceMessageId: charAvatarNotice.sourceMessageId },
+            } as any);
+            await reloadMessages(visibleCountRef.current);
+            setCharAvatarNotice(null);
+            addToast('已同步到角色卡头像', 'success');
+        } catch (err) {
+            console.warn('[Chat] sync char avatar to profile failed', err);
+            addToast('同步角色卡失败', 'error');
+        } finally {
+            setCharAvatarNoticeBusy(null);
+        }
+    }, [addToast, char, charAvatarNotice, reloadMessages, updateCharacter]);
+
     // 进入/切换角色时兜底：有 pending（事件发出时不在本聊天页）或未结束的线下会话则恢复弹窗
     useEffect(() => {
         if (!activeCharacterId) return;
@@ -3449,16 +3599,20 @@ ${recent || '（你们相处了很久）'}
         } catch { /* ignore */ }
         if (wantsOfflineResume && !characters.some(c => c.id === activeCharacterId)) {
             setShowOfflineMode(false);
+            setOfflineAutoStartScenario(undefined);
             clearSuspendedOfflineSession();
             addToast('这场线下现场已经不在了', 'info');
             return;
         }
         const hasPendingOffline = consumeOfflinePending(activeCharacterId);
+        const pendingOfflineScenario = hasPendingOffline ? consumeOfflinePendingScenario(activeCharacterId) : undefined;
         const hasDraftOffline = hasOfflineSession(activeCharacterId);
         if (hasPendingOffline || hasDraftOffline) {
+            setOfflineAutoStartScenario(hasPendingOffline ? pendingOfflineScenario : undefined);
             setShowOfflineMode(true);
             if (wantsOfflineResume) clearSuspendedOfflineSession();
         } else {
+            setOfflineAutoStartScenario(undefined);
             setShowOfflineMode(false);
             if (wantsOfflineResume) {
                 clearSuspendedOfflineSession();
@@ -3478,14 +3632,17 @@ ${recent || '（你们相处了很久）'}
 
             if (!charRef.current) {
                 setShowOfflineMode(false);
+                setOfflineAutoStartScenario(undefined);
                 clearSuspendedOfflineSession();
                 addToast('这场线下现场已经不在了', 'info');
                 return;
             }
             if (hasOfflineSession(info.charId)) {
+                setOfflineAutoStartScenario(undefined);
                 setShowOfflineMode(true);
                 clearSuspendedOfflineSession();
             } else {
+                setOfflineAutoStartScenario(undefined);
                 setShowOfflineMode(false);
                 clearSuspendedOfflineSession();
                 addToast('这场线下现场已经不在了', 'info');
@@ -3534,6 +3691,7 @@ ${recent || '（你们相处了很久）'}
             clearSuspendedOfflineSession();
         }
         setShowOfflineMode(false);
+        setOfflineAutoStartScenario(undefined);
         void reloadMessages(visibleCountRef.current);
         addToast('线下模式已结束，回到线上聊天', 'info');
         if (char?.id) scheduleOfflineFollowup(char.id, commitInfo);
@@ -3550,6 +3708,7 @@ ${recent || '（你们相处了很久）'}
             entryCount,
         });
         setShowOfflineMode(false);
+        setOfflineAutoStartScenario(undefined);
         addToast('线下现场已挂起，结束线下前不会写回聊天上下文', 'success');
     };
 
@@ -4361,6 +4520,7 @@ ${privateCallDecisionPromptBody({
                 if (!char) break;
                 if (!getPrivateBlockState(char).canUserSend) { addToast('拉黑期间无法见面', 'error'); break; }
                 setShowPanel('none');
+                setOfflineAutoStartScenario(undefined);
                 setShowOfflineMode(true);
                 break;
             }
@@ -4600,7 +4760,7 @@ ${privateCallDecisionPromptBody({
             try {
                 const { injectMemoryPalace } = await import('../utils/memoryPalace/pipeline');
                 await injectMemoryPalace(char);
-            } catch { /* 记忆宫殿未启用时跳过 */ }
+            } catch { /* 回忆标本馆未启用时跳过 */ }
             const context = ContextBuilder.buildCoreContext(char, userProfile, true);
             const allMsgs = await DB.getMessagesByCharId(char.id);
             const recent = allMsgs.slice(-30).map(m => formatMessageWithTime(m, char.name, userProfile.name, formatTime)).join('\n');
@@ -4836,7 +4996,7 @@ ${privateCallDecisionPromptBody({
 
     const generateDailySchedule = async (targetChar: typeof char, forceRegenerate: boolean = false) => {
         if (!targetChar || isScheduleGenerating) return;
-        const scheduleApi = resolveScheduleMoodApi(targetChar);
+        const scheduleApi = resolveDailyScheduleApi(targetChar);
         if (!scheduleApi.baseUrl || !scheduleApi.model) return;
         setIsScheduleGenerating(true);
         try {
@@ -4857,7 +5017,7 @@ ${privateCallDecisionPromptBody({
         // Force regenerate with new style — use updated char object
         const updatedChar = { ...char, scheduleStyle: style };
         if (!isScheduleFeatureOn(updatedChar)) return;
-        const scheduleApi = resolveScheduleMoodApi(updatedChar);
+        const scheduleApi = resolveDailyScheduleApi(updatedChar);
         if (!scheduleApi.baseUrl || !scheduleApi.model) return;
         setIsScheduleGenerating(true);
         try {
@@ -5318,8 +5478,8 @@ ${privateCallDecisionPromptBody({
     const handleClearHistory = async () => {
         if (!char) return;
 
-        // 记忆宫殿安全检查：保留最近 10 条时仍保护未处理消息；全量清除语义是重置角色上下文。
-        if (preserveContext && char.memoryPalaceEnabled) {
+        // 回忆标本馆安全检查：保留最近 10 条时仍保护未处理消息；全量清除语义是重置角色上下文。
+        if (preserveContext && isMemoryFeatureEnabled(char)) {
             const hwm = await getMemoryPalaceHWM(char.id);
             const allMessages = await DB.getMessagesByCharId(char.id, true);
             const textMessages = allMessages.filter(m => m.type === 'text' && m.content?.trim());
@@ -5330,7 +5490,7 @@ ${privateCallDecisionPromptBody({
                 const processedMsgs = allMessages.filter(m => m.id <= hwm);
                 const choice = confirm(
                     `⚠️ 回忆标本馆提醒\n\n` +
-                    `当前有 ${unprocessedCount} 条聊天记录尚未被回忆标本馆处理（向量化）。\n` +
+                    `当前有 ${unprocessedCount} 条聊天记录尚未被回忆标本馆整理。\n` +
                     `直接清空会导致这些记录永久丢失，无法被角色记住。\n\n` +
                     `点击「确定」→ 仅删除已被回忆标本馆处理过的记录（安全）\n` +
                     `点击「取消」→ 取消清空操作\n\n` +
@@ -5360,7 +5520,7 @@ ${privateCallDecisionPromptBody({
             }
         }
 
-        // 原有逻辑（无记忆宫殿 or 所有消息已处理）
+        // 原有逻辑（无回忆标本馆 or 所有消息已处理）
         if (preserveContext) {
             const allMessages = await DB.getMessagesByCharId(char.id, true);
             const toKeep = allMessages.slice(-10);
@@ -5438,22 +5598,21 @@ ${privateCallDecisionPromptBody({
         addToast('已清空絮语上下文、角色软件状态和生成内容，仅保留角色设定', 'success');
     };
 
-    const handleForceVectorize = async () => {
-        if (!char || !char.memoryPalaceEnabled || isVectorizing) return;
-        const { embedding: mpEmb, llm: mpLLM } = resolveMemoryPalaceAuxConfigs(auxApiConfig, memoryPalaceConfig);
-        if (!mpEmb || !mpLLM) {
+    const handleOrganizeMemory = async () => {
+        if (!char || !isMemoryFeatureEnabled(char) || isMemoryOrganizing) return;
+        const { llm: mpLLM } = resolveMemoryPalaceAuxConfigs(auxApiConfig, memoryPalaceConfig);
+        if (!mpLLM) {
             addToast('请先在文具盒开启并填好副 API', 'error');
             return;
         }
 
-        setIsVectorizing(true);
+        setIsMemoryOrganizing(true);
         setModalType('none');
         addToast('开始整理可处理旧聊天，最近 200 条热区会保留在聊天上下文里', 'info');
 
         try {
             const result = await runMemoryPalaceCatchUp({
                 char,
-                embeddingConfig: mpEmb,
                 llmConfig: mpLLM,
                 userName: userProfile?.name || '',
             });
@@ -5482,7 +5641,7 @@ ${privateCallDecisionPromptBody({
         } catch (e: any) {
             addToast(`整理失败：${e.message}`, 'error');
         } finally {
-            setIsVectorizing(false);
+            setIsMemoryOrganizing(false);
         }
     };
 
@@ -6203,6 +6362,16 @@ ${privateCallDecisionPromptBody({
     const displayCharName = convo?.remarkName?.trim() || char?.name || '';
     const displayCharAvatar = convo?.charAvatarOverride || char?.avatar || '';
     const displayUserAvatar = convo?.userAvatarOverride || userProfile.avatar;
+    const privateSpeakerNameById = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const item of characters) {
+            const name = item.id === activeCharacterId
+                ? displayCharName
+                : (item.convoSettings?.remarkName?.trim() || item.name || '').trim();
+            if (name) map.set(item.id, name);
+        }
+        return map;
+    }, [characters, activeCharacterId, displayCharName]);
     const headerChar = useMemo(
         () => (char && (displayCharName !== char.name || displayCharAvatar !== char.avatar))
             ? { ...char, name: displayCharName, avatar: displayCharAvatar }
@@ -6430,7 +6599,7 @@ ${privateCallDecisionPromptBody({
                              >
                                  <span style={{ fontSize: 26 }}>🗂️</span>
                              </div>
-                             <div className="text-[10px] tracking-[0.25em] uppercase font-semibold" style={{ color: '#6366f1' }}>Memory Palace</div>
+                             <div className="text-[10px] tracking-[0.25em] uppercase font-semibold" style={{ color: '#6366f1' }}>Memory Gallery</div>
                              <p className="text-[17px] font-bold mt-1" style={{ color: '#0f172a' }}>记忆整理完成</p>
                              <p className="text-[11px] text-slate-400 mt-1">
                                  新增 {memoryPalaceResult.stored} 条 · 去重跳过 {memoryPalaceResult.skipped} 条
@@ -7552,17 +7721,20 @@ ${privateCallDecisionPromptBody({
                 isEmotionBuffFeatureEnabled={isEmotionBuffFeatureOn(char)}
                 onToggleEmotionBuffFeature={handleToggleEmotionBuffFeature}
                 isMemoryPalaceEnabled={!!char.memoryPalaceEnabled}
-                isVectorizing={isVectorizing}
-                onForceVectorize={handleForceVectorize}
+                isMemoryOrganizing={isMemoryOrganizing}
+                onOrganizeMemory={handleOrganizeMemory}
                 apiPresets={apiPresets}
                 onAddApiPreset={addApiPreset}
                 onSaveEmotion={(config) => {
-                    // 日程 / 心情 API 同步到所有角色，enabled 仅写到当前角色
-                    syncEmotionApiToAllCharacters(config.api);
+                    // 日程 API / 心情 API 同步到所有角色，enabled 仅写到当前角色
+                    const scheduleApi = cleanScheduleMoodApi(config.scheduleApi);
+                    const moodApi = cleanScheduleMoodApi(config.moodApi);
+                    syncScheduleMoodApisToAllCharacters({ scheduleApi, moodApi });
                     updateCharacter(char.id, {
                         emotionConfig: {
                             enabled: config.enabled,
-                            ...(config.api && config.api.baseUrl ? { api: config.api } : {}),
+                            ...(scheduleApi ? { scheduleApi } : {}),
+                            ...(moodApi ? { moodApi } : {}),
                         },
                     });
                 }}
@@ -7982,6 +8154,9 @@ ${privateCallDecisionPromptBody({
                         !nextMessage ||
                         nextMessage.role !== m.role ||
                         Math.abs(nextMessage.timestamp - m.timestamp) > messageGroupGapMs;
+                    const messageSpeakerName = m.role === 'assistant'
+                        ? (privateSpeakerNameById.get(m.charId) || displayCharName || char?.name || 'Ta')
+                        : undefined;
                     // 时间分割线：会话开头或间隔超过 30 分钟时插入
                     const needsTimeDivider = m.role !== 'system' &&
                         (!prevMessage || Math.abs(m.timestamp - prevMessage.timestamp) > messageGroupGapMs);
@@ -8061,6 +8236,7 @@ ${privateCallDecisionPromptBody({
                             musicPlaying={musicPlaying}
                             isLastUserMsg={m.role === 'user' && m.id === lastUserMsgId}
                             onUserAvatarClick={() => setShowActionSelector(true)}
+                            speakerName={messageSpeakerName}
                         />
                         </div>
                     );
@@ -8485,8 +8661,8 @@ ${privateCallDecisionPromptBody({
                     onClearChatContextOnly={handleClearChatContextOnly}
                     preserveContext={preserveContext}
                     onTogglePreserveContext={() => setPreserveContext(!preserveContext)}
-                    isVectorizing={isVectorizing}
-                    onForceVectorize={handleForceVectorize}
+                    isMemoryOrganizing={isMemoryOrganizing}
+                    onOrganizeMemory={handleOrganizeMemory}
                     onExportChat={handleExportChat}
                     messagesCount={filterPrivateChatVisibleMessages((allHistoryMessages && allHistoryMessages.length > 0) ? allHistoryMessages : messages).length}
                     privateChatArchives={privateChatArchives}
@@ -8680,6 +8856,47 @@ ${privateCallDecisionPromptBody({
                 </div>
             )}
 
+            {/* 「TA 换上了用户发来的头像」弹窗：默认会话生效，可撤回 / 同步角色卡 */}
+            {charAvatarNotice && char && (
+                <div className="absolute inset-0 z-[405] flex items-center justify-center p-6 animate-fade-in" style={{ background: 'rgba(20,18,16,0.5)', backdropFilter: 'blur(3px)' }} onClick={() => setCharAvatarNotice(null)}>
+                    <div className="w-[min(84vw,336px)] rounded-3xl overflow-hidden animate-pop-in" style={{ background: 'linear-gradient(180deg,#fbf9f2,#f2efe4)', border: `1px solid ${INK_SOFT}66`, boxShadow: '0 30px 60px -24px rgba(20,18,14,0.6)', color: INK }} onClick={e => e.stopPropagation()}>
+                        <div className="px-6 pt-6 pb-5 text-center">
+                            <img src={charAvatarNotice.image} className="w-20 h-20 mx-auto mb-3 rounded-full object-cover shadow" style={{ border: '3px solid #fbf9f2', outline: `1px solid ${INK_SOFT}66` }} alt="" />
+                            <div className="text-[15px] font-black" style={{ color: INK }}>{displayCharName} 换上了新头像</div>
+                            <div className="mt-2 text-[11px] leading-relaxed" style={{ color: INK_SOFT }}>
+                                {charAvatarNotice.source === 'user_request' ? 'TA 同意了你的头像请求，当前单聊已经生效。' : 'TA 从你发来的图片里挑中了这一张，当前单聊已经生效。'}
+                            </div>
+                            {charAvatarNotice.reason && (
+                                <div className="mt-4 rounded-2xl p-3.5 text-[13px] leading-relaxed text-left" style={{ background: 'rgba(255,253,247,0.82)', border: `1px solid ${INK_SOFT}55`, outline: `1px dashed ${INK_SOFT}44`, outlineOffset: -4, color: INK }}>
+                                    {charAvatarNotice.reason}
+                                </div>
+                            )}
+                            <div className="mt-4 text-[10.5px] leading-relaxed" style={{ color: INK_SOFT }}>
+                                现在只改了这段单聊。想让所有地方都用它，再同步到角色卡。
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2" style={{ borderTop: `1px dashed ${INK_SOFT}66` }}>
+                            <button
+                                onClick={handleUndoCharAvatarChange}
+                                disabled={!!charAvatarNoticeBusy}
+                                className="py-3.5 text-[14px] font-bold active:scale-[0.99] transition-transform disabled:opacity-50"
+                                style={{ color: INK_SOFT }}
+                            >
+                                {charAvatarNoticeBusy === 'undo' ? '撤回中…' : '撤回'}
+                            </button>
+                            <button
+                                onClick={handleSyncCharAvatarToProfile}
+                                disabled={!!charAvatarNoticeBusy}
+                                className="py-3.5 text-[14px] font-black active:scale-[0.99] transition-transform disabled:opacity-50"
+                                style={{ color: INK, borderLeft: `1px dashed ${INK_SOFT}66` }}
+                            >
+                                {charAvatarNoticeBusy === 'sync' ? '同步中…' : '同步角色卡'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 查岗（用户 → 角色）：+ 号面板入口，内嵌原 CheckPhone */}
             {showCheckPhone && char && (
                 <div className="absolute inset-0 z-[410]">
@@ -8717,6 +8934,7 @@ ${privateCallDecisionPromptBody({
                     userProfile={userProfile}
                     apiConfig={apiConfig}
                     addToast={addToast}
+                    autoStartScenario={offlineAutoStartScenario}
                     onEnd={handleOfflineEnd}
                     onSuspend={handleOfflineSuspend}
                 />

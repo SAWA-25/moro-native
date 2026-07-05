@@ -22,7 +22,6 @@ export enum AppID {
   Worldbook = 'worldbook', 
   Novel = 'novel', 
   Bank = 'bank', // New App
-  XhsStock = 'xhs_stock', // XHS image stock for publishing
   SpecialMoments = 'special_moments', // Valentine's Day & future events
   XhsFreeRoam = 'xhs_free_roam', // Character autonomous XHS activity
   Songwriting = 'songwriting', // Songwriting / Lyric creation app
@@ -30,7 +29,7 @@ export enum AppID {
   VoiceDesigner = 'voice_designer', // 捏声音 — MiniMax 音色设计器
   Guidebook = 'guidebook', // 攻略本 — 角色攻略用户小游戏
   LifeSim = 'lifesim', // 模拟人生 — 与角色共同经营的小世界
-  MemoryPalace = 'memory_palace', // 记忆宫殿 — 七个房间可视化
+  MemoryPalace = 'memory_palace', // 回忆标本馆 — 七个房间可视化
   Handbook = 'handbook', // 手账 — 跨角色聚合的生活留痕本（LLM 代笔 + 角色生活流陪伴）
   QQBridge = 'qq_bridge', // QQ 桥接 — 通过 NapCat 把 QQ 私聊接入当前角色，共享 IndexedDB 上下文
   HotNews = 'hot_news', // 热点 — 分时段召回的多平台热榜可视化（决定角色可能聊起的话题）
@@ -480,7 +479,7 @@ export interface APIConfig {
   aceStepApiKey?: string;
   model: string;
   // Per-API streaming toggle. Some endpoints only support stream:true.
-  // Missing → false (默认非流式).
+  // Missing → true (文具盒主 API 默认流式).
   stream?: boolean;
   // Per-API temperature for chat / 约会 main calls. Missing → 0.85.
   temperature?: number;
@@ -699,12 +698,7 @@ export interface HotNewsSnapshot {
   fetchedAt: number;   // 拉取时间戳
 }
 
-export interface MemoryPalaceBackupConfig {
-  embedding: {
-    model: string;
-    dimensions: number;
-  };
-}
+export type MemoryPalaceBackupConfig = Record<string, never>;
 
 export interface MemoryFragment {
   id: string;
@@ -782,6 +776,7 @@ export interface ScheduleSlot {
 export interface DailySchedule {
     id: string;           // `${charId}_${date}`
     charId: string;
+    modelId?: string;     // model-visible character identity anchor used when this schedule was generated
     date: string;         // YYYY-MM-DD
     slots: ScheduleSlot[];
     generatedAt: number;
@@ -1922,6 +1917,7 @@ export interface BankBusinessTemplate {
     id: string;
     name: string;
     icon: string;
+    startupCost: number;
     vibe: string;
     customerGroups: string[];
     margin: number;
@@ -2413,10 +2409,40 @@ export interface BankLifeState {
     aiLastGeneratedAt?: Record<string, string>;
 }
 
+export type BankDollhousesByShopId = Record<string, DollhouseState>;
+
+export interface BankShopBranch {
+    id: string;
+    businessTypeId: string;
+    businessName: string;
+    openedAt: string;
+    shop: BankShopState;
+    firedStaff: ShopStaff[];
+    shopProducts: BankLifeShopProduct[];
+    shopCustomers: string[];
+    shopEvents: BankLifeEvent[];
+}
+
+export interface BankShopDailyRewards {
+    dateStr: string;
+    headquartersPatrol?: boolean;
+    shelfByShopId?: Record<string, boolean>;
+    reviewByShopId?: Record<string, boolean>;
+    idleBonusByShopId?: Record<string, boolean>;
+}
+
+export interface BankShopPortfolioState {
+    activeShopId: string;
+    headquartersEnergy: number;
+    branches: BankShopBranch[];
+    dailyRewards?: BankShopDailyRewards;
+}
+
 export interface BankFullState {
     config: BankConfig;
     shop: BankShopState;
     life?: BankLifeState;
+    shopPortfolio?: BankShopPortfolioState;
     goals: SavingsGoal[];
     firedStaff?: ShopStaff[]; // Fired staff pool: can rehire or permanently delete
     todaySpent: number;
@@ -3451,14 +3477,34 @@ export interface CharacterProfile {
   emotionConfig?: {
     /** 心情 buff 独立开关；作息开启时，false 会停止情绪评估、注入和顶栏 buff 展示。 */
     enabled: boolean;
+    /** 旧版「日程 / 心情 API」字段：仅作历史兜底；新配置请使用 scheduleApi / moodApi。 */
     api?: {
+      baseUrl: string;
+      apiKey: string;
+      model: string;
+    };
+    /** 今日日程生成与聊天中日程协调使用的 API。留空时使用主 API。 */
+    scheduleApi?: {
+      baseUrl: string;
+      apiKey: string;
+      model: string;
+    };
+    /** 心情 buff / 意识流评估使用的 API。留空时使用主 API。 */
+    moodApi?: {
       baseUrl: string;
       apiKey: string;
       model: string;
     };
   };
 
-  // 记忆宫殿 (Memory Palace)
+  // 回忆标本馆 / Cognitive Flow
+  /**
+   * 角色长期记忆底层：
+   * - cognitive_flow：默认，本地 IndexedDB 认知流（证据链 + Event/Episode/Saga/feel + 权重池）
+   * - classic：旧版回忆标本馆召回/整理语义
+   * - off：关闭长期记忆后台整理与注入
+   */
+  memoryMode?: 'cognitive_flow' | 'classic' | 'off';
   memoryPalaceEnabled?: boolean;
   /**
    * 是否启用"palace 提取后自动同步归档"：开启后每次 buffer 处理成功都会把新记忆按日期
@@ -3466,15 +3512,9 @@ export interface CharacterProfile {
    * 已处理的聊天。默认 false（opt-in）——首次启用建议让用户做一次 force 追平历史。
    */
   autoArchiveEnabled?: boolean;
-  embeddingConfig?: {
-    baseUrl: string;
-    apiKey: string;
-    model: string;        // 默认 text-embedding-3-small
-    dimensions: number;   // 默认 1024
-  };
   personalityStyle?: 'emotional' | 'narrative' | 'imagery' | 'analytical';
   ruminationTendency?: number;  // 反刍倾向 0-1，默认 0.3
-  memoryPalaceInjection?: string;  // 记忆宫殿检索结果，注入到 System Prompt（运行时填充，不持久化）
+  memoryPalaceInjection?: string;  // 回忆标本馆检索结果，注入到 System Prompt（运行时填充，不持久化）
 
   // 自我领悟词条：消化过程中 self_room 反刍产生的常驻认知
   // 像情绪 buff 一样注入到 contextBuilder 的角色设定下方
@@ -3983,6 +4023,18 @@ export interface ConvoSettings {
     charAvatarOverride?: string;
     /** 允许 TA 自主把用户发来的图片设为自己的头像。 */
     allowCharAvatarFromUserImage?: boolean;
+    /** TA 最近一次换本会话头像的理由。 */
+    charAvatarChangeReason?: string;
+    /** TA 最近一次换本会话头像的时间戳。 */
+    charAvatarUpdatedAt?: number;
+    /** TA 最近一次换头像的来源：主动挑图 / 用户请求后同意。 */
+    charAvatarChangeSource?: 'autonomous' | 'user_request';
+    /** TA 最近一次使用的用户图片消息 id。 */
+    charAvatarSourceMessageId?: number;
+    /** 撤回最近一次头像更换时恢复的旧本会话头像；undefined 表示恢复沿用角色卡头像。 */
+    charAvatarPreviousOverride?: string;
+    /** TA 历次挑头像的轻量记录（不重复存图片内容，最新在前）。 */
+    charAvatarHistory?: Array<{ sourceMessageId?: number; reason?: string; source?: 'autonomous' | 'user_request'; at: number; syncedToCharacter?: boolean }>;
     /** 主控·本会话头像（覆盖用户头像，仅本会话展示） */
     userAvatarOverride?: string;
     /** 角色立绘：聊天界面右下角半透明立绘（galgame 式） */
@@ -4012,6 +4064,8 @@ export interface GroupConvoSettings {
     liveChatOverride?: LiveChatOverride;
     autoReplyEachUserMessage?: boolean;
     narrationMode?: boolean;
+    /** 群聊自动线下：群聊发展到大家已经碰头/同处现场时自动进入群聊赴约窗口。 */
+    autoOffline?: boolean;
     innerVoiceEnabled?: boolean;
     translationEnabled?: boolean;
     translateSourceLang?: string;
@@ -4130,10 +4184,19 @@ export interface GroupProfile {
     dissolvedAt?: number;
 }
 
-export interface CharacterExportData extends Omit<CharacterProfile, 'id' | 'modelId' | 'memories' | 'refinedMemories' | 'activeMemoryMonths'> {
+export interface CharacterExportData extends Omit<CharacterProfile, 'id' | 'modelId' | 'memories' | 'refinedMemories' | 'activeMemoryMonths' | 'guidebookInsights' | 'mountedWorldbooks'> {
     version: number;
     type: 'moro_character_card';
     embeddedTheme?: ChatTheme;
+    /**
+     * 单卡导出时使用完整世界书快照：Moro 导回可恢复本地剪报夹条目，
+     * SillyTavern 兼容数据则写在 data.character_book。
+     */
+    mountedWorldbooks?: Worldbook[];
+    /** SillyTavern / Character Card V2 兼容载体，供外部工具读取 character_book 与 scoped regex。 */
+    spec?: 'chara_card_v2';
+    spec_version?: '2.0';
+    data?: Record<string, any>;
 }
 
 /** 絮语·用户社交背景：不是正式神经链接角色，而是用户人际关系里的影子联系人/群聊。 */
@@ -5760,7 +5823,6 @@ export interface FullBackupData {
     apiPresets?: ApiPreset[];
     availableModels?: string[];
     realtimeConfig?: RealtimeConfig;  // 实时感知配置（天气/新闻/Notion）
-    memoryPalaceConfig?: MemoryPalaceBackupConfig;
     customIcons?: Record<string, string>;
     appearancePresets?: AppearancePreset[];
     characters?: CharacterProfile[];
@@ -5835,6 +5897,7 @@ export interface FullBackupData {
     // Bank Data
     bankState?: BankFullState;
     bankDollhouse?: DollhouseState;
+    bankDollhouses?: BankDollhousesByShopId;
     bankTransactions?: BankTransaction[];
 
     socialAppData?: {
@@ -5902,9 +5965,8 @@ export interface FullBackupData {
     // LifeSim
     lifeSimState?: LifeSimState | null;
 
-    // Memory Palace (记忆宫殿)
+    // 回忆标本馆
     memoryNodes?: any[];
-    memoryVectors?: any[];
     memoryLinks?: any[];
     topicBoxes?: any[];
     anticipations?: any[];
@@ -5912,7 +5974,6 @@ export interface FullBackupData {
     memoryPalaceHighWaterMarks?: Record<string, number>; // charId → lastProcessedMsgId
     memoryPalaceFlags?: Record<string, string>; // mp_personality_tried_* / mp_first_archive_notice_* 等 UI 标记
     cloudBackupConfig?: CloudBackupConfig;
-    remoteVectorConfig?: { enabled: boolean; supabaseUrl: string; supabaseAnonKey: string; initialized: boolean };
 
     // Character daily schedule (角色日程表 — daily_schedule store)
     dailySchedules?: DailySchedule[];
@@ -5924,7 +5985,7 @@ export interface FullBackupData {
     trackers?: Tracker[];
     trackerEntries?: TrackerEntry[];
 
-    // Memory Palace 批次处理元数据
+    // 回忆标本馆 批次处理元数据
     memoryBatches?: any[];
 
     // Pixel Home（小屋像素界面）

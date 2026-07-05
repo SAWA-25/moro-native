@@ -1,5 +1,5 @@
 /**
- * Memory Palace — 期盼生命周期 (Anticipation Lifecycle)
+ * 回忆标本馆 — 期盼生命周期 (Anticipation Lifecycle)
  *
  * 窗台上的期盼经历以下状态流转：
  * - active → 7 天后变成 anchor（人生锚点）
@@ -56,7 +56,7 @@ export async function fulfillAnticipation(id: string): Promise<void> {
         tags: ['期盼实现', '温暖'],
         importance: 7,
         mood: 'grateful',
-        embedded: false, // 等后续向量化
+        embedded: false, // legacy flag; local-only nodes leave it false
         boxId: '',
         boxTopic: '期盼实现',
         createdAt: Date.now(),

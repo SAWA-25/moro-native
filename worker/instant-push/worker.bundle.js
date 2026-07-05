@@ -2393,7 +2393,9 @@ var PROMPT_PRIVACY_LINE_PATTERNS = [
   /(?:JSON|Markdown|代码块|字段名|只输出|不要输出).{0,24}(?:格式|字段|对象|数组|正文|回复|解释|代码块)/i,
   /(?:根据|按照|依照|基于).{0,16}(?:系统提示|提示词|角色卡|人设|设定|世界书|隐藏上下文|身份锚)/,
   /(?:我|角色|模型|AI).{0,10}(?:被要求|需要遵守|必须遵守|收到的任务|当前任务|输出格式)/i,
-  /(?:以下|上面).{0,10}(?:材料|规则|设定|上下文|prompt|提示).{0,16}(?:内部|隐藏|参考|不可见)/i
+  /(?:以下|上面).{0,10}(?:材料|规则|设定|上下文|prompt|提示).{0,16}(?:内部|隐藏|参考|不可见)/i,
+  /(?:当前要回应的消息|未回复消息|写法要求|按顺序逐条回应|逐条回应|不要提前回答后面还没轮到的消息)/,
+  /(?:这不是回复用户刚刚发来的消息|只输出真正要发出去的消息正文|不要写名字前缀、时间戳、系统提示或分析)/
 ];
 function stripPromptPrivacyLeaks(text) {
   const withoutBlocks = text.replace(hiddenBlockRe, "").replace(hiddenTagRe, "");
@@ -2411,6 +2413,9 @@ function sanitizeAssistantVisibleText(text) {
   return stripPromptPrivacyLeaks(strippedMeta);
 }
 
+// utils/callDirective.ts
+var CALL_USER_RE = /\[\[\s*CALL_USER\s*(?:[:：]\s*[^\]]*?)?\]\]/gi;
+
 // utils/sanitize.ts
 var stripLiteralBackslashN = (t) => t.replace(/\\n/g, "\n");
 var stripSourceTags = (t) => t.replace(/\s*\[(?:聊天|通话|约会)\]\s*/g, "\n");
@@ -2418,9 +2423,16 @@ var stripShopLineLabels = (t) => t.replace(/^\s*[\[【]\s*心意铺(?:陪逛)?\s
 var stripTimestamps = (t) => t.replace(/\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\]\s*/g, "").replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\s*/gm, "").replace(/（[上下]午\d{1,2}[：:]\d{2}）/g, "").replace(/\(\d{1,2}:\d{2}\s*[AP]M\)/gi, "");
 var stripChineseDate = (t) => t.replace(/\[\d{4}[-/年]\d{1,2}[-/月]\d{1,2}.*?\]/g, "");
 var stripRoleNamePrefix = (t) => t.replace(/^[\w一-龥]+:\s*/, "");
-var stripBusinessTagsForBubble = (t) => t.replace(/\[\[(?:ACTION|RECALL|SEARCH|DIARY|READ_DIARY|FS_DIARY|FS_READ_DIARY|DIARY_START|DIARY_END|FS_DIARY_START|FS_DIARY_END|MUSIC_ACTION)[:\s][\s\S]*?\]\]/g, "").replace(/\[\[\s*BLOCK_USER\s*\]\]/gi, "").replace(/\[\[\s*CALL_USER\s*\]\]/gi, "").replace(/\[\[\s*WITHDRAW\s*\]\]/gi, "").replace(/\[\[\s*REACT\s*[:：][^\]]*\]\]/gi, "").replace(/\[\[\s*PAT_SUFFIX\s*[:：][^\]]*\]\]/gi, "").replace(/\[\[\s*PAT\s*\]\]/gi, "").replace(/\[\[\s*FORCE_REPLY\s*[:：]?\s*[\s\S]*?\]\]/gi, "").replace(/\[\[(?:REL|TAKEOUT_ORDER|WEDDING_PLAN)[：:][\s\S]*?\]\]/g, "").replace(/\[\[PROPOSE(?:[：:][\s\S]*?)?\]\]/g, "").replace(/\[schedule_message[^\]]*\]/g, "");
+var stripBusinessTagsForBubble = (t) => t.replace(/\[\[(?:ACTION|RECALL|SEARCH|DIARY|READ_DIARY|FS_DIARY|FS_READ_DIARY|DIARY_START|DIARY_END|FS_DIARY_START|FS_DIARY_END|MUSIC_ACTION)[:\s][\s\S]*?\]\]/g, "").replace(/\[\[\s*BLOCK_USER\s*\]\]/gi, "").replace(CALL_USER_RE, "").replace(/\[\[\s*WITHDRAW\s*\]\]/gi, "").replace(/\[\[\s*REACT\s*[:：][^\]]*\]\]/gi, "").replace(/\[\[\s*PAT_SUFFIX\s*[:：][^\]]*\]\]/gi, "").replace(/\[\[\s*PAT\s*\]\]/gi, "").replace(/\[\[\s*FORCE_REPLY\s*[:：]?\s*[\s\S]*?\]\]/gi, "").replace(/\[\[(?:REL|TAKEOUT_ORDER|WEDDING_PLAN)[：:][\s\S]*?\]\]/g, "").replace(/\[\[PROPOSE(?:[：:][\s\S]*?)?\]\]/g, "").replace(/\[schedule_message[^\]]*\]/g, "");
 var stripBusinessTagsForNotification = (t) => stripBusinessTagsForBubble(t).replace(/\[\[(?:READ_NOTE|XHS_[A-Z_]+)[:\s][\s\S]*?\]\]/g, "").replace(/\[\[XHS_[A-Z_]+\]\]/g, "").replace(/\[\[(?:SHARE_SONG|NEWS_CARD)[:\s][\s\S]*?\]\]/g, "");
-var stripQuotes = (t) => t.replace(/\[\[(?:QU[OA]TE|引用)[：:][\s\S]*?\]\]/g, "").replace(/\[(?:QU[OA]TE|引用)[：:][^\]]*\]/g, "").replace(/\[回复\s*[""“][^""”]*?[""”](?:\.{0,3})\]\s*[：:]?\s*/g, "");
+var ASSISTANT_QUOTE_CLEAN_DOUBLE = /\[\[(?:QU[OA]TE|引用)[：:][\s\S]*?\]\]/g;
+var ASSISTANT_QUOTE_CLEAN_SINGLE = /\[(?:QU[OA]TE|引用)[：:][^\]]*\]/g;
+var ASSISTANT_REPLY_QUOTE_CLEAN = /\[回复\s*["“「『][^"”」』]*?["”」』](?:\.{0,3})\]\s*[：:]?\s*/g;
+var ASSISTANT_NATURAL_REPLY_QUOTE_CLEAN = /\[\s*(?:[^\]\n「『“"]{0,40}?)?引用了(?:[^\]\n「『“"]{0,80}?)?(?:说的)?\s*[「『“"]([\s\S]{1,500}?)[」』”"]\s*(?:[,，]\s*)?(?:并\s*)?(?:回复了?|回了|回应了)\s*(?:[↓:：]|如下)?\s*\]\s*[：:]?\s*/g;
+function stripAssistantReplyQuoteMarkers(text) {
+  return text.replace(ASSISTANT_QUOTE_CLEAN_DOUBLE, "").replace(ASSISTANT_QUOTE_CLEAN_SINGLE, "").replace(ASSISTANT_REPLY_QUOTE_CLEAN, "").replace(ASSISTANT_NATURAL_REPLY_QUOTE_CLEAN, "");
+}
+var stripQuotes = stripAssistantReplyQuoteMarkers;
 var stripMarkdownHeaders = (t) => t.replace(/^#{1,6}\s+/gm, "");
 var stripMarkdownBold = (t) => t.replace(/\*{2,}/g, "");
 var stripMarkdownDividers = (t) => t.replace(/^\s*---\s*$/gm, "").replace(/^\s*[-*+]\s*$/gm, "");

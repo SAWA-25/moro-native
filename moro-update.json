@@ -1,19 +1,19 @@
 {
-  "versionCode": 8,
-  "versionName": "1.0.7",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/moro.apk",
-  "sha256": "a3d8077caed09a0527f67f2bb9f464ebc426d98e0dd8b7461a39c5ee47282e7f",
-  "sizeBytes": 274020755,
-  "releaseNotes": "正式版 1.0.7：\n- 上游的新内容已经装进安装版，共览、幕间集、见闻簿、补丁铺、剪报夹、絮语和音乐等入口都在啦。\n- iPhone 刘海、灵动岛和底部小横条的避让更稳，标题、按钮、输入栏、弹窗和悬浮按钮会乖乖待在能点到的地方。\n- iPhone 13 Pro 打开安装版停在锁屏时会更轻一点，减少卡很久或突然回到锁屏的机会。\n- Android 可以从 1.0.6 直接覆盖升级，右下角的小开发标记在正式版里会乖乖藏好。\n- TA 窥屏、观屏评论、查岗和落脚点这些轻互动继续守好授权边界，需要你点头的地方都会明说。\n- 安装包已经用正式签名重新打好，适合放心更新。",
+  "versionCode": 11,
+  "versionName": "1.0.8",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8/moro.apk",
+  "sha256": "7993b464d9d479f4e9197f6914552390c586cfe28657a3688eaf86dd7586935c",
+  "sizeBytes": 270341479,
+  "releaseNotes": "正式版 1.0.8：\n- 上游的新内容已经装进安装版，人生拟多分店、相册拾光素材、线下见面续上聊天、回忆标本馆新能力等入口都在啦。\n- iPhone 安装继续使用这次确认过的正式路线，Bundle ID 保持不变，安装页会指向同一个新包。\n- Android 提供完整 release 签名包，可以从旧安装版继续覆盖升级；更新前照旧建议先给重要数据做个小备份。\n- 正式安装版默认藏好构建角标，桌面、聊天和设置页不会多出一枚小标签。\n- 这次只更新安装包内容、入口和稳定性，不会主动清空你的角色、聊天、记忆、相册、店铺或 API 设置。",
   "mandatory": false,
-  "publishedAt": "2026-07-04T13:25:58+08:00",
+  "publishedAt": "2026-07-05T08:47:21+08:00",
   "ios": {
-    "versionCode": 10,
-    "versionName": "1.0.7.2",
-    "buildNumber": 10,
+    "versionCode": 11,
+    "versionName": "1.0.8",
+    "buildNumber": 11,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/ios-1.0.7.2/Moro-ios-1.0.7.2.ipa?bundle=wb.uniusc9734.tool7&v=1072",
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8/Moro-v1.0.8.ipa?bundle=wb.uniusc9734.tool7&v=108",
     "plistUrl": "https://raw.githubusercontent.com/SAWA-25/moro-native/native-main/release/moro-ios-install.plist",
-    "releaseNotes": "修复 iPhone 安装版启动稳定性，并让文具盒可以打开 IPA 安装确认页。"
+    "releaseNotes": "安装版 1.0.8 会把上游新功能和修复一起带到 iPhone，安装路线、Bundle ID 和正式签名保持对齐。"
   }
 }

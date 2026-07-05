@@ -11,10 +11,12 @@ import { drainPendingDiaries } from './pendingDiary';
 import { applyEmotionEvalRaw } from './emotionApply';
 import { processNewMessages } from './memoryPalace/pipeline';
 import { resolveMemoryPalaceAuxConfigsFromStorage } from './memoryPalace/auxConfig';
+import { isMemoryFeatureEnabled } from './memoryPalace/cognitiveFlow';
 import { loadMusicHooks } from '../context/MusicContext';
 import type { XhsNote } from './realtimeContext';
 import { appendDevDebugInstantPushLog, appendDevDebugLog, isCaptureEnabled, makeDebugLogger } from './devDebug';
 import { buildOpenAiEndpoint } from './openAiCompat';
+import { normalizeMainApiConfig } from './apiConfigDefaults';
 import { sanitizeAssistantVisibleText } from './promptPrivacy';
 import { dispatchForceReplyRequest, extractForceReplyDirective } from './forceReply';
 
@@ -121,17 +123,17 @@ export const pushLastXhsNotesRef: { current: XhsNote[] } = { current: [] };
 
 /** 从 localStorage 读 APIConfig (与 OSContext load 逻辑保持一致, 但这里在 React 之外跑) */
 const loadApiConfigFromLocalStorage = (): APIConfig => {
-  const fallback: APIConfig = { baseUrl: '', apiKey: '', model: '' };
+  const fallback: APIConfig = normalizeMainApiConfig({ baseUrl: '', apiKey: '', model: '' });
   try {
     const raw = localStorage.getItem('os_api_config');
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
-    return {
+    return normalizeMainApiConfig({
       baseUrl: parsed.baseUrl || '',
       apiKey: parsed.apiKey || '',
       model: parsed.model || '',
       ...parsed,
-    };
+    });
   } catch {
     return fallback;
   }
@@ -308,7 +310,7 @@ const processInboxMessageWithPostProcessing = async (message: ActiveMsg2InboxMes
   }
 
   // ─── Phase 2 Round 2 (2f): push 尾段 ───
-  // Memory Palace 缓冲区处理仍在这里 (跟本地 fetch 路径 finally 段对齐, 不依赖 React).
+  // 回忆标本馆 缓冲区处理仍在这里 (跟本地 fetch 路径 finally 段对齐, 不依赖 React).
   // 情绪评估**不再这里跑** — push-tail 用 char.systemPrompt + 50 条聊天的 degraded ctx,
   // 会污染 useChatAI line 613 用 full ctx 算的 buff 状态. 改为 Option B:
   //   - 写一条 pending 标记到 KV (charId → lastPushMsgId)
@@ -399,9 +401,9 @@ async function logInstantPushLlmExchange(message: ActiveMsg2InboxMessage): Promi
 }
 
 /**
- * 跑 push 路径的尾段: Memory Palace 缓冲区处理 + 情绪 eval pending 标记.
+ * 跑 push 路径的尾段: 回忆标本馆 缓冲区处理 + 情绪 eval pending 标记.
  *
- * Memory Palace 直接在这里跑 (pipeline 内部 self-contained, 不依赖 React state).
+ * 回忆标本馆 直接在这里跑 (pipeline 内部 self-contained, 不依赖 React state).
  * 情绪评估走 Option B:
  *   - 写 KV pending 标记 (charId → lastPushMsgId); 用户切回这个 chat 时 useChatAI useEffect drain
  *   - 同时 dispatch 'post-push-emotion-eval' 事件; 如果 useChatAI 已 mount 这个 char 就立即跑
@@ -412,10 +414,10 @@ async function runPushTailPipeline(
   char: import('../types').CharacterProfile,
   userProfile: UserProfile,
 ): Promise<void> {
-  // 1. Memory Palace
-  const { embedding: mpEmb, llm: mpLLM } = resolveMemoryPalaceAuxConfigsFromStorage();
+  // 1. 回忆标本馆
+  const { llm: mpLLM } = resolveMemoryPalaceAuxConfigsFromStorage();
 
-  if ((char as any).memoryPalaceEnabled && mpEmb && mpLLM) {
+  if (isMemoryFeatureEnabled(char as any) && mpLLM) {
     try {
       const recentMsgs = await DB.getRecentMessagesByCharId(char.id, 50);
       // fire-and-forget: pipeline 内部有并发锁 + 水位线检查, 不会抢着跑两份
@@ -423,7 +425,6 @@ async function runPushTailPipeline(
         recentMsgs,
         char.id,
         char.name,
-        mpEmb,
         mpLLM,
         userProfile?.name || '',
         false,
@@ -436,7 +437,7 @@ async function runPushTailPipeline(
     }
   }
 
-  // 2. 情绪评估 — 已迁到 worker（日程 / 心情 API）: worker 跑完主回复后跑 eval, 推 emotion_update push,
+  // 2. 情绪评估 — 已迁到 worker（心情 API）: worker 跑完主回复后跑 eval, 推 emotion_update push,
   // flushInboxToChat 看到 messageType==='emotion_update' 调 applyEmotionEvalRaw 落 buff.
   // 所以这里不再触发客户端 eval (否则 worker + 客户端双跑双扣费). 见 worker/instant-push + useChatAI.
 
@@ -467,7 +468,7 @@ const flushInboxToChatImpl = async () => {
       bodyChars: typeof message.body === 'string' ? message.body.length : undefined,
     });
 
-    // emotion_update: worker 跑完日程 / 心情 API 情绪评估后推回的 buff 结果. 不渲染成聊天消息, 直接落 buff +
+    // emotion_update: worker 跑完心情 API 情绪评估后推回的 buff 结果. 不渲染成聊天消息, 直接落 buff +
     // 广播 innerState (useChatAI 监听 'emotion-innerstate-updated' → setEvolvedNarrative 喂下一轮).
     // 识别条件用 messageType==='emotion_update' 或 metadata.emotionRaw 存在 —— 后者兜底旧 SW
     // (<1.8.0 不认 emotion_update messageKind, 会把它当 content 存进 inbox, 但 metadata.emotionRaw

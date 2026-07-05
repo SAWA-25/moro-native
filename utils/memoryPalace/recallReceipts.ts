@@ -1,5 +1,5 @@
 /**
- * Memory Palace — 召回回执 (Recall Receipts)
+ * 回忆标本馆 — 召回回执 (Recall Receipts)
  *
  * 记录"路径①召回"每次实际注入到主聊天 prompt 的 memoryId 列表。
  * 用途：路径②extraction 处理 buffer 时，用回执反查"这段对话期间角色被
@@ -8,7 +8,7 @@
  *
  * 为什么需要这玩意：
  *   纠正语句和被纠正的记忆之间常常隔几十条消息（buffer 满 100 才处理），
- *   单纯靠"对最近消息做向量召回"经常漏 — 但召回时我们 100% 知道 prompt
+ *   单纯靠"对最近消息做相关性召回"经常漏 — 但召回时我们 100% 知道 prompt
  *   里塞了哪些记忆，把这个事实记下来就不必猜。
  *
  * 存储：localStorage，按 char 分键，环形保留最近 RECEIPT_MAX 条。

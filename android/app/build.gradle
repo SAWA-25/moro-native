@@ -50,8 +50,8 @@ android {
         applicationId "com.moro.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.7"
+        versionCode 11
+        versionName "1.0.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "MORO_RELEASE_CERT_SHA256", "\"${moroReleaseCertSha256.replace('"', '')}\""
         aaptOptions {

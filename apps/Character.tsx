@@ -5,7 +5,7 @@
  */
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useOS } from '../context/OSContext';
-import { AppID, CharacterProfile, CharacterExportData, MemoryFragment } from '../types';
+import { AppID, CharacterProfile, CharacterExportData, MemoryFragment, Worldbook } from '../types';
 import {
     Waveform, VinylRecord, UserPlus, TrayArrowDown, TrayArrowUp, PaperPlaneTilt, X, Binoculars,
 } from '@phosphor-icons/react';
@@ -26,7 +26,10 @@ import { generateLifeProfile } from '../utils/lifeProfile';
 import { generateAppearanceTags } from '../utils/appearanceTags';
 import { resolveAuxApi } from '../utils/auxApi';
 import { extractCardJsonFromPng, parseSillyTavernCard, convertSTCardToCharacter, ParsedSTCard } from '../utils/sillyTavernCard';
+import { buildCharacterCardExportData } from '../utils/characterCardExport';
 import { createCharacterId } from '../utils/characterIdentity';
+import { applyCharacterEditorMacros } from '../utils/characterEditorMacros';
+import { scrollToManualAnchor } from '../utils/manualDeepLink';
 import { PAPER_TONES, MONO_STACK } from '../components/handbook/paper';
 import { callChatCompletion } from '../utils/llmClient';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
@@ -141,8 +144,8 @@ const CharacterCard: React.FC<{
 };
 
 /** onExit：剪影集（PersonaHubApp）嵌入时返回封面页；不传则关闭 App 回桌面（旧行为） */
-const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
-  const { closeApp: closeAppOS, openApp, characters, activeCharacterId, setActiveCharacterId, addCharacter, importCharacter, updateCharacter, deleteCharacter, apiConfig, auxApiConfig, addToast, userProfile, customThemes, addCustomTheme, worldbooks, addWorldbook } = useOS();
+const Character: React.FC<{ onExit?: () => void; manualTarget?: { anchorId?: string; nonce: number } }> = ({ onExit, manualTarget }) => {
+  const { closeApp: closeAppOS, openApp, characters, activeCharacterId, setActiveCharacterId, addCharacter, importCharacter, updateCharacter, deleteCharacter, apiConfig, auxApiConfig, addToast, userProfile, customThemes, addCustomTheme, worldbooks, addWorldbook, worldbookGroupSettings } = useOS();
   // 角色卡生成/润色/导入属「聊天以外」的功能：走副 API（未配置副 API 时回退主 API）
   const auxApi = { ...apiConfig, ...resolveAuxApi(auxApiConfig, apiConfig) };
   const [isGeneratingLifeProfile, setIsGeneratingLifeProfile] = useState(false);
@@ -260,6 +263,31 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
           return blob.includes(q);
       });
   }, [characters, search]);
+
+  useEffect(() => {
+      if (!manualTarget) return;
+      const anchorId = manualTarget.anchorId;
+      const fallback = 'manual-personas-characters';
+
+      if (anchorId === 'manual-personas-character-export' && view === 'list') {
+          const targetId = activeCharacterId && characters.some(c => c.id === activeCharacterId)
+              ? activeCharacterId
+              : characters[0]?.id;
+          if (targetId) {
+              setEditingId(targetId);
+              setView('detail');
+              setDetailTab('identity');
+              return;
+          }
+      }
+
+      if (anchorId === 'manual-personas-character-export' && view === 'detail' && !formData) return;
+
+      const timeout = window.setTimeout(() => {
+          if (!scrollToManualAnchor(anchorId)) scrollToManualAnchor(fallback);
+      }, 260);
+      return () => window.clearTimeout(timeout);
+  }, [manualTarget?.nonce, manualTarget?.anchorId, view, activeCharacterId, characters, formData]);
 
   const applyVoiceToCharacter = (voice: MiniMaxVoiceItem, source: 'system' | 'voice_cloning' | 'voice_generation') => {
       if (!formData) return;
@@ -421,9 +449,10 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
       // Functional update to prevent stale state issues in simple closures
       setFormData(prev => {
           if (!prev) return null;
-          if (Object.is(prev[field], value)) return prev;
+          const nextValue = applyCharacterEditorMacros(field, value, prev, userProfile);
+          if (Object.is(prev[field], nextValue)) return prev;
           formDataDirtyRef.current = true;
-          const next = { ...prev, [field]: value };
+          const next = { ...prev, [field]: nextValue };
           formDataRef.current = next;
           return next;
       });
@@ -592,7 +621,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
   /**
    * 按指定日期强制重新总结：读原始聊天记录（忽略 hideBeforeMessageId），LLM 总结，
    * upsert 同日期的 'archive' MemoryFragment（'palace' 自动归档的不动，保持并存）。
-   * 这是自动化的兜底路径：即使 4.5 已经被 palace 处理+隐藏+向量化，用户依然能让 AI
+   * 这是自动化的兜底路径：即使 4.5 已经被 palace 处理+隐藏，用户依然能让 AI
    * 重新阅读 4.5 原始聊天做一版手动总结。
    */
   /**
@@ -869,23 +898,16 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
   const handleExportCard = async () => {
       if (!formData) return;
 
-      const {
-          id, modelId, memories, refinedMemories, activeMemoryMonths, guidebookInsights,
-          ...cardProps
-      } = formData;
-
-      const exportData: CharacterExportData = {
-          ...cardProps,
-          version: 1,
-          type: 'moro_character_card'
-      };
-
-      if (formData.bubbleStyle) {
-          const customTheme = customThemes.find(t => t.id === formData.bubbleStyle);
-          if (customTheme) {
-              exportData.embeddedTheme = customTheme;
-          }
-      }
+      const { exportData, worldbookCount, regexScriptCount } = buildCharacterCardExportData(formData, {
+          customThemes,
+          worldbooks,
+          worldbookGroupSettings,
+      });
+      const packedParts = [
+          worldbookCount > 0 ? `${worldbookCount} 条世界书` : '',
+          regexScriptCount > 0 ? `${regexScriptCount} 条正则` : '',
+      ].filter(Boolean);
+      const packedSuffix = packedParts.length > 0 ? `（含 ${packedParts.join('、')}）` : '';
 
       const json = JSON.stringify(exportData, null, 2);
       const fileName = `${formData.name || 'Character'}_Card.json`;
@@ -906,7 +928,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                   title: '导出角色卡',
                   files: [uriResult.uri],
               });
-              addToast('已调起分享', 'success');
+              addToast(`已调起分享${packedSuffix}`, 'success');
               return;
           } catch (e: any) {
               console.error("Native Export Error", e);
@@ -927,7 +949,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                   title: '导出角色卡',
                   files: [file],
               });
-              addToast('已调起分享', 'success');
+              addToast(`已调起分享${packedSuffix}`, 'success');
               return;
           }
       } catch (e: any) {
@@ -947,7 +969,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
 
-          addToast('角色卡已导出', 'success');
+          addToast(`角色卡已导出${packedSuffix}`, 'success');
   };
 
   /**
@@ -1042,32 +1064,53 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
       // Sync mounted worldbooks into the global worldbook app so they
       // appear under their original category (or the character's name
       // as a sensible fallback when the card has no category set).
-      const incomingMounted = (data.mountedWorldbooks || []).map(wb => ({ ...wb }));
+      const now = Date.now();
       const fallbackCategory = `${data.name || '导入角色'} 的世界书`;
-      let importedWbCount = 0;
-      for (const wb of incomingMounted) {
-          if (!wb.id || worldbooks.some(existing => existing.id === wb.id)) continue;
+      const incomingMounted: Worldbook[] = (data.mountedWorldbooks || []).map((wb, index) => {
           const category = wb.category && wb.category.trim() ? wb.category : fallbackCategory;
-          wb.category = category;
-          await addWorldbook({
-              id: wb.id,
+          return {
+              ...wb,
+              id: wb.id || `wb-import-${now}-${index}`,
               title: wb.title || '未命名设定',
               content: wb.content || '',
               category,
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-          });
+              createdAt: typeof wb.createdAt === 'number' ? wb.createdAt : now,
+              updatedAt: typeof wb.updatedAt === 'number' ? wb.updatedAt : now,
+          };
+      });
+      let importedWbCount = 0;
+      for (const wb of incomingMounted) {
+          if (!wb.id || worldbooks.some(existing => existing.id === wb.id)) continue;
+          await addWorldbook(wb);
           importedWbCount++;
       }
 
+      const {
+          id: _id,
+          modelId: _modelId,
+          version: _version,
+          type: _type,
+          embeddedTheme: _embeddedTheme,
+          spec: _spec,
+          spec_version: _specVersion,
+          data: _stCompatData,
+          mountedWorldbooks: _exportMounted,
+          ...characterFields
+      } = data as CharacterExportData & { id?: string; modelId?: string };
+
       const newChar: CharacterProfile = {
-          ...data,
+          ...characterFields,
           id: createCharacterId('import'),
           memories: [],
           refinedMemories: {},
           activeMemoryMonths: [],
-          mountedWorldbooks: incomingMounted,
-          embeddedTheme: undefined
+          mountedWorldbooks: incomingMounted.map(wb => ({
+              id: wb.id,
+              title: wb.title,
+              content: wb.content,
+              category: wb.category,
+              enabled: wb.enabled,
+          })),
       } as CharacterProfile;
 
       // 旧实现：DB.saveCharacter + addCharacter()「naive 刷新」+ reload —— 整页重启之外，
@@ -1084,7 +1127,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
   );
 
   return (
-    <div className="h-full w-full text-[#2f3432] relative" style={DOT_BG}>
+    <div data-manual-anchor="manual-personas-characters" className="h-full w-full text-[#2f3432] relative" style={DOT_BG}>
        {view === 'list' ? (
            <div className="flex flex-col min-h-0 h-full animate-fade-in">
                {/* 顶栏 */}
@@ -1305,7 +1348,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                {fieldLabel('核心设定（角色指令）', 'SCRIPT')}
                                <textarea value={formData.systemPrompt} onChange={(e) => handleChange('systemPrompt', e.target.value)} className={`${AREA_INPUT} h-40`} placeholder="填写角色身份、性格、行为规则和对话边界" />
                                <p className="text-[12px] mt-1.5 leading-relaxed" style={NOTE_TEXT}>
-                                   支持 {'{{user}}'} / {'{{char}}'} 以及 {'<user>'} / {'<char>'} 宏；启用活字盘预设时对应 Char Description 占位。
+                                   输入 {'{{user}}'} / {'{{char}}'} 以及 {'<user>'} / {'<char>'} 后，会自动替换为当前用户和角色名称；启用活字盘预设时对应 Char Description 占位。
                                </p>
                            </div>
 
@@ -1348,6 +1391,9 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                     className={`${AREA_INPUT} h-24`}
                                     placeholder="填写角色所在世界、背景规则或重要常识"
                                 />
+                               <p className="text-[12px] mt-1.5 leading-relaxed" style={NOTE_TEXT}>
+                                   这里输入角色 / 用户宏也会自动替换成当前名字。
+                               </p>
                            </div>
 
                            {/* 生活侧写：帮 TA 更了解自己的生活速写（副 API 生成，可手动改） */}
@@ -1384,7 +1430,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                     placeholder={'<START>\n{{user}}: 在画什么？\n{{char}}: 在画云。'}
                                 />
                                <p className="text-[12px] mt-1.5 leading-relaxed" style={NOTE_TEXT}>
-                                   用来约束角色说话方式。多段示例用 &lt;START&gt; 分隔；启用活字盘预设时对应 Chat Examples 占位。
+                                   用来约束角色说话方式。多段示例用 &lt;START&gt; 分隔；角色 / 用户宏会自动替换；启用活字盘预设时对应 Chat Examples 占位。
                                </p>
                            </div>
 
@@ -1396,7 +1442,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                     value={formData.firstMes || ''}
                                     onChange={(e) => handleChange('firstMes', e.target.value)}
                                     className={`${AREA_INPUT} h-24`}
-                                    placeholder="新聊天里 TA 先开口的那句话（{{user}} / {{char}} 宏照常可用）…"
+                                    placeholder="新聊天里 TA 先开口的那句话（{{user}} / {{char}} 会自动替换）…"
                                 />
                                <p className="text-[12px] mt-1.5 leading-relaxed" style={NOTE_TEXT}>
                                    新聊天为空时显示。支持多个备选开场，进入聊天后可切换选择。
@@ -1528,7 +1574,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                            </div>
 
                            {/* 导出角色卡 */}
-                           <div className="pt-2 pb-2">
+                           <div data-manual-anchor="manual-personas-character-export" className="pt-2 pb-2">
                                <button
                                    onClick={handleExportCard}
                                    className={`w-full py-3.5 text-xs font-black flex items-center justify-center gap-2 ${INK_BTN}`}
@@ -1536,7 +1582,7 @@ const Character: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
                                    <TrayArrowUp size={15} weight="bold" />
                                    导出角色卡
                                </button>
-                               <p className="text-[12px] text-center mt-2" style={{ color: PAPER_TONES.inkFaint }}>导出的角色卡不包含记忆档案和聊天记录。</p>
+                               <p className="text-[12px] text-center mt-2" style={{ color: PAPER_TONES.inkFaint }}>导出的角色卡会带上已绑定世界书和角色正则，不包含记忆档案和聊天记录。</p>
                            </div>
                        </div>
                    )}

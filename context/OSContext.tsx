@@ -11,7 +11,9 @@ import { proactiveFallbackHint, proactivePendingReplyHint } from '../utils/laiwa
 import { findPendingProactiveReplyMessages, makeQueuedReplyTarget } from '../utils/proactivePendingReply';
 import { canCharContactUser, CHAR_BLOCK_EVENT, extractBlockUserDirective, isCharBlockDisabled, randomUnblockDelayMs } from '../utils/blockSystem';
 import { isAppealDue, generateUnblockAppeal } from '../utils/unblockAppeal';
-import { resolveAuxApi, resolveOptionalCustomApi } from '../utils/auxApi';
+import { resolveAuxApi } from '../utils/auxApi';
+import { resolveMoodApi, type ScheduleMoodApiConfig } from '../utils/scheduleMoodApi';
+import { DEFAULT_MAIN_API_CONFIG, normalizeApiPresetConfig, normalizeApiPresets, normalizeMainApiConfig } from '../utils/apiConfigDefaults';
 import { CHAR_USER_REMARK_EVENT, type UserRemarkEventDetail } from '../utils/userRemarkSystem';
 import { CHAR_PAT_SUFFIX_EVENT } from '../utils/patSuffix';
 import { RELATIONSHIP_EVENT, PROPOSAL_EVENT, MARRIAGE_PLAN_EVENT, buildRelationshipState, sanitizeRelationshipUpdate, isRelationshipStage, applyAffectionDelta } from '../utils/relationship';
@@ -34,7 +36,7 @@ import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { callChatCompletion } from '../utils/llmClient';
 import { INSTALLED_APPS } from '../constants';
 import { normalizeCharacterDefaults } from '../utils/impression';
-import { createCharacterId, ensureCharacterModelId } from '../utils/characterIdentity';
+import { createCharacterId } from '../utils/characterIdentity';
 import { isEmotionBuffFeatureOn, isScheduleFeatureOn } from '../utils/scheduleGenerator';
 import { evaluateEmotionBackground } from '../hooks/useChatAI';
 import { maybeRunMomentsAutoPost } from '../utils/momentsAutoPost';
@@ -45,6 +47,8 @@ import { splitOutRichBlocks } from '../utils/chatRichContent';
 import { extractThinkingChainFromCompletion, flattenContent, stripThinkBlocks } from '../utils/llmReasoning';
 import { sanitizeAssistantVisibleText } from '../utils/promptPrivacy';
 import { FORCE_REPLY_EVENT, FORCE_REPLY_STORAGE_KEY, extractForceReplyDirective, type ForceReplyEventDetail, type ForceReplyRequest } from '../utils/forceReply';
+import { extractCallUserDirective } from '../utils/callDirective';
+import { mergeCharacterProfileUpdate, mergeGroupProfileUpdate } from '../utils/profileUpdateMerge';
 import { loadMusicPlaybackSnapshot } from './MusicContext';
 import { setMinimaxRegion } from '../utils/minimaxEndpoint';
 import { appendScreenPeekCommentToCard } from '../utils/screenPeekComments';
@@ -65,6 +69,7 @@ import { collectLocalStorageSnapshot, isTemporaryLocalStorageKey, restoreLocalSt
 import { isEmotionEvalSkipped } from '../utils/devDebug';
 import { showLocalNotification } from '../utils/browserNotify';
 import { isAmbientSocialCharacterForUser, shouldHideAmbientSocialRecordForUser } from '../utils/ambientSocial';
+import { OFFLINE_SESSION_STATE_EVENT, isOfflineSessionActive } from '../utils/offlineMode';
 import {
   CHAT_ALARM_LOCK_MS,
   CHAT_ALARM_NATIVE_WINDOW_DAYS,
@@ -260,17 +265,10 @@ const defaultRealtimeConfig: RealtimeConfig = {
   cacheMinutes: 30
 };
 
-// 记忆宫殿全局配置。API 渠道统一走文具盒副 API，这里只保留标本馆内部模型偏好。
-export interface MemoryPalaceGlobalConfig {
-  embedding: {
-    model: string;
-    dimensions: number;
-  };
-}
+// 回忆标本馆全局配置。API 渠道统一走文具盒副 API；旧检索配置已废弃。
+export type MemoryPalaceGlobalConfig = Record<string, never>;
 
-const defaultMemoryPalaceConfig: MemoryPalaceGlobalConfig = {
-  embedding: { model: 'BAAI/bge-m3', dimensions: 1024 },
-};
+const defaultMemoryPalaceConfig: MemoryPalaceGlobalConfig = {};
 
 interface OSContextType {
   activeApp: AppID;
@@ -296,7 +294,7 @@ interface OSContextType {
   activeCharacterId: string;
   addCharacter: () => void;
   /** 导入完整角色（角色卡导入用）：落库 + 进 state + 设为当前角色，不刷新页面 */
-  importCharacter: (char: CharacterProfile) => Promise<void>;
+  importCharacter: (char: CharacterProfile, options?: { preserveId?: boolean }) => Promise<void>;
   updateCharacter: (id: string, updates: Partial<CharacterProfile>) => Promise<void>;
   deleteCharacter: (id: string) => void;
   setActiveCharacterId: (id: string) => void;
@@ -353,16 +351,12 @@ interface OSContextType {
   realtimeConfig: RealtimeConfig;
   updateRealtimeConfig: (updates: Partial<RealtimeConfig>) => void;
 
-  // 记忆宫殿全局配置（所有角色共用）
+  // 回忆标本馆全局配置（所有角色共用）
   memoryPalaceConfig: MemoryPalaceGlobalConfig;
   updateMemoryPalaceConfig: (updates: Partial<MemoryPalaceGlobalConfig>) => void;
 
-  // 日程 / 心情 API（所有角色同步；心情 buff 是否启用仍各自独立）
-  syncEmotionApiToAllCharacters: (api: { baseUrl: string; apiKey: string; model: string } | undefined) => void;
-
-  // 远程向量存储配置 (Supabase pgvector)
-  remoteVectorConfig: import('../utils/memoryPalace/types').RemoteVectorConfig;
-  updateRemoteVectorConfig: (updates: Partial<import('../utils/memoryPalace/types').RemoteVectorConfig>) => void;
+  // 日程 API / 心情 API（所有角色同步；心情 buff 是否启用仍各自独立）
+  syncScheduleMoodApisToAllCharacters: (apis: { scheduleApi?: ScheduleMoodApiConfig; moodApi?: ScheduleMoodApiConfig }) => void;
 
   customThemes: ChatTheme[];
   addCustomTheme: (theme: ChatTheme) => Promise<void>;
@@ -475,16 +469,7 @@ const defaultTheme: OSTheme = {
   contentColor: '#2b2933', // 默认墨色文字（浅色纸面背景）
 };
 
-const defaultApiConfig: APIConfig = {
-  baseUrl: '',
-  apiKey: '',
-  minimaxApiKey: '',
-  minimaxGroupId: '',
-  minimaxRegion: 'domestic',
-  model: 'gpt-4o-mini',
-  stream: false,
-  temperature: 0.85,
-};
+const defaultApiConfig: APIConfig = DEFAULT_MAIN_API_CONFIG;
 
 const defaultAuxApiConfig: AuxApiConfig = {
   enabled: false,
@@ -670,7 +655,7 @@ const OSContext = createContext<OSContextType | undefined>(undefined);
 export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... (State declarations same as before) ...
   const [activeApp, setActiveApp] = useState<AppID>(AppID.Launcher);
-  // App 导航历史：openApp 时压入来源 App，goBack 时弹出回到上一个；用于子 App（如拾光图库/自由活动）按来源返回而非直接回桌面
+  // App 导航历史：openApp 时压入来源 App，goBack 时弹出回到上一个；用于子 App（如相册内拾光素材/自由活动）按来源返回而非直接回桌面
   const appHistoryRef = useRef<AppID[]>([]);
   const [theme, setTheme] = useState<OSTheme>(defaultTheme);
   const [apiConfig, setApiConfig] = useState<APIConfig>(defaultApiConfig);
@@ -703,75 +688,19 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       return () => clearInterval(timer);
   }, []);
 
-  // 启动后台扫描一次，把还停留在老 number[] 形态的向量记录升级到 Uint8Array
-  // 紧凑存储。完全无损，不影响召回质量。重度用户磁盘可省 ~12×（500MB → 40MB
-  // 量级）。fire-and-forget，不阻塞 UI；只在确实有数据被升级时弹一次 toast
-  // 让用户知道发生了什么。重复调用幂等，下次启动如果没有老数据就立刻退出。
+  // 清理旧版远程检索配置。新版回忆标本馆只使用文具盒副 API + 本地 IndexedDB。
   useEffect(() => {
-      let cancelled = false;
-      const nativeRuntime = isNativeAppRuntime();
-      const nativeIOS = isNativeIOSRuntime();
-      if (nativeRuntime && isLocked) return;
-      const abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      let startTimer: number | null = null;
-      let idleHandle: number | null = null;
-      const scheduleIdle = (cb: () => void): number => {
-          const ric = (window as any).requestIdleCallback;
-          if (typeof ric === 'function') return ric(cb, { timeout: nativeIOS ? 12000 : 5000 });
-          return window.setTimeout(cb, nativeIOS ? 3000 : 1000);
-      };
-      const run = async () => {
-          try {
-              if (cancelled) return;
-              const { MemoryVectorDB } = await import('../utils/memoryPalace/db');
-              const migrated = await MemoryVectorDB.scanAndMigrateLegacy((m, s) => {
-                  if (cancelled || m === 0) return;
-                  if (s % 1000 === 0 && s > 0) {
-                      setSysOperation({
-                          status: 'processing',
-                          message: `正在压缩记忆向量到紧凑格式... ${m}/${s}`,
-                          progress: 0,
-                      });
-                  }
-              }, {
-                  batchSize: nativeIOS ? 35 : nativeRuntime ? 100 : 500,
-                  pauseMs: nativeIOS ? 300 : nativeRuntime ? 150 : 50,
-                  signal: abort?.signal,
-                  shouldContinue: () => !cancelled && (!nativeRuntime || document.visibilityState !== 'hidden'),
-              });
-              if (cancelled) return;
-              if (migrated > 0) {
-                  setSysOperation({ status: 'idle', message: '', progress: 0 });
-                  addToast(`已把 ${migrated} 条记忆向量压缩到紧凑格式，磁盘空间已释放`, 'success');
-              }
-          } catch (e) {
-              console.warn('[memory] vector migration scan failed', e);
-          }
-      };
-      const startDelay = nativeIOS ? 12000 : nativeRuntime ? 7000 : 2000;
-      startTimer = window.setTimeout(() => {
-          if (cancelled) return;
-          idleHandle = scheduleIdle(() => { void run(); });
-      }, startDelay);
-      return () => {
-          cancelled = true;
-          abort?.abort();
-          if (startTimer !== null) window.clearTimeout(startTimer);
-          if (idleHandle !== null) {
-              const cancelIdle = (window as any).cancelIdleCallback;
-              if (typeof cancelIdle === 'function') cancelIdle(idleHandle);
-              else window.clearTimeout(idleHandle);
-          }
-      };
-  // addToast / setSysOperation 是稳定引用，跑一次即可
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLocked]);
+      try {
+          localStorage.removeItem('os_remote_vector_config');
+          localStorage.removeItem('os_memory_palace_config');
+      } catch {}
+  }, []);
 
   const [characters, setCharacters] = useState<CharacterProfile[]>([]);
   const [activeCharacterId, setActiveCharacterId] = useState<string>('');
   const charactersRef = useRef<CharacterProfile[]>([]);
 
-  // 刷新后能恢复"上一次聊的角色"：所有调用方（聊天切换/通知 onclick/记忆宫殿 handleSwitchChar）
+  // 刷新后能恢复"上一次聊的角色"：所有调用方（聊天切换/通知 onclick/回忆标本馆 handleSwitchChar）
   // 都走裸 setActiveCharacterId，集中在这里同步到 localStorage，避免每个调用点各写一遍
   useEffect(() => {
     if (activeCharacterId) {
@@ -802,11 +731,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [apiPresets, setApiPresets] = useState<ApiPreset[]>([]);
   const [realtimeConfig, setRealtimeConfig] = useState<RealtimeConfig>(defaultRealtimeConfig);
   const [memoryPalaceConfig, setMemoryPalaceConfig] = useState<MemoryPalaceGlobalConfig>(() => {
-    try { const s = localStorage.getItem('os_memory_palace_config'); return s ? { ...defaultMemoryPalaceConfig, ...JSON.parse(s) } : defaultMemoryPalaceConfig; } catch { return defaultMemoryPalaceConfig; }
-  });
-  const defaultRemoteVectorConfig = { enabled: false, supabaseUrl: '', supabaseAnonKey: '', initialized: false };
-  const [remoteVectorConfig, setRemoteVectorConfig] = useState(() => {
-    try { const s = localStorage.getItem('os_remote_vector_config'); return s ? { ...defaultRemoteVectorConfig, ...JSON.parse(s) } : defaultRemoteVectorConfig; } catch { return defaultRemoteVectorConfig; }
+    return defaultMemoryPalaceConfig;
   });
   const [customThemes, setCustomThemes] = useState<ChatTheme[]>([]);
   const [customIcons, setCustomIcons] = useState<Record<string, string>>({});
@@ -1227,10 +1152,10 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
              } catch(e) { console.error('Theme load error', e); }
         }
         
-        if (savedApi) setApiConfig(JSON.parse(savedApi));
+        if (savedApi) { try { setApiConfig(normalizeMainApiConfig(JSON.parse(savedApi))); } catch { /* ignore */ } }
         if (savedAuxApi) { try { setAuxApiConfig({ ...defaultAuxApiConfig, ...JSON.parse(savedAuxApi) }); } catch { /* ignore */ } }
         if (savedModels) setAvailableModels(JSON.parse(savedModels));
-        if (savedPresets) setApiPresets(JSON.parse(savedPresets));
+        if (savedPresets) { try { setApiPresets(normalizeApiPresets(JSON.parse(savedPresets))); } catch { /* ignore */ } }
 
         // 加载实时配置
         const savedRealtimeConfig = localStorage.getItem('os_realtime_config');
@@ -1469,26 +1394,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         console.error('Data init failed:', err);
       } finally {
         setIsDataLoaded(true);
-
-        // 检测：远程向量存储已配置但远程可能缺数据（导入备份后）
-        try {
-            const rvConfig = JSON.parse(localStorage.getItem('os_remote_vector_config') || '{}');
-            if (rvConfig.enabled && rvConfig.initialized && rvConfig.supabaseUrl) {
-                const { getVectorCount } = await import('../utils/memoryPalace/supabaseVector');
-                const remoteCount = await getVectorCount(rvConfig);
-                // 本地向量数量
-                const localDb = await import('../utils/db').then(m => m.openDB());
-                const localCount = await new Promise<number>((res) => {
-                    const tx = localDb.transaction('memory_vectors', 'readonly');
-                    const req = tx.objectStore('memory_vectors').count();
-                    req.onsuccess = () => res(req.result);
-                    req.onerror = () => res(0);
-                });
-                if (localCount > 0 && remoteCount < localCount * 0.5) {
-                    setTimeout(() => addToast(`本地有 ${localCount} 条向量，远程仅 ${remoteCount} 条。建议去「文具盒」同步到远程。`, 'info'), 3000);
-                }
-            }
-        } catch { /* 静默 */ }
       }
     };
 
@@ -2003,7 +1908,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           const history = [entry, ...(cs.userRemarkHistory || [])].slice(0, 20);
           updateCharacter(charId, {
               convoSettings: {
-                  ...cs,
                   userNickname: remark,
                   userRemarkMotivation: motivation,
                   userRemarkUpdatedAt: entry.at,
@@ -2107,7 +2011,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               const nextBuffs = detail.buffs as CharacterProfile['activeBuffs'];
               const nextInjection = typeof detail.buffInjection === 'string' ? detail.buffInjection : '';
               setCharacters(prev => prev.map(c => c.id === charId
-                  ? { ...c, activeBuffs: nextBuffs, buffInjection: nextInjection }
+                  ? normalizeCharacterDefaults({ ...c, activeBuffs: nextBuffs, buffInjection: nextInjection })
                   : c));
               return;
           }
@@ -2116,7 +2020,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               const updated = all.find(c => c.id === charId);
               if (!updated) return;
               setCharacters(prev => prev.map(c => c.id === charId
-                  ? { ...c, activeBuffs: updated.activeBuffs, buffInjection: updated.buffInjection }
+                  ? normalizeCharacterDefaults({ ...c, activeBuffs: updated.activeBuffs, buffInjection: updated.buffInjection })
                   : c));
           }).catch(() => {});
       };
@@ -2346,6 +2250,13 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               return;
           }
 
+          // 线下模式还没结束时，当前角色已经在面对面现场里；不要同时从线上私聊冒出主动消息。
+          if (isOfflineSessionActive(charId)) {
+              drainQueuedProactive();
+              console.log(`🔕 [Proactive/Global] Skipped for ${char.name}: offline session active`);
+              return;
+          }
+
           // Respect per-character proactive config（事件驱动的反应 customHint 不受主动消息开关限制）
           if (!customHint && char.proactiveConfig && !char.proactiveConfig.enabled) {
               drainQueuedProactive();
@@ -2555,12 +2466,9 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               const fullMessages = payload.fullMessages;
 
               // 3c. 情绪评估 fire-and-forget — 与主 API 并行，沿用 useChatAI 的 API 选择逻辑：
-              //     今日作息底部 API > 主 apiConfig（与文具盒副 API / 记忆宫殿副 API 独立）
+              //     心情 API > 主 apiConfig（与文具盒副 API / 回忆标本馆副 API 独立）
               if (!payload.flags.promptBuildSkipped && !isEmotionEvalSkipped() && emotionBuffOn) {
-                  const emotionApi = resolveOptionalCustomApi(char.emotionConfig?.api, apiConfigRef.current, {
-                      customBinding: '今日作息日程 / 心情 API',
-                      mainBinding: '今日作息 API 留空，使用主 API',
-                  });
+                  const emotionApi = resolveMoodApi(char, apiConfigRef.current);
                   if (emotionApi.baseUrl && currentUserProfile) {
                       evaluateEmotionBackground(char, currentUserProfile, systemPrompt, apiMessages, emotionApi)
                           .then((innerState) => {
@@ -2621,9 +2529,10 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
               // [[CALL_USER]] 指令：主动语音通话开启时，角色可决定直接给用户拨电话
               let charWantsCall = false;
-              if (proactiveCallAllowed && /\[\[CALL_USER\]\]/.test(aiContent)) {
-                  charWantsCall = true;
-                  aiContent = aiContent.replace(/\[\[CALL_USER\]\]/g, '').trim();
+              const callExtract = extractCallUserDirective(aiContent);
+              if (callExtract.wantsCall) {
+                  aiContent = callExtract.content;
+                  if (proactiveCallAllowed) charWantsCall = true;
               }
 
               // [[BLOCK_USER]] 指令：主动消息路径也可能触发（如被拉黑后赌气拉回去）
@@ -3722,14 +3631,19 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   useEffect(() => {
       if (!isDataLoaded || deferNativeStartupBackground) return;
       const mirror = () => { void mirrorProactiveSnapshots(charactersRef.current, apiConfigRef.current, auxApiConfigRef.current); };
-      const onVisible = () => { if (document.visibilityState === 'visible') { void reconcileProactiveFires(); mirror(); } };
+      const onVisibility = () => {
+          if (document.visibilityState === 'visible') void reconcileProactiveFires();
+          mirror();
+      };
       void reconcileProactiveFires();
       mirror();
       const timer = setInterval(mirror, 5 * 60 * 1000);
-      document.addEventListener('visibilitychange', onVisible);
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener(OFFLINE_SESSION_STATE_EVENT, mirror);
       return () => {
           clearInterval(timer);
-          document.removeEventListener('visibilitychange', onVisible);
+          document.removeEventListener('visibilitychange', onVisibility);
+          window.removeEventListener(OFFLINE_SESSION_STATE_EVENT, mirror);
       };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDataLoaded, deferNativeStartupBackground]);
@@ -3871,7 +3785,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         console.error('Failed to persist os_theme to LocalStorage', e);
     }
   };
-  const updateApiConfig = (updates: Partial<APIConfig>) => { const newConfig = { ...apiConfig, ...updates }; setApiConfig(newConfig); localStorage.setItem('os_api_config', JSON.stringify(newConfig)); };
+  const updateApiConfig = (updates: Partial<APIConfig>) => { const newConfig = normalizeMainApiConfig({ ...apiConfig, ...updates }); setApiConfig(newConfig); localStorage.setItem('os_api_config', JSON.stringify(newConfig)); };
   const updateAuxApiConfig = (updates: Partial<AuxApiConfig>) => { const newConfig = { ...auxApiConfig, ...updates }; setAuxApiConfig(newConfig); localStorage.setItem('os_aux_api_config', JSON.stringify(newConfig)); };
   const updateRealtimeConfig = (updates: Partial<RealtimeConfig>) => { const newConfig = { ...realtimeConfig, ...updates }; setRealtimeConfig(newConfig); localStorage.setItem('os_realtime_config', JSON.stringify(newConfig)); };
 
@@ -3949,49 +3863,44 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   const updateMemoryPalaceConfig = (updates: Partial<MemoryPalaceGlobalConfig>) => {
-    const newConfig: MemoryPalaceGlobalConfig = {
-      embedding: { ...memoryPalaceConfig.embedding, ...(updates.embedding || {}) },
-    };
+    const newConfig: MemoryPalaceGlobalConfig = {};
     setMemoryPalaceConfig(newConfig);
-    localStorage.setItem('os_memory_palace_config', JSON.stringify(newConfig));
+    localStorage.removeItem('os_memory_palace_config');
   };
 
-  // 日程 / 心情 API 同步到所有角色：API 字段（baseUrl/apiKey/model）所有角色共用，
+  // 日程 API / 心情 API 同步到所有角色：API 字段（baseUrl/apiKey/model）所有角色共用，
   // 各角色自身的心情 buff enabled 标志保持不变。
-  // 注意：与文具盒全局副 API 独立；它覆盖今日日程生成 / 协调和心情 buff。
-  const syncEmotionApiToAllCharacters = (api: { baseUrl: string; apiKey: string; model: string } | undefined) => {
+  // 注意：与文具盒全局副 API 独立；日程 API 覆盖今日日程生成 / 协调，心情 API 覆盖心情 buff。
+  const syncScheduleMoodApisToAllCharacters = (apis: { scheduleApi?: ScheduleMoodApiConfig; moodApi?: ScheduleMoodApiConfig }) => {
     setCharacters(prev => {
       const updated = prev.map(c => {
         const prevEmotion = c.emotionConfig;
         const nextEmotion = {
           enabled: prevEmotion?.enabled !== false,
-          ...(api && api.baseUrl ? { api: { baseUrl: api.baseUrl, apiKey: api.apiKey, model: api.model } } : {}),
+          ...(apis.scheduleApi ? { scheduleApi: apis.scheduleApi } : {}),
+          ...(apis.moodApi ? { moodApi: apis.moodApi } : {}),
         };
-        const next = { ...c, emotionConfig: nextEmotion };
+        const next = normalizeCharacterDefaults({ ...c, emotionConfig: nextEmotion });
         DB.saveCharacter(next);
         return next;
       });
       return updated;
     });
   };
-  const updateRemoteVectorConfig = (updates: Partial<typeof defaultRemoteVectorConfig>) => {
-    const newConfig = { ...remoteVectorConfig, ...updates };
-    setRemoteVectorConfig(newConfig);
-    localStorage.setItem('os_remote_vector_config', JSON.stringify(newConfig));
-  };
   const saveModels = (models: string[]) => { setAvailableModels(models); localStorage.setItem('os_available_models', JSON.stringify(models)); };
-  const addApiPreset = (name: string, config: APIConfig) => { setApiPresets(prev => { const next = [...prev, { id: Date.now().toString(), name, config }]; localStorage.setItem('os_api_presets', JSON.stringify(next)); return next; }); };
+  const addApiPreset = (name: string, config: APIConfig) => { setApiPresets(prev => { const next = [...prev, { id: Date.now().toString(), name, config: normalizeApiPresetConfig(config) }]; localStorage.setItem('os_api_presets', JSON.stringify(next)); return next; }); };
   const removeApiPreset = (id: string) => { setApiPresets(prev => { const next = prev.filter(p => p.id !== id); localStorage.setItem('os_api_presets', JSON.stringify(next)); return next; }); };
-  const savePresets = (presets: ApiPreset[]) => { setApiPresets(presets); localStorage.setItem('os_api_presets', JSON.stringify(presets)); };
+  const savePresets = (presets: ApiPreset[]) => { const next = normalizeApiPresets(presets); setApiPresets(next); localStorage.setItem('os_api_presets', JSON.stringify(next)); };
   const addCharacter = async () => {
     const name = 'New Character';
     // 默认开启心情 buff 独立开关；真正触发还要过 isEmotionBuffFeatureOn，
     // 作息没开时不会额外跑聊天后的情绪分析。
-    // 注意：memoryPalaceEnabled 不在这里默认开 —— 那是用户在记忆宫殿 App 显式 opt-in
-    // 的功能，自动开会替用户决策。
+    // 长期记忆默认值统一交给 normalizeCharacterDefaults / Cognitive Flow 处理；
+    // 用户显式关闭过的角色仍会保持关闭。
     const newCharId = createCharacterId('char');
-    const newChar: CharacterProfile = ensureCharacterModelId({
+    const newChar: CharacterProfile = normalizeCharacterDefaults({
       id: newCharId,
+      modelId: newCharId,
       name,
       avatar: generateAvatar(name),
       description: '点击编辑设定...',
@@ -4009,16 +3918,16 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   // 角色卡导入专用：以前的实现是 DB.saveCharacter + addCharacter()「naive 刷新」+
   // window.location.reload() —— 既会整页重启，又会顺手创建一个空白 New Character。
   // 现在直接把完整角色写进 state + DB，导入即生效，不再刷新。
-  const importCharacter = async (char: CharacterProfile) => {
+  const importCharacter = async (char: CharacterProfile, options?: { preserveId?: boolean }) => {
     // 导入即视为已加入「往来」：强制置 true，导入后无需「添加好友」即可在往来直接开聊
     // （不沿用卡里可能带的 addedToChat:false，保证任何导入都直接出现在往来）
-    const importedId = char.id || createCharacterId('import');
-    const withChat: CharacterProfile = normalizeCharacterDefaults(ensureCharacterModelId({
+    const importedId = options?.preserveId && char.id ? char.id : createCharacterId('import');
+    const withChat: CharacterProfile = normalizeCharacterDefaults({
       ...char,
       id: importedId,
       modelId: importedId,
       addedToChat: true,
-    } as CharacterProfile));
+    } as CharacterProfile);
     setCharacters(prev => [...prev.filter(c => c.id !== withChat.id), withChat]);
     setActiveCharacterId(withChat.id);
     await DB.saveCharacter(withChat);
@@ -4029,7 +3938,11 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const updateCharacter = async (id: string, updates: Partial<CharacterProfile>) => {
     const target = await new Promise<CharacterProfile | null>(resolve => {
       setCharacters(prev => {
-        const updated = prev.map(c => c.id === id ? normalizeCharacterDefaults({ ...c, ...updates }) : c);
+        const updated = prev.map(c => {
+          if (c.id !== id) return c;
+          const merged = mergeCharacterProfileUpdate(c, updates);
+          return normalizeCharacterDefaults(merged);
+        });
         resolve(updated.find(c => c.id === id) || null);
         return updated;
       });
@@ -4063,12 +3976,21 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   const updateGroup = async (id: string, updates: Partial<GroupProfile>): Promise<GroupProfile | null> => {
-      const target = groups.find(g => g.id === id);
+      const target = await new Promise<GroupProfile | null>(resolve => {
+          setGroups(prev => {
+              const current = prev.find(g => g.id === id);
+              if (!current) {
+                  resolve(null);
+                  return prev;
+              }
+              const updated = mergeGroupProfileUpdate(current, updates);
+              resolve(updated);
+              return prev.map(g => g.id === id ? updated : g);
+          });
+      });
       if (!target) return null;
-      const updated = { ...target, ...updates };
-      await DB.saveGroup(updated);
-      setGroups(prev => prev.map(g => g.id === id ? updated : g));
-      return updated;
+      await DB.saveGroup(target);
+      return target;
   };
 
   // Worldbook Methods
@@ -4153,7 +4075,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                             }
                           : m
                   );
-                  const newChar = { ...char, mountedWorldbooks: newMounted };
+                  const newChar = normalizeCharacterDefaults({ ...char, mountedWorldbooks: newMounted });
                   DB.saveCharacter(newChar);
                   return newChar;
               }
@@ -4172,7 +4094,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
       const updatedChars = characters.map(char => {
           if (char.mountedWorldbooks?.some(m => m.id === id)) {
               const newMounted = char.mountedWorldbooks.filter(m => m.id !== id);
-              const newChar = { ...char, mountedWorldbooks: newMounted };
+              const newChar = normalizeCharacterDefaults({ ...char, mountedWorldbooks: newMounted });
               DB.saveCharacter(newChar);
               return newChar;
           }
@@ -4219,7 +4141,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               return mountedCategory !== normalizedCategory && !deletedIds.has(m.id);
           });
           if (newMounted.length !== mounted.length) {
-              const newChar = { ...char, mountedWorldbooks: newMounted };
+              const newChar = normalizeCharacterDefaults({ ...char, mountedWorldbooks: newMounted });
               DB.saveCharacter(newChar);
               return newChar;
           }
@@ -4620,7 +4542,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               'quizzes', 'guidebook', 'takeout_orders', 'scheduled_messages', 'life_sim',
               'handbook', 'trackers', 'tracker_entries', 'hotnews_snapshots',
               'desktop_pet',
-              'memory_nodes', 'memory_vectors', 'memory_links', 'topic_boxes', 'anticipations', 'event_boxes',
+              'memory_nodes', 'memory_links', 'topic_boxes', 'anticipations', 'event_boxes',
               'daily_schedule', 'memory_batches',
               'pixel_home_assets', 'pixel_home_layouts',
               // 「页外」虚拟世界各房间 store —— 早期导出清单漏了，导致备份不含房间数据
@@ -4651,7 +4573,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               apiPresets: (mode === 'text_only' || mode === 'full') ? apiPresets : undefined,
               availableModels: (mode === 'text_only' || mode === 'full') ? availableModels : undefined,
               realtimeConfig: (mode === 'text_only' || mode === 'full') ? realtimeConfig : undefined,
-              memoryPalaceConfig: (mode === 'text_only' || mode === 'full') ? memoryPalaceConfig : undefined,
               theme: theme, // Include theme in all modes (text/media)
               customIcons: (mode === 'text_only' || mode === 'media_only' || mode === 'full')
                   ? { ...customIcons }
@@ -4676,14 +4597,13 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
               // 云端配置
               cloudBackupConfig: (mode === 'text_only' || mode === 'full') ? (() => { try { const s = localStorage.getItem('os_cloud_backup_config'); return s ? JSON.parse(s) : undefined; } catch { return undefined; } })() : undefined,
-              remoteVectorConfig: (mode === 'text_only' || mode === 'full') ? (() => { try { const s = localStorage.getItem('os_remote_vector_config'); return s ? JSON.parse(s) : undefined; } catch { return undefined; } })() : undefined,
 
               // Instant Push
               instantPushConfig: (mode === 'text_only' || mode === 'full') ? (() => { try { const s = localStorage.getItem('instant_push_config_v1'); return s ? JSON.parse(s) : undefined; } catch { return undefined; } })() : undefined,
               pushVapid: (mode === 'text_only' || mode === 'full') ? (() => { try { const s = localStorage.getItem('push_vapid_v1'); return s ? JSON.parse(s) : undefined; } catch { return undefined; } })() : undefined,
 
 
-              // Memory Palace 水位线
+              // 回忆标本馆 水位线
               memoryPalaceHighWaterMarks: (mode === 'text_only' || mode === 'full') ? (() => {
                   const hwm: Record<string, number> = {};
                   for (let i = 0; i < localStorage.length; i++) {
@@ -4696,7 +4616,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   return Object.keys(hwm).length > 0 ? hwm : undefined;
               })() : undefined,
 
-              // Memory Palace 每角色的 UI 标记（人格检测已跑过、首次归档 banner 已看过等）
+              // 回忆标本馆 每角色的 UI 标记（人格检测已跑过、首次归档 banner 已看过等）
               // 丢了会导致重弹一次人格确认 / 首次 banner，体验噪声但不丢数据，仍然应该备份
               memoryPalaceFlags: (mode === 'text_only' || mode === 'full') ? (() => {
                   const flags: Record<string, string> = {};
@@ -4819,7 +4739,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
           // Stores that never contain base64 image data — skip recursive traversal
           const noImageStores = new Set([
-              'memory_nodes', 'memory_vectors', 'memory_links', 'topic_boxes', 'anticipations', 'event_boxes',
+              'memory_nodes', 'memory_links', 'topic_boxes', 'anticipations', 'event_boxes',
               'bank_transactions', 'takeout_orders', 'scheduled_messages', 'memory_batches', 'hotnews_snapshots', 'desktop_pet'
           ]);
 
@@ -4859,28 +4779,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
               // Fast path: stores with no image data skip expensive recursive traversal
               if (noImageStores.has(storeName)) {
-                  if (storeName === 'memory_vectors' && Array.isArray(rawData)) {
-                      // 向量在 IndexedDB 里是 Uint8Array（Float32 原始字节）或老
-                      // number[]，JSON.stringify 没法序列化 Uint8Array（结果是 {}）
-                      // 所以这里统一解码成 plain number[]，让备份能 JSON 圆规一周。
-                      // 重做时 MemoryVectorDB.saveMany 会把 number[] 重新压回
-                      // Uint8Array，磁盘还是省的。
-                      processedData = rawData.map((v: any) => {
-                          if (!v || !v.vector) return v;
-                          let arr: number[];
-                          if (v.vector instanceof Uint8Array) {
-                              const f32 = new Float32Array(v.vector.buffer, v.vector.byteOffset, v.vector.byteLength >>> 2);
-                              arr = Array.from(f32);
-                          } else if (v.vector instanceof Float32Array) {
-                              arr = Array.from(v.vector);
-                          } else {
-                              arr = v.vector;
-                          }
-                          return { ...v, vector: arr };
-                      });
-                  } else {
-                      processedData = rawData;
-                  }
+                  processedData = rawData;
               } else if (mode === 'text_only') {
                   processedData = Array.isArray(rawData) && rawData.length > 200
                       ? await processArrayChunked(rawData, stripBase64)
@@ -4983,7 +4882,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                   case 'hotnews_snapshots': backupData.hotNewsSnapshots = processedData; break;
                   case 'desktop_pet': backupData.desktopPetState = Array.isArray(processedData) ? (processedData[0] || undefined) : (processedData || undefined); break;
                   case 'memory_nodes': backupData.memoryNodes = processedData; break;
-                  case 'memory_vectors': backupData.memoryVectors = processedData; break;
                   case 'memory_links': backupData.memoryLinks = processedData; break;
                   case 'topic_boxes': backupData.topicBoxes = processedData; break;
                   case 'anticipations': backupData.anticipations = processedData; break;
@@ -5020,7 +4918,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           // Instead of JSON.stringify(entire backupData) which doubles peak memory,
           // we serialize large arrays separately and build the JSON incrementally.
           const largeArrayKeys = ['characters', 'messages', 'assets', 'galleryImages',
-              'savedEmojis', 'memoryNodes', 'memoryVectors', 'memoryLinks',
+              'savedEmojis', 'memoryNodes', 'memoryLinks',
               'socialPosts', 'diaries', 'worldbooks', 'novels', 'coviewMedia', 'coviewBooks', 'coviewSessions', 'coviewMessages', 'xhsActivities',
               'bankTransactions', 'quizSessions', 'guidebookSessions',
               'topicBoxes', 'anticipations', 'eventBoxes', 'roomCustomAssets', 'mediaAssets',
@@ -5314,7 +5212,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
           if (data.availableModels) saveModels(data.availableModels);
           if (data.apiPresets) savePresets(data.apiPresets);
           if (data.realtimeConfig) updateRealtimeConfig(data.realtimeConfig); // 恢复实时感知配置
-          if (data.memoryPalaceConfig) updateMemoryPalaceConfig(data.memoryPalaceConfig); // 恢复记忆宫殿全局配置
 
           if (data.customIcons !== undefined || data.appearancePresets !== undefined) {
               await restoreAssetsInPlace(data.customIcons, '应用图标');
@@ -5348,14 +5245,13 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
           // Restore 云端配置
           if (data.cloudBackupConfig) localStorage.setItem('os_cloud_backup_config', JSON.stringify(data.cloudBackupConfig));
-          if (data.remoteVectorConfig) localStorage.setItem('os_remote_vector_config', JSON.stringify(data.remoteVectorConfig));
 
           // Restore Instant Push
           if (data.instantPushConfig) localStorage.setItem('instant_push_config_v1', JSON.stringify(data.instantPushConfig));
           if (data.pushVapid) localStorage.setItem('push_vapid_v1', JSON.stringify(data.pushVapid));
 
 
-          // Restore Memory Palace 水位线
+          // Restore 回忆标本馆 水位线
           if (data.memoryPalaceHighWaterMarks) {
               for (const [charId, hwm] of Object.entries(data.memoryPalaceHighWaterMarks)) {
                   if (typeof hwm === 'number' && hwm > 0) {
@@ -5364,7 +5260,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
               }
           }
 
-          // Restore Memory Palace UI flags（人格检测已跑过 / 首次 banner 已见等）
+          // Restore 回忆标本馆 UI flags（人格检测已跑过 / 首次 banner 已见等）
           if (data.memoryPalaceFlags && typeof data.memoryPalaceFlags === 'object') {
               for (const [key, val] of Object.entries(data.memoryPalaceFlags)) {
                   if (typeof val === 'string') {
@@ -5700,9 +5596,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     updateRealtimeConfig,
     memoryPalaceConfig,
     updateMemoryPalaceConfig,
-    syncEmotionApiToAllCharacters,
-    remoteVectorConfig,
-    updateRemoteVectorConfig,
+    syncScheduleMoodApisToAllCharacters,
     customThemes,
     addCustomTheme,
     removeCustomTheme,
