@@ -1,20 +1,20 @@
 {
-  "versionCode": 12,
-  "versionName": "1.0.8.1",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/moro.apk",
-  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.1%2Fmoro.apk",
-  "sha256": "63b8a98bc618d7cefedcf44218adf985bef63463ba16ad27438ae8a666c76a05",
-  "sizeBytes": 270358216,
-  "releaseNotes": "Android 安装版 1.0.8.1：\n- 完整合入 upstream/master 的新内容，包含心意铺图片链接、茶话亭互动、人生拟经营等近期更新。\n- Android APK 使用与 1.0.8 相同的正式签名，可从旧安装版继续覆盖升级。\n- 保留 native-main 正式版适配：安装版更新入口、安装页资源和隐藏构建角标都继续生效。\n- 这次只更新 APK；iPhone 安装页和 IPA 路线不随本次 APK 更新改动。\n- 更新不会主动清空角色、聊天、记忆、相册、店铺或 API 设置。",
+  "versionCode": 13,
+  "versionName": "1.0.8.2",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro.apk",
+  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.2%2Fmoro.apk",
+  "sha256": "d7e3d4b25be83d4efee400264bc3f1af1ba693a811cbfb78067f1c72343319e7",
+  "sizeBytes": 270371171,
+  "releaseNotes": "Moro 1.0.8.2 来啦：\n- 补上这批新鲜的小功能和体验打磨，桌面、来往、折子戏、记忆、商店等入口都跟上啦。\n- 角色说话、生活记录和主动消息会更稳一点，列表里的备注不再悄悄混进角色自我介绍。\n- 外部图片和店铺链接会更乖地识别，奇怪格式会被拦住，不让安装包闹小脾气。\n- Android 安装包继续使用正式签名，旧版本可以直接覆盖升级。\n- 更新不会清空角色、聊天、记忆、相册、店铺或 API 设置，请放心抱走。",
   "mandatory": false,
-  "publishedAt": "2026-07-05T22:43:12+08:00",
+  "publishedAt": "2026-07-06T07:06:03+08:00",
   "ios": {
-    "versionCode": 12,
-    "versionName": "1.0.8.1",
-    "buildNumber": 12,
+    "versionCode": 13,
+    "versionName": "1.0.8.2",
+    "buildNumber": 13,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/Moro-v1.0.8.1.ipa?bundle=wb.uniusc9734.tool7",
-    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/moro-ios-install.plist",
-    "releaseNotes": "iPhone 安装版 1.0.8.1 以稳定的 1.0.7.2 IPA 路线为底座，合入上游新内容，同时保留正式签名、固定 Bundle ID、安装页和隐藏构建角标。"
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/Moro-v1.0.8.2.ipa?bundle=wb.uniusc9734.tool7",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro-ios-install.plist",
+    "releaseNotes": "iPhone 安装包 1.0.8.2 合入最新功能，同时继续使用固定 Bundle ID 和正式签名路线。安装页会指向新的安装包，更新不会清空本地资料。"
   }
 }

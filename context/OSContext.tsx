@@ -2511,6 +2511,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 }),
                 timeoutMs: PROACTIVE_CHAT_REPLY_TIMEOUT_MS,
                 maxRetries: 0,
+                presetScope: false,
               });
 
               // 5. Process & save response

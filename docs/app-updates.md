@@ -110,11 +110,11 @@ VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A
     "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/moro.apk"
   },
   "ios": {
-    "versionName": "1.0.8.1",
-    "buildNumber": 12,
+    "versionName": "1.0.8.2",
+    "buildNumber": 13,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/Moro-v1.0.8.1.ipa",
-    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.1/moro-ios-install.plist",
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/Moro-v1.0.8.2.ipa",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro-ios-install.plist",
     "releaseNotes": "修复 iPhone 安装版稳定性，并合入上游新内容"
   }
 }
