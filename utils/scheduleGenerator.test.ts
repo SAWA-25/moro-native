@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile, DailySchedule, Message, UserProfile } from '../types';
 import { DB } from './db';
 import { callChatCompletion } from './llmClient';
-import { generateDailyScheduleForChar, reconcileScheduleWithChat } from './scheduleGenerator';
+import { chatHasScheduleSignal, generateDailyScheduleForChar, reconcileScheduleWithChat } from './scheduleGenerator';
+import { getLocalDateKey } from './dateKey';
 
 vi.mock('./llmClient', () => ({
   callChatCompletion: vi.fn(),
@@ -87,12 +88,12 @@ describe('schedule generator character identity', () => {
     const result = await generateDailyScheduleForChar(char, user, API, true);
 
     expect(result).toBeNull();
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateKey();
     await expect(DB.getDailySchedule('char-isaac', today)).resolves.toBeNull();
   });
 
   it('does not reconcile a schedule with another character id', async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateKey();
     const existing = {
       id: `char-isaac_${today}`,
       charId: 'char-isaac',
@@ -125,5 +126,18 @@ describe('schedule generator character identity', () => {
 
     expect(result).toBeNull();
     await expect(DB.getDailySchedule('char-isaac', today)).resolves.toBeNull();
+  });
+
+  it('treats explicit room movement as a schedule signal', () => {
+    const messages = [{
+      id: 1,
+      charId: 'char-isaac',
+      role: 'user',
+      type: 'text',
+      content: '回卧室找我，把东西拿过来。',
+      timestamp: Date.now(),
+    }] as Message[];
+
+    expect(chatHasScheduleSignal(messages)).toBe(true);
   });
 });

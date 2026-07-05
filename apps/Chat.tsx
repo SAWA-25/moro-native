@@ -21,6 +21,7 @@ import { runRecenter, RECENTER_DEFAULT_TURNS, type RecenterResult } from '../uti
 import { proposalResultHint, innerVoicePromptBody, phoneLockAttemptPromptBody, phoneLockChatPromptBody, parallelReplyPromptBody, livePrivateDraftPromptBody, blockPeekPrompt, privateCallDecisionPromptBody, musicShareAutoReplyHint, charPhoneCheckFollowupPrompt, type PrivateCallMode } from '../utils/laiwangPrompts';
 import { isAuxApiOn, resolveAuxApi } from '../utils/auxApi';
 import { cleanScheduleMoodApi, resolveScheduleApi } from '../utils/scheduleMoodApi';
+import { getLocalDateKey, getNextLocalMidnightDelay } from '../utils/dateKey';
 import { resolveMemoryPalaceAuxConfigs } from '../utils/memoryPalace/auxConfig';
 import { isMemoryFeatureEnabled } from '../utils/memoryPalace/cognitiveFlow';
 import { runMemoryPalaceCatchUp } from '../utils/memoryPalace';
@@ -86,6 +87,7 @@ import { pickObservedUserPhoneApp, summarizeScreenPeekDeviceSnapshot } from '../
 import { startRealPhoneScreenCapture } from '../utils/screenCapture';
 import { FORUM_PENDING_CHAT_SHARE_KEY, forumShareAutoReplyHint, normalizeForumSharePendingPayload } from '../utils/forum';
 import { MUSIC_PENDING_CHAT_SHARE_KEY, lyricPreviewFromMusicShareSong, normalizeMusicPendingChatSharePayload, songFromMusicShareSnapshot } from '../utils/musicShare';
+import { SHOP_REPLY_REQUEST_EVENT, consumeShopReply, type ShopReplyRequest } from '../utils/shop';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { getNotifyPermission, requestNotifyPermission } from '../utils/browserNotify';
 import { formatReplyTimerTitle, formatReplyTimerValue, type ReplyTimerMetadata } from '../utils/replyTimer';
@@ -130,7 +132,7 @@ const ASSISTANT_REVEAL_BETWEEN_MIN_MS = 900;
 const ASSISTANT_REVEAL_BETWEEN_MAX_MS = 2400;
 const ASSISTANT_REVEAL_CHAR_MS = 45;
 const ASSISTANT_REVEAL_CHAR_MAX_MS = 3200;
-const DAILY_SCHEDULE_TTL_MS = 24 * 60 * 60 * 1000;
+const SCHEDULE_MIDNIGHT_REFRESH_GRACE_MS = 1000;
 const KNOWN_MESSAGE_TYPES = new Set<MessageType>([
     'text', 'image', 'emoji', 'interaction', 'transfer', 'system', 'social_card', 'forum_card', 'chat_forward',
     'screen_peek_card', 'screen_watch_card', 'xhs_card', 'twitter_card', 'score_card', 'music_card', 'mcd_card', 'html_card', 'news_card', 'vr_card',
@@ -1835,6 +1837,59 @@ ${parallelReplyPromptBody({
         if (!isTyping) void drainAutoReplyQueue();
     }, [isTyping, drainAutoReplyQueue]);
 
+    const triggerShopReply = useCallback(async (request?: ShopReplyRequest | null): Promise<boolean> => {
+        if (!char || activeApp !== AppID.Chat || activeCharacterId !== char.id) return false;
+        if (request && request.charId !== char.id) return false;
+        if (isTyping || !canCharContactUser(char)) return false;
+
+        const pending = consumeShopReply(char.id, request?.messageId);
+        if (!pending) return false;
+
+        const recent = await DB.getRecentMessagesByCharId(char.id, char.contextLimit || 500);
+        const target = recent.find(m =>
+            m.id === pending.messageId &&
+            m.charId === char.id &&
+            !m.groupId
+        );
+        if (!target) return false;
+
+        const totalLine = typeof pending.total === 'number' && pending.total > 0 ? `，金额约 ¥${pending.total}` : '';
+        const countLine = pending.itemCount && pending.itemCount > 1 ? `，共 ${pending.itemCount} 件` : '';
+        const noteLine = pending.note ? `，备注/清单是「${pending.note}」` : '';
+        const ephemeralSystemPrompt = pending.kind === 'clear_cart'
+            ? `用户刚刚在「心意铺」帮你清空了心愿购物车${countLine}${totalLine}${noteLine}。本轮请直接、自然地回应这件事；可以感谢、惊喜、害羞、吐槽被看穿心愿、说会珍惜或顺势聊其中想要的东西，但不要说没收到。`
+            : pending.kind === 'companion_pay'
+                ? `用户刚刚在「心意铺」替你代付了 ${pending.itemEmoji}${pending.itemName}${totalLine}${noteLine}。本轮请直接、自然地回应这次代付；可以感谢、惊喜、害羞、嘴硬、吐槽或表达会记得这份心意，但不要说没收到。`
+                : `用户刚刚从「心意铺」送给你 ${pending.itemEmoji}${pending.itemName}${noteLine}。本轮请直接、自然地回应这份礼物；可以感谢、惊喜、害羞、吐槽、珍惜或追问，但不要说没收到。`;
+        if (isInstantConfigReady()) setInstantSendingActive(true);
+        const ok = await triggerAI(recent, undefined, () => setInstantSendingActive(false), {
+            targetUserMessage: target,
+            ephemeralSystemPrompt,
+            apiUsageContext: { shopGiftReply: true, giftMessageId: pending.messageId },
+        });
+        setInstantSendingActive(false);
+        return ok;
+    }, [activeApp, activeCharacterId, char, isTyping, triggerAI]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const handler = (event: Event) => {
+            const detail = (event as CustomEvent<ShopReplyRequest>).detail;
+            if (!detail || detail.charId !== activeCharacterId) return;
+            void triggerShopReply(detail);
+        };
+        window.addEventListener(SHOP_REPLY_REQUEST_EVENT, handler);
+        return () => window.removeEventListener(SHOP_REPLY_REQUEST_EVENT, handler);
+    }, [activeCharacterId, triggerShopReply]);
+
+    useEffect(() => {
+        if (activeApp !== AppID.Chat || !activeCharacterId) return;
+        const timer = window.setTimeout(() => {
+            void triggerShopReply();
+        }, 160);
+        return () => window.clearTimeout(timer);
+    }, [activeApp, activeCharacterId, triggerShopReply]);
+
     // --- Voice TTS for chat messages ---
     interface VoiceData { url: string; originalText: string; spokenText?: string; lang?: string; }
     // Persisted shape (IndexedDB assets store). `blob` is the raw audio;
@@ -2456,15 +2511,14 @@ ${parallelReplyPromptBody({
         }
     }
 
-    function scheduleNextDailyScheduleRefresh(targetChar: CharacterProfile, schedule: DailySchedule) {
+    function scheduleNextDailyScheduleRefresh(targetChar: CharacterProfile) {
         clearScheduleRefreshTimer();
         if (!isScheduleFeatureOn(targetChar)) return;
-        const age = Date.now() - (schedule.generatedAt || 0);
-        const delay = DAILY_SCHEDULE_TTL_MS - age;
-        if (delay <= 0) return;
+        const delay = getNextLocalMidnightDelay() + SCHEDULE_MIDNIGHT_REFRESH_GRACE_MS;
         scheduleRefreshTimerRef.current = setTimeout(() => {
             scheduleRefreshTimerRef.current = null;
-            generateDailySchedule(targetChar, true);
+            void generateDailySchedule(targetChar, true);
+            scheduleNextDailyScheduleRefresh(targetChar);
         }, delay);
     }
 
@@ -2491,14 +2545,13 @@ ${parallelReplyPromptBody({
             clearScheduleRefreshTimer();
             return;
         }
-        scheduleNextDailyScheduleRefresh(targetChar, schedule);
+        scheduleNextDailyScheduleRefresh(targetChar);
         const notes = await loadScheduleLifeNotes(schedule);
         if (activeCharIdRef.current === targetChar.id) setScheduleLifeNotes(notes);
     }
 
-    // Auto-generate daily schedule (fire-and-forget on chat load) + 今日作息每 24 小时自动更新一次
+    // Auto-generate daily schedule on chat load, then refresh at the next local midnight.
     // 总开关关闭时完全跳过：不查询 DB、不调用 API、不跑兜底
-    // 刷新策略：加载/生成/刷新后都按 generatedAt 重新挂下一轮 24h 刷新。
     useEffect(() => {
         clearScheduleRefreshTimer();
         if (!char) return;
@@ -2510,7 +2563,7 @@ ${parallelReplyPromptBody({
         const scheduleApi = resolveDailyScheduleApi(char);
         if (!scheduleApi.baseUrl || !scheduleApi.model) return;
         const targetChar = char;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateKey();
         let cancelled = false;
         DB.getDailySchedule(targetChar.id, today).then(async existing => {
             if (cancelled) return;
@@ -2522,11 +2575,6 @@ ${parallelReplyPromptBody({
                 return;
             }
             await applyScheduleState(targetChar, existing);
-            if (cancelled) return;
-            if (Date.now() - (existing.generatedAt || 0) >= DAILY_SCHEDULE_TTL_MS) {
-                // 距上次生成已满 24 小时：自动重算一份新作息（强制重生成）
-                generateDailySchedule(targetChar, true);
-            }
         }).catch(() => {});
         return () => {
             cancelled = true;
@@ -2551,7 +2599,7 @@ ${parallelReplyPromptBody({
         if (!char || !isScheduleFeatureOn(char)) return;
         let cancelled = false;
         const targetChar = char;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateKey();
         const reloadSchedule = async () => {
             const fresh = await DB.getDailySchedule(targetChar.id, today).catch(() => null);
             if (!cancelled) await applyScheduleState(targetChar, fresh);
@@ -4987,7 +5035,7 @@ ${privateCallDecisionPromptBody({
             setScheduleLifeNotes({});
             return;
         }
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateKey();
         const s = await DB.getDailySchedule(char.id, today);
         await applyScheduleState(char, s);
     };
@@ -5082,7 +5130,7 @@ ${privateCallDecisionPromptBody({
         // 打开后立刻尝试生成（若今日未生成且已选风格）
         const updatedChar = { ...char, ...patch };
         if (updatedChar.scheduleStyle) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateKey();
             const existing = await DB.getDailySchedule(char.id, today).catch(() => null);
             if (existing) {
                 await applyScheduleState(updatedChar, existing);
