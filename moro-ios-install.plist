@@ -11,7 +11,7 @@
           <key>kind</key>
           <string>software-package</string>
           <key>url</key>
-          <string>https://github.com/SAWA-25/moro-native/releases/download/v1.0.7/Moro-v1.0.7.ipa?bundle=wb.uniusc9734.tool7&amp;v=28696267283</string>
+          <string>https://github.com/SAWA-25/moro-native/releases/download/v1.0.8/Moro-v1.0.8.ipa?bundle=wb.uniusc9734.tool7&amp;run=28724960368</string>
         </dict>
       </array>
       <key>metadata</key>
@@ -19,7 +19,7 @@
         <key>bundle-identifier</key>
         <string>wb.uniusc9734.tool7</string>
         <key>bundle-version</key>
-        <string>1.0.7</string>
+        <string>1.0.8</string>
         <key>kind</key>
         <string>software</string>
         <key>title</key>
