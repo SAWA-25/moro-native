@@ -3,11 +3,11 @@
   "versionName": "1.0.8.2",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro.apk",
   "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.2%2Fmoro.apk",
-  "sha256": "d7e3d4b25be83d4efee400264bc3f1af1ba693a811cbfb78067f1c72343319e7",
-  "sizeBytes": 270371171,
-  "releaseNotes": "Moro 1.0.8.2 来啦：\n- 补上这批新鲜的小功能和体验打磨，桌面、来往、折子戏、记忆、商店等入口都跟上啦。\n- 角色说话、生活记录和主动消息会更稳一点，列表里的备注不再悄悄混进角色自我介绍。\n- 外部图片和店铺链接会更乖地识别，奇怪格式会被拦住，不让安装包闹小脾气。\n- Android 安装包继续使用正式签名，旧版本可以直接覆盖升级。\n- 更新不会清空角色、聊天、记忆、相册、店铺或 API 设置，请放心抱走。",
+  "sha256": "f81a3b24e205b8a321f34d4b6337b6d2a2fe5157ba477aaf1d7747e0ef847763",
+  "sizeBytes": 270371778,
+  "releaseNotes": "Moro 1.0.8.2 同版本补新内容来啦：\n- iPhone 和 Android 安装包都会覆盖到这版新包，还是熟悉的 1.0.8.2。\n- 人生拟店铺把“营业”和“打烊”分成两个按钮啦，18:00 后再打烊，状态更清楚。\n- 正式安装版默认继续隐藏角标，桌面安安静静不露开发小尾巴。\n- 角色、聊天、记忆、相册、店铺和 API 设置都会留在本机，更新后接着玩就好。",
   "mandatory": false,
-  "publishedAt": "2026-07-06T07:06:03+08:00",
+  "publishedAt": "2026-07-06T08:49:00+08:00",
   "ios": {
     "versionCode": 13,
     "versionName": "1.0.8.2",
@@ -15,6 +15,6 @@
     "bundleId": "wb.uniusc9734.tool7",
     "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/Moro-v1.0.8.2.ipa?bundle=wb.uniusc9734.tool7&run=28758339356",
     "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro-ios-install.plist?run=28758339356",
-    "releaseNotes": "iPhone 安装包 1.0.8.2 合入最新功能，同时继续使用固定 Bundle ID 和正式签名路线。安装页会指向新的安装包，更新不会清空本地资料。"
+    "releaseNotes": "iPhone 安装包 1.0.8.2 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。安装页会指向同版本重打的新包，本地资料不会被清空。"
   }
 }
