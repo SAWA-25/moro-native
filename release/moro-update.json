@@ -11,8 +11,8 @@
     "versionName": "1.0.8.4",
     "buildNumber": 15,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/Moro-v1.0.8.4.ipa?bundle=wb.uniusc9734.tool7&run=28893039567",
-    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro-ios-install.plist?run=28893039567",
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/Moro-v1.0.8.4.ipa?bundle=wb.uniusc9734.tool7&run=28904898077",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro-ios-install.plist?run=28904898077",
     "releaseNotes": "iPhone 安装包 1.0.8.4 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。本地资料不会被主动清空。"
   },
   "sha256": "888890dc4e0c541d531a226e9136c4723a2a6420334d4c27e4bf1613b55b733a",
