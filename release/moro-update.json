@@ -3,7 +3,7 @@
   "versionName": "1.0.8.4",
   "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro.apk",
   "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.4%2Fmoro.apk",
-  "releaseNotes": "Moro 1.0.8.4 正式安装包来啦：\n- iPhone 和 Android 都换到这次的新包，补上实时交易台、陪逛小窗、主动来信和天气定位等新鲜内容。\n- 查岗、线下模式、饭票口味、循迹隔离和人生拟小店都更稳一点，小世界继续顺滑转起来。\n- 正式安装版默认继续隐藏角标，角色、聊天、记忆、相册、店铺、世界书和 API 设置都会留在本机。\n- 如果旧包安装后打不开或装不上，再删除旧 App 后重新安装新版。",
+  "releaseNotes": "Moro 1.0.8.4 正式安装包来啦：\n- iPhone 和 Android 都换到这次的新包，补上实时交易台、陪逛小窗、主动来信和天气定位等新鲜内容。\n- 分享单张角色卡时会更清爽，不会把你的单聊称呼、小名、特别关心、铃声或查手机权限一起带给别人。\n- 查岗、线下模式、饭票口味、循迹隔离和人生拟小店都更稳一点，小世界继续顺滑转起来。\n- 正式安装版默认继续隐藏角标，角色、聊天、记忆、相册、店铺、世界书和 API 设置都会留在本机。\n- 如果旧包安装后打不开或装不上，再删除旧 App 后重新安装新版。",
   "mandatory": false,
   "publishedAt": "2026-07-08T03:40:00+08:00",
   "ios": {
@@ -15,6 +15,6 @@
     "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro-ios-install.plist?run=28893039567",
     "releaseNotes": "iPhone 安装包 1.0.8.4 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。本地资料不会被主动清空。"
   },
-  "sha256": "cc8b1ad1ea6a5ccec99433a0d8781b6c5198ebe1b7da53496671cf9870914459",
-  "sizeBytes": 270413098
+  "sha256": "888890dc4e0c541d531a226e9136c4723a2a6420334d4c27e4bf1613b55b733a",
+  "sizeBytes": 270399894
 }
