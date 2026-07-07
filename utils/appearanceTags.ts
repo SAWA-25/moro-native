@@ -20,16 +20,10 @@ export interface AppearanceApiConfig {
 
 /**
  * 把剪影集完整角色设定 + 绑定世界书拼成一段「外貌素材」喂给 prompt（纯函数，便于单测）。
- * 列表备注只是剪影集卡片上的短标签，不作为外貌生成依据。
+ * 不在这里裁剪角色卡或挂载世界书，避免外貌线索被摘要丢失。
  */
-export function buildAppearanceSourceText(char: CharacterProfile, _perBookLimit = 1200, totalLimit = 12000): string {
-    const text = buildFullCharacterSetting(char, {
-        fallback: '',
-        includeDescription: false,
-        includeMemos: true,
-        includeName: false,
-    });
-    return text.length > totalLimit ? text.slice(0, Math.max(0, totalLimit)) : text;
+export function buildAppearanceSourceText(char: CharacterProfile, _perBookLimit?: number, _totalLimit?: number): string {
+    return buildFullCharacterSetting(char, { includeMemos: true });
 }
 
 /** 把模型回复清洗成一行逗号分隔的 tag（去重、去引号/代码块/编号、压空白）。 */

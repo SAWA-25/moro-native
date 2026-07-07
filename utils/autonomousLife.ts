@@ -457,7 +457,7 @@ function recentChatSupportsLocationChange(eventLocation: string | undefined, rec
 /** 把角色完整设定压成一小段喂给 agent，让线下生活从 TA 的身份/生活半径里长出来。 */
 function personaBrief(char: CharacterProfile): string {
   return [
-    buildFullCharacterSetting(char, { heading: '角色完整设定与生活线索', includeDescription: false, includeMemos: true }),
+    buildFullCharacterSetting(char, { heading: '角色完整设定与生活线索', includeMemos: true }),
     '生成生活小事时，必须从以上设定推导 TA 的生活半径、时代/世界观、职业或身份、兴趣、社交关系、习惯和当前惦记的事；不要套用和设定无关的通用现代日常模板。',
   ].join('\n');
 }

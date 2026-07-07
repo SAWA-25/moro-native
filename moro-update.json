@@ -1,20 +1,18 @@
 {
-  "versionCode": 13,
-  "versionName": "1.0.8.2",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro.apk",
-  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.2%2Fmoro.apk",
-  "sha256": "f81a3b24e205b8a321f34d4b6337b6d2a2fe5157ba477aaf1d7747e0ef847763",
-  "sizeBytes": 270371778,
-  "releaseNotes": "Moro 1.0.8.2 同版本补新内容来啦：\n- iPhone 和 Android 安装包都会覆盖到这版新包，还是熟悉的 1.0.8.2。\n- 人生拟店铺把“营业”和“打烊”分成两个按钮啦，18:00 后再打烊，状态更清楚。\n- 正式安装版默认继续隐藏角标，桌面安安静静不露开发小尾巴。\n- 角色、聊天、记忆、相册、店铺和 API 设置都会留在本机，更新后接着玩就好。",
+  "versionCode": 14,
+  "versionName": "1.0.8.3",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.3/moro.apk",
+  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv1.0.8.3%2Fmoro.apk",
+  "releaseNotes": "Moro 1.0.8.3 正式安装包来啦：\n- iPhone 和 Android 都换到这次的新包，补上上游的新鲜内容。\n- 心意铺陪逛会更会说话、会拉回当前货架，结束后也会把临时提示收干净。\n- 角色代入入口会更完整读取人设；线下见面、强制回话和人生拟小店也一起更稳。\n- 正式安装版默认继续隐藏角标，角色、聊天、记忆、相册、店铺和 API 设置都会留在本机。",
   "mandatory": false,
-  "publishedAt": "2026-07-06T08:49:00+08:00",
+  "publishedAt": "2026-07-07T08:45:07+08:00",
   "ios": {
-    "versionCode": 13,
-    "versionName": "1.0.8.2",
-    "buildNumber": 13,
+    "versionCode": 14,
+    "versionName": "1.0.8.3",
+    "buildNumber": 14,
     "bundleId": "wb.uniusc9734.tool7",
-    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/Moro-v1.0.8.2.ipa?bundle=wb.uniusc9734.tool7&run=28761089216",
-    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.2/moro-ios-install.plist?run=28761089216",
-    "releaseNotes": "iPhone 安装包 1.0.8.2 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。安装页会指向同版本重打的新包，本地资料不会被清空。"
+    "ipaUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.3/Moro-v1.0.8.3.ipa?bundle=wb.uniusc9734.tool7",
+    "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.3/moro-ios-install.plist",
+    "releaseNotes": "iPhone 安装包 1.0.8.3 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。本地资料不会被清空。"
   }
 }
