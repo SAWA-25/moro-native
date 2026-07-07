@@ -4282,7 +4282,7 @@ export interface GroupProfile {
     dissolvedAt?: number;
 }
 
-export interface CharacterExportData extends Omit<CharacterProfile, 'id' | 'modelId' | 'memories' | 'refinedMemories' | 'activeMemoryMonths' | 'guidebookInsights' | 'mountedWorldbooks'> {
+export interface CharacterExportData extends Omit<CharacterProfile, 'id' | 'modelId' | 'memories' | 'refinedMemories' | 'activeMemoryMonths' | 'guidebookInsights' | 'mountedWorldbooks' | 'convoSettings'> {
     version: number;
     type: 'moro_character_card';
     embeddedTheme?: ChatTheme;
