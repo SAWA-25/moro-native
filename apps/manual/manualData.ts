@@ -77,8 +77,8 @@ export interface ManualUpdateNoticeDateGroup {
 export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 'social', 'creation', 'roleplay', 'system'];
 
 export const MANUAL_UPDATE_NOTICE_DATE_PINNED_HEADLINES: Record<string, string> = {
-  '2026-07-11': '云端功能更新不用再下载新 APK',
-  '2026-07-08': 'App 自己拉取更新，最新版本 1.0.8.4',
+  '2026-07-11': 'Android 1.0.8.5 开启云端更新',
+  '2026-07-08': 'App 自己拉取更新',
   '2026-07-06': '预设不要开文风，不要开字数',
 };
 
@@ -88,8 +88,9 @@ export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
     date: '2026-07-11',
     title: '功能更新可以云端下发了',
     kind: 'feature',
-    summary: '文具盒的应用更新现在会优先拉取云端功能包；普通功能更新不用再重新下载 APK，只有原生底层变化才需要装新版安装包。',
+    summary: '文具盒的应用更新现在会优先拉取云端功能包；Android 1.0.8.5 先覆盖安装一次后，普通功能更新不用再重新下载 APK。',
     items: [
+      '这次 Android 1.0.8.5 属于开启云端更新所需的原生底层包，请先按系统提示覆盖安装一次。',
       '打开安装版后，Moro 会在合适时机检查云端功能更新；收到弹窗后点“一键更新”即可生效。',
       '也可以进入「文具盒 → 基础与安全 → 应用更新」，点「检查更新」主动拉取最新版功能包。',
       '如果这次没有云端功能包，系统才会继续检查 APK / IPA 安装包；新增权限、底层插件或系统壳变化时仍需重新安装一次。',
@@ -112,10 +113,10 @@ export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
     date: '2026-07-08',
     title: 'App 自己拉取更新',
     kind: 'notice',
-    summary: '置顶弹窗公告：Moro 会自己拉取更新；最新版本是 1.0.8.4。',
+    summary: '置顶弹窗公告：Moro 会自己拉取更新。',
     items: [
       '打开 App 后会自己检查并拉取可用更新，不需要另找下载入口。',
-      '最新版本是 1.0.8.4；如果还停在旧版本，请保持网络正常并重新打开 App 等待更新完成。',
+      '如果还停在旧版本，请保持网络正常并重新打开 App 等待更新完成。',
     ],
     popupOnly: true,
   },
