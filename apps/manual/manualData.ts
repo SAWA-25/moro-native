@@ -77,11 +77,24 @@ export interface ManualUpdateNoticeDateGroup {
 export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 'social', 'creation', 'roleplay', 'system'];
 
 export const MANUAL_UPDATE_NOTICE_DATE_PINNED_HEADLINES: Record<string, string> = {
+  '2026-07-11': '云端功能更新不用再下载新 APK',
   '2026-07-08': 'App 自己拉取更新，最新版本 1.0.8.4',
   '2026-07-06': '预设不要开文风，不要开字数',
 };
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
+  {
+    id: '2026-07-11-cloud-live-update-first',
+    date: '2026-07-11',
+    title: '功能更新可以云端下发了',
+    kind: 'feature',
+    summary: '文具盒的应用更新现在会优先拉取云端功能包；普通功能更新不用再重新下载 APK，只有原生底层变化才需要装新版安装包。',
+    items: [
+      '打开安装版后，Moro 会在合适时机检查云端功能更新；收到弹窗后点“一键更新”即可生效。',
+      '也可以进入「文具盒 → 基础与安全 → 应用更新」，点「检查更新」主动拉取最新版功能包。',
+      '如果这次没有云端功能包，系统才会继续检查 APK / IPA 安装包；新增权限、底层插件或系统壳变化时仍需重新安装一次。',
+    ],
+  },
   {
     id: '2026-07-08-character-card-export-convo-settings-fix',
     date: '2026-07-08',
@@ -6251,7 +6264,7 @@ const BASE_MANUAL_ENTRIES: ManualEntry[] = [
     category: 'system',
     summary: '系统设置中心，集中管理界面、安全、备份、聊天连接、实时感知、通知和外部服务。',
     features: [
-      '基础与安全：界面全屏、顶部状态栏、手机安装版更新、锁屏密码。',
+      '基础与安全：界面全屏、顶部状态栏、云端功能更新 / 手机安装版更新、锁屏密码。',
       '备份与恢复：本地 ZIP、文字数据、媒体与外观、云端备份和恢复。',
       '模型与服务：主 API、副 API、API 后台流水、MiniMax、Replicate / ACE-Step 等外部服务。',
       '模型报错排查：按 401、404、429、超时、上下文过长、流式中断等常见提示给出解决方法。',
@@ -6289,7 +6302,7 @@ const BASE_MANUAL_ENTRIES: ManualEntry[] = [
         answer: '现在默认开启。支持流式的服务商会让回复更快开始显示；如果经常半路断、乱码或空白，先关闭流式输出再试。',
       },
     ],
-    tips: ['手机安装版更新需要系统确认安装；备份文件和 API 凭据只保存在你的设备或你自己的云端账号下。'],
+    tips: ['功能更新会优先通过云端下发，只有原生底层变化才需要重新安装；备份文件和 API 凭据只保存在你的设备或你自己的云端账号下。'],
     settingSections: [
       {
         id: 'settings-basic',
@@ -6322,7 +6335,13 @@ const BASE_MANUAL_ENTRIES: ManualEntry[] = [
           {
             id: 'settings-apk-update',
             title: '应用更新',
-            description: '检查开发者发布的新版本，下载新版安装包；国内线路只是下载通道不同，版本相同。',
+            description: '检查云端功能包和安装包。普通功能更新可直接云端下发；只有原生底层变化时才需要下载 / 安装新版 APK 或 IPA。',
+            defaultBehavior: '点击“检查更新”会先拉取云端功能包；云端没有可用更新时，再继续检查手机安装包。',
+            options: [
+              { label: '检查更新', description: '主动拉取最新版云端功能包，并在需要时继续检查 APK / IPA。' },
+              { label: '一键更新', description: '云端功能包已准备好时显示，点击后让新功能立即生效。' },
+              { label: '下载 / 安装新版', description: '仅在原生底层或安装包版本需要更新时使用，仍需按系统提示确认。' },
+            ],
             path: ['文具盒', '基础与安全', '应用更新'],
             deepLink: settingsLink('manual-settings-update', 'group:basic'),
             nativeOnly: true,
@@ -12068,7 +12087,7 @@ export const MANUAL_DESTINATIONS: Record<string, ManualDestination> = {
   '文具盒': {
     appId: AppID.Settings,
     path: ['Dock / 桌面', '文具盒'],
-    details: ['配置整机基础、安全、备份、API、实时感知和通知。'],
+    details: ['配置整机基础、安全、备份、API、实时感知和通知；基础与安全里可检查云端功能更新，只有原生底层变动才需要下载安装包。'],
     deepLink: settingsLink('manual-settings-root'),
   },
   '拼贴册': {

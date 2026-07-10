@@ -39,6 +39,12 @@ import {
     type ApkDownloadProgress,
     type NativeAppInfo,
 } from '../utils/appUpdates';
+import {
+    applyCloudUpdate,
+    isCloudUpdateReady,
+    syncCloudUpdate,
+    type CloudUpdateCheckResult,
+} from '../utils/cloudUpdates';
 import { queueManualDeepLink, scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { fetchModelList, testChatConnection } from '../utils/llmClient';
@@ -523,8 +529,10 @@ const Settings: React.FC = () => {
   const [cloudTestResult, setCloudTestResult] = useState<string>('');
   const [cloudTesting, setCloudTesting] = useState(false);
 
-  // 应用更新（手机安装版检查）
+  // 应用更新（云端功能包优先；必要时再走手机安装包）
   const [nativeAppInfo, setNativeAppInfo] = useState<NativeAppInfo | null>(null);
+  const [cloudUpdateCheck, setCloudUpdateCheck] = useState<CloudUpdateCheckResult | null>(null);
+  const [cloudUpdateProgress, setCloudUpdateProgress] = useState<number | null>(null);
   const [apkUpdateCheck, setApkUpdateCheck] = useState<AppUpdateCheckResult | null>(null);
   const [apkUpdateBusy, setApkUpdateBusy] = useState(false);
   const [apkUpdateStatus, setApkUpdateStatus] = useState('');
@@ -772,14 +780,43 @@ const Settings: React.FC = () => {
       if (apkUpdateBusy) return;
       setApkUpdateBusy(true);
       setApkDownloadProgress(null);
-      setApkUpdateStatus('正在检查更新...');
+      setCloudUpdateProgress(null);
+      setCloudUpdateCheck(null);
+      setApkUpdateStatus('正在检查云端功能更新...');
       try {
+          const cloudResult = await syncCloudUpdate(progress => {
+              setCloudUpdateProgress(progress);
+              if (progress > 0 && progress < 1) {
+                  setApkUpdateStatus(`正在拉取云端功能包：${Math.round(progress * 100)}%`);
+              }
+          });
+          setCloudUpdateCheck(cloudResult);
+          setCloudUpdateProgress(null);
+          if (isCloudUpdateReady(cloudResult)) {
+              setApkUpdateCheck(null);
+              setApkUpdateStatus('云端功能更新已准备好，点“一键更新”即可生效。');
+              return;
+          }
+
+          const packageCheckStatus = cloudResult.status === 'up-to-date'
+              ? '云端功能包已是最新，继续检查是否需要安装包...'
+              : cloudResult.status === 'disabled'
+                  ? '当前安装包未接入云端功能更新，继续检查安装包...'
+                  : cloudResult.status === 'unsupported'
+                      ? '当前环境不支持云端功能更新，继续检查安装包...'
+                      : cloudResult.status === 'error'
+                          ? '云端功能通道暂时不可用，继续检查安装包...'
+                          : '继续检查是否需要安装包...';
+          setApkUpdateStatus(packageCheckStatus);
           const result = await checkConfiguredAppUpdate();
           setNativeAppInfo(result.current);
           setApkUpdateCheck(result);
+          const cloudNote = cloudResult.status === 'error'
+              ? `云端功能通道暂时不可用：${cloudResult.message}。`
+              : '';
           setApkUpdateStatus(result.updateAvailable
               ? `发现新版本 ${formatAppPackageVersion(result.latest.versionName, result.latest.versionCode, result.latest.platform)}`
-              : formatApkNoUpdateStatus(result));
+              : `${cloudNote}${formatApkNoUpdateStatus(result)}`);
       } catch (e: any) {
           console.warn('[Settings] check app update failed', e);
           setApkUpdateCheck(null);
@@ -787,6 +824,20 @@ const Settings: React.FC = () => {
           setApkUpdateStatus(message);
           addToast(message, 'error');
       } finally {
+          setApkUpdateBusy(false);
+      }
+  };
+
+  const handleApplyCloudUpdate = async () => {
+      if (apkUpdateBusy || !isCloudUpdateReady(cloudUpdateCheck)) return;
+      setApkUpdateBusy(true);
+      setApkUpdateStatus('正在让云端功能更新生效...');
+      try {
+          await applyCloudUpdate();
+      } catch (e: any) {
+          const message = e?.message || '云端更新生效失败';
+          setApkUpdateStatus(message);
+          addToast(message, 'error');
           setApkUpdateBusy(false);
       }
   };
@@ -1398,6 +1449,15 @@ const Settings: React.FC = () => {
       openApp(AppID.Manual);
   }, [openApp]);
 
+  const hasCloudUpdate = isCloudUpdateReady(cloudUpdateCheck);
+  const hasInstallPackageUpdate = !!apkUpdateCheck?.updateAvailable;
+  const updateActionDisabled = apkUpdateBusy || (!hasCloudUpdate && !hasInstallPackageUpdate);
+  const updateActionLabel = hasCloudUpdate
+      ? '一键更新'
+      : apkUpdateCheck?.latest.packageType === 'ipa'
+          ? '安装新版'
+          : '下载新版';
+
   return (
     <div ref={settingsRootRef} className="settings-polaroid h-full w-full bg-[#f6f6f2] flex min-h-0 flex-col relative text-[#2f3437]" style={DOT_BG}>
       <style>{POLAROID_SCOPE_CSS}</style>
@@ -1477,9 +1537,9 @@ const Settings: React.FC = () => {
                     manualAnchor="manual-settings-update"
                     tag="UPDATE"
                     title="应用更新"
-                    hand="检查并安装开发者发布的新版本。"
+                    hand="优先拉取云端功能包；只有原生底层变动时才需要重新安装 APK / IPA。"
                     rotate="rotate-[0.4deg]"
-                    right={<StatusBadge active={!!apkUpdateCheck?.updateAvailable} activeText="有新版" inactiveText="已就绪" />}
+                    right={<StatusBadge active={hasCloudUpdate || hasInstallPackageUpdate} activeText={hasCloudUpdate ? '云更新' : '有新版'} inactiveText="已就绪" />}
                 >
                     <div className="space-y-4">
                         <div className="rounded-[14px] border border-[#e7e1d6] bg-white px-3 py-2.5">
@@ -1497,9 +1557,7 @@ const Settings: React.FC = () => {
                                 )}
                             </div>
                             <p className="text-[10px] text-[#69716d] mt-2 leading-relaxed">
-                                {nativeAppInfo?.platform === 'ios'
-                                    ? '有新版本时会打开 iPhone 安装确认页，仍需你按系统提示继续安装。'
-                                    : '有新版本时会下载安装包并打开 Android 系统安装器，仍需你手动确认安装。'}
+                                「检查更新」会先拉取云端功能包，收到云端更新时点“一键更新”即可生效，不用重新下载安装包。只有原生权限、底层插件或系统壳变动时，才会提示安装新版 APK / IPA。
                             </p>
                         </div>
 
@@ -1510,15 +1568,15 @@ const Settings: React.FC = () => {
                                 onClick={handleCheckApkUpdate}
                                 className={`py-2.5 text-xs font-black disabled:opacity-40 ${STICKER}`}
                             >
-                                {apkUpdateBusy && !apkDownloadProgress ? '检查中...' : '检查更新'}
+                                {apkUpdateBusy ? '处理中...' : '检查更新'}
                             </button>
                             <button
                                 type="button"
-                                disabled={apkUpdateBusy || !apkUpdateCheck?.updateAvailable}
-                                onClick={() => handleDownloadApkUpdate(false)}
-                                className={`py-2.5 text-xs font-black disabled:opacity-40 ${apkUpdateCheck?.updateAvailable ? INK_BTN : STICKER}`}
+                                disabled={updateActionDisabled}
+                                onClick={() => hasCloudUpdate ? void handleApplyCloudUpdate() : void handleDownloadApkUpdate(false)}
+                                className={`py-2.5 text-xs font-black disabled:opacity-40 ${hasCloudUpdate || hasInstallPackageUpdate ? INK_BTN : STICKER}`}
                             >
-                                {apkUpdateCheck?.latest.packageType === 'ipa' ? '安装新版' : '下载新版'}
+                                {updateActionLabel}
                             </button>
                             {apkUpdateCheck?.latest.packageType === 'apk' && apkUpdateCheck.latest.domesticApkUrl && (
                                 <button
@@ -1532,9 +1590,24 @@ const Settings: React.FC = () => {
                             )}
                         </div>
 
-                        {(apkUpdateStatus || apkUpdateCheck?.latest) && (
+                        {(apkUpdateStatus || cloudUpdateCheck || apkUpdateCheck?.latest) && (
                             <div className="rounded-[14px] border border-[#dce8ea] bg-[#f3f7f6] p-3 text-[11px] text-[#2f3437] leading-relaxed">
                                 {apkUpdateStatus && <p className="font-bold">{apkUpdateStatus}</p>}
+                                {cloudUpdateCheck && (
+                                    <p className="mt-1 text-[#69716d]">
+                                        云端功能包：{cloudUpdateCheck.status === 'ready' ? '已准备好'
+                                            : cloudUpdateCheck.status === 'up-to-date' ? '已是最新'
+                                                : cloudUpdateCheck.status === 'disabled' ? '未接入'
+                                                    : cloudUpdateCheck.status === 'unsupported' ? '当前安装包不支持'
+                                                        : cloudUpdateCheck.status === 'error' ? cloudUpdateCheck.message
+                                                            : cloudUpdateCheck.message}
+                                    </p>
+                                )}
+                                {cloudUpdateProgress !== null && cloudUpdateProgress > 0 && (
+                                    <div className="mt-2 h-2 rounded-full bg-white border border-[#e7e1d6] overflow-hidden">
+                                        <div className="h-full bg-[#7fa8b3] transition-all" style={{ width: `${Math.round(cloudUpdateProgress * 100)}%` }} />
+                                    </div>
+                                )}
                                 {apkDownloadProgress && apkDownloadProgress.status === 'downloading' && (
                                     <div className="mt-2 h-2 rounded-full bg-white border border-[#e7e1d6] overflow-hidden">
                                         <div className="h-full bg-[#7fa8b3] transition-all" style={{ width: `${Math.round(apkDownloadProgress.progress * 100)}%` }} />

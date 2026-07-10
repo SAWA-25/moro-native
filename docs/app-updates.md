@@ -1,6 +1,14 @@
 # 应用更新（GitHub Releases + Appflow）
 
-Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、下载 / 安装新版、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
+Moro 的更新入口在「文具盒 -> 基础与安全 -> 应用更新」。普通用户只会看到当前版本、检查更新、一键更新 / 下载安装包、安装权限和更新说明；GitHub Release、更新清单 URL、Appflow App ID、channel 等开发配置都不出现在 App UI 里。
+
+## 用户侧更新顺序
+
+安装版点击「检查更新」时，会先走 Appflow Live Updates 拉取云端功能包。只要这次变更属于 WebView 内的 JS/CSS/图片资源，用户收到云端更新弹窗后点「一键更新」即可生效，不需要重新下载 APK 或 IPA。
+
+只有云端功能包没有可用更新、或这次确实涉及原生底层变动时，App 才继续检查安装包更新清单并提示下载 / 安装新版。典型需要重新装包的情况包括新增原生权限、升级 Capacitor 插件、修改 Android / iOS 壳层、改安装包版本号等。
+
+App 启动进入手机桌面后也会静默检查一次云端功能包；如果有新快照，会弹出「云端功能更新已送达」提示。用户可以立刻一键更新，也可以稍后回到文具盒手动检查。
 
 ## APK 更新发布流程
 
@@ -126,6 +134,8 @@ VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A
 
 项目已经接入 `@capacitor/live-updates@0.3.1`，这是当前 Capacitor 6 工程使用的兼容版本。Appflow 配置只在构建时写入 Capacitor 配置，不在 App 里提供用户可编辑入口。
 
+仓库根目录的 `appflow.config.json` 记录了 Appflow App ID 和云端 Web Build 命令；当前项目在 Appflow 里固定用 `npx pnpm@9.15.9 install --frozen-lockfile`，再执行 `npx pnpm@9.15.9 build:native`。Appflow 最后会读取根目录 `www`，所以命令会把 `dist-native` 复制成 `www`；不要让 Appflow 回退到 npm 默认构建。
+
 打包前可设置：
 
 ```dotenv
@@ -135,14 +145,14 @@ VITE_MORO_APPFLOW_AUTO_UPDATE_METHOD=background
 VITE_MORO_APPFLOW_MAX_VERSIONS=2
 ```
 
-`VITE_MORO_APPFLOW_APP_ID` 为空时，Live Updates 会保持关闭。配置完成后运行：
+`VITE_MORO_APPFLOW_APP_ID` 为空时，Live Updates 会保持关闭；文具盒会跳过云端功能包，继续检查 APK / IPA 安装包。配置完成后运行：
 
 ```powershell
 pnpm build
 pnpm cap:sync
 ```
 
-Live Updates 只适合更新 WebView 里的网页资源，也就是 Vite 打出来的 JS/CSS/图片。以下变化仍然必须重新发 APK：
+Live Updates 只适合更新 WebView 里的网页资源，也就是 Vite 打出来的 JS/CSS/图片。发布云端包后，安装版会在启动后自动检查，也能在「文具盒 -> 基础与安全 -> 应用更新 -> 检查更新」里主动拉取。以下变化仍然必须重新发 APK：
 
 - 新增或修改 Android 权限
 - 新增、升级或删除 Capacitor 原生插件

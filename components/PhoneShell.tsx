@@ -156,6 +156,7 @@ setAppPayloadWarmer((id: AppID) => { const c = APP_BY_ID[id]; if (c) warmLazy(c)
 
 import { Like520Controller, shouldShowLike520Popup } from './Like520Event';
 import { WorkerUpdateReminderController, shouldShowWorkerUpdateReminder } from './WorkerUpdateReminderEvent';
+import { CloudUpdatePrompt } from './CloudUpdatePrompt';
 import { formatBytes } from '../utils/format';
 import { AppID } from '../types';
 import { App as CapApp } from '@capacitor/app';
@@ -183,6 +184,11 @@ import {
   groupManualUpdateNoticesByDate,
   type ManualUpdateNotice,
 } from '../apps/manual/manualData';
+import {
+  shouldPromptCloudUpdate,
+  syncCloudUpdate,
+  type CloudUpdateCheckResult,
+} from '../utils/cloudUpdates';
 
 /*
 // Internal Error Boundary Component
@@ -694,6 +700,7 @@ const PhoneShell: React.FC = () => {
   const previousLockedRef = useRef(isLocked);
   const manualNoticeSeenThisSessionRef = useRef<Set<string>>(new Set());
   const nativeReadyEventSentRef = useRef(false);
+  const cloudUpdateAutoCheckedRef = useRef(false);
   const phoneFrameRef = useRef<HTMLDivElement | null>(null);
   const offlineFloatButtonRef = useRef<HTMLButtonElement | null>(null);
   const offlineFloatDragRef = useRef<OfflineFloatDragState | null>(null);
@@ -704,6 +711,7 @@ const PhoneShell: React.FC = () => {
   const [mountedApps, setMountedApps] = useState<AppID[]>(() => [AppID.Launcher]);
   const [manualUpdateNotices, setManualUpdateNotices] = useState<ManualUpdateNotice[]>([]);
   const [manualUpdateNoticeArmed, setManualUpdateNoticeArmed] = useState(false);
+  const [cloudUpdatePrompt, setCloudUpdatePrompt] = useState<CloudUpdateCheckResult | null>(null);
   const [offlineFloatPos, setOfflineFloatPos] = useState<FloatingPosition | null>(null);
 
   useEffect(() => {
@@ -869,6 +877,38 @@ const PhoneShell: React.FC = () => {
   }, [showDisclaimer, showImportRecoveryPrompt, showLike520Popup, isDataLoaded]);
 
   useEffect(() => {
+    if (cloudUpdateAutoCheckedRef.current || cloudUpdatePrompt) return;
+    if (!nativeRuntime || !isDataLoaded || isLocked) return;
+    if (showDisclaimer || showImportRecoveryPrompt || showLike520Popup || showWorkerUpdateReminder) return;
+
+    cloudUpdateAutoCheckedRef.current = true;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void syncCloudUpdate()
+        .then((result) => {
+          if (!cancelled && shouldPromptCloudUpdate(result)) {
+            setCloudUpdatePrompt(result);
+          }
+        })
+        .catch((error) => console.warn('[PhoneShell] cloud update auto check failed', error));
+    }, 1800);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    cloudUpdatePrompt,
+    isDataLoaded,
+    isLocked,
+    nativeRuntime,
+    showDisclaimer,
+    showImportRecoveryPrompt,
+    showLike520Popup,
+    showWorkerUpdateReminder,
+  ]);
+
+  useEffect(() => {
     const wasLocked = previousLockedRef.current;
     previousLockedRef.current = isLocked;
     if (wasLocked && !isLocked) {
@@ -884,7 +924,8 @@ const PhoneShell: React.FC = () => {
       showDisclaimer ||
       showImportRecoveryPrompt ||
       showLike520Popup ||
-      showWorkerUpdateReminder
+      showWorkerUpdateReminder ||
+      cloudUpdatePrompt
     ) {
       return;
     }
@@ -904,6 +945,7 @@ const PhoneShell: React.FC = () => {
     showImportRecoveryPrompt,
     showLike520Popup,
     showWorkerUpdateReminder,
+    cloudUpdatePrompt,
   ]);
 
   const markVisibleManualUpdateNoticesSeen = () => {
@@ -1299,7 +1341,14 @@ const PhoneShell: React.FC = () => {
          />
        )}
 
-       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && manualUpdateNotices.length > 0 && (
+       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && cloudUpdatePrompt && (
+         <CloudUpdatePrompt
+           result={cloudUpdatePrompt}
+           onClose={() => setCloudUpdatePrompt(null)}
+         />
+       )}
+
+       {!showDisclaimer && !showImportRecoveryPrompt && !showLike520Popup && !showWorkerUpdateReminder && !cloudUpdatePrompt && manualUpdateNotices.length > 0 && (
          <ManualUpdateNoticePopup
            notices={manualUpdateNotices}
            onClose={acknowledgeManualUpdateNotice}

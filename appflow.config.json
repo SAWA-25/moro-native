@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "appId": "f5c1409a",
+      "dependencyInstallCommand": "npx pnpm@9.15.9 install --frozen-lockfile",
+      "webBuildCommand": "npx pnpm@9.15.9 build:native && rm -rf www && cp -R dist-native www",
+      "androidPath": "android",
+      "iosPath": "ios"
+    }
+  ]
+}
