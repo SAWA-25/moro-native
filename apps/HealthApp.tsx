@@ -1,7 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Bell,
+  Bluetooth,
+  BluetoothConnected,
+  BluetoothSlash,
   CalendarBlank,
   ChartLineUp,
   Check,
@@ -12,13 +15,17 @@ import {
   Moon,
   Notebook,
   PersonSimpleWalk,
+  PencilSimple,
   Pill,
   Plus,
+  Pulse,
   ShieldCheck,
   Smiley,
   Sparkle,
   ThermometerSimple,
   Trash,
+  Watch,
+  X,
 } from '@phosphor-icons/react';
 import { useOS } from '../context/OSContext';
 import { DB } from '../utils/db';
@@ -26,6 +33,9 @@ import { AppID } from '../types';
 import type {
   HealthModuleId,
   HealthModuleSettings,
+  HealthImportBatch,
+  HealthImportSource,
+  HealthPlan,
   HealthPrivacyMode,
   HealthRecord,
   HealthReminder,
@@ -57,6 +67,17 @@ import {
   toHealthDateKey,
 } from '../utils/health';
 import {
+  HEALTH_IMPORT_FIELD_OPTIONS,
+  makeHealthImportBatch,
+  makeRealtimeHeartRateRecord,
+  parseBleHeartRateMeasurement,
+  parseHealthImportFile,
+  type HealthImportFieldKey,
+  type HealthImportFieldMapping,
+  type HealthImportPreset,
+  type HealthImportPreview,
+} from '../utils/healthImport';
+import {
   PERIOD_CYCLE_LENGTH_DEFAULT,
   PERIOD_CYCLE_LENGTH_MAX,
   PERIOD_CYCLE_LENGTH_MIN,
@@ -77,11 +98,61 @@ import {
 import { getNotifyPermission, requestNotifyPermission, showLocalNotification, type NotifyPermission } from '../utils/browserNotify';
 import { scrollToManualAnchor, useManualDeepLink } from '../utils/manualDeepLink';
 
-type ViewId = 'today' | 'calendar' | 'trends' | 'reminders' | 'privacy';
+type ViewId = 'today' | 'calendar' | 'trends' | 'reminders' | 'devices' | 'privacy';
 type PeriodNumberField = 'cycleLength' | 'periodLength';
+type HealthGoalDraft = { target: string; unit: string; enabled: boolean };
+type HealthLiveDevicePreset = 'standard' | 'garmin';
+type HealthLiveConnectionState = 'idle' | 'requesting' | 'connecting' | 'listening' | 'disconnected' | 'error';
+
+interface WebBluetoothNavigator extends Navigator {
+  bluetooth?: {
+    requestDevice(options: WebBluetoothRequestOptions): Promise<WebBluetoothDevice>;
+  };
+}
+
+interface WebBluetoothRequestOptions {
+  filters?: WebBluetoothRequestFilter[];
+  optionalServices?: string[];
+  acceptAllDevices?: boolean;
+}
+
+interface WebBluetoothRequestFilter {
+  services?: string[];
+  name?: string;
+  namePrefix?: string;
+}
+
+interface WebBluetoothDevice extends EventTarget {
+  name?: string;
+  gatt?: {
+    connected?: boolean;
+    connect(): Promise<WebBluetoothGATTServer>;
+    disconnect(): void;
+  };
+}
+
+interface WebBluetoothGATTServer {
+  getPrimaryService(service: string): Promise<WebBluetoothGATTService>;
+}
+
+interface WebBluetoothGATTService {
+  getCharacteristic(characteristic: string): Promise<BluetoothRemoteGATTCharacteristic>;
+}
+
+interface BluetoothRemoteGATTCharacteristic extends EventTarget {
+  value?: DataView;
+  startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+  stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+  readValue(): Promise<DataView>;
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const todayKey = () => toHealthDateKey(new Date());
+const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+const DEFAULT_WEEKDAYS = [1, 2, 3, 4, 5];
+const DEFAULT_EVERYDAY = [1, 2, 3, 4, 5, 6, 0];
+const WEEKDAY_PICKER_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const GOAL_MODULE_IDS: HealthModuleId[] = ['hydration', 'sleep', 'movement', 'mood', 'medication'];
 
 const notifyPeriodReminderUpdated = () => {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('period-reminders-updated'));
@@ -152,6 +223,7 @@ const moduleIcon: Record<HealthModuleId, React.ReactNode> = {
   symptom: <ThermometerSimple size={18} weight="fill" />,
   mood: <Smiley size={18} weight="fill" />,
   movement: <PersonSimpleWalk size={18} weight="fill" />,
+  vitals: <Pulse size={18} weight="fill" />,
 };
 
 const findPeriodTracker = (trackers: Tracker[]) => (
@@ -171,6 +243,43 @@ const inferLastStartDate = (events: PeriodCycleEvent[], trackerEntries: TrackerE
 
 const formatShortDate = (date: string) => date.slice(5).replace('-', '/');
 
+const parseDateKey = (dateKey: string): Date => {
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateKey) ? dateKey : todayKey();
+  const [year, month, day] = normalized.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const shiftDateKey = (dateKey: string, days: number): string => {
+  const date = parseDateKey(dateKey);
+  date.setDate(date.getDate() + days);
+  return toHealthDateKey(date);
+};
+
+const shiftMonthKey = (dateKey: string, months: number): string => {
+  const date = parseDateKey(dateKey);
+  return toHealthDateKey(new Date(date.getFullYear(), date.getMonth() + months, 1));
+};
+
+const monthCellsFor = (dateKey: string) => {
+  const anchor = parseDateKey(dateKey);
+  const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
+    return {
+      dateKey: toHealthDateKey(date),
+      day: date.getDate(),
+      currentMonth: date.getMonth() === anchor.getMonth(),
+    };
+  });
+};
+
+const monthLabel = (dateKey: string) => {
+  const date = parseDateKey(dateKey);
+  return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+};
+
 const lastNDates = (count: number) => {
   const out: string[] = [];
   const base = new Date();
@@ -179,6 +288,188 @@ const lastNDates = (count: number) => {
     out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }
   return out;
+};
+
+const moduleDefaultUnit = (moduleId: HealthModuleId) => (
+  moduleId === 'vitals' ? '条' :
+  HEALTH_MODULES.find(item => item.id === moduleId)?.unit || '次'
+);
+
+const goalFallbackForModule = (moduleId: HealthModuleId): { target: number; unit: string } | null => {
+  const module = HEALTH_MODULES.find(item => item.id === moduleId);
+  if (module?.defaultGoal) return module.defaultGoal;
+  if (moduleId === 'medication') return { target: 1, unit: '次' };
+  return null;
+};
+
+const normalizeReminderWeekdays = (frequency: HealthReminderFrequency, weekdays?: number[]) => {
+  const fallback = frequency === 'weekdays' ? DEFAULT_WEEKDAYS : DEFAULT_EVERYDAY;
+  const source = weekdays?.length ? weekdays : fallback;
+  const set = new Set<number>();
+  source.forEach(day => {
+    const n = Number(day);
+    if (Number.isInteger(n) && n >= 0 && n <= 6) set.add(n);
+  });
+  return Array.from(set).sort((a, b) => a - b);
+};
+
+const reminderFrequencyText = (reminder: HealthReminder) => {
+  if (reminder.frequency === 'daily') return '每天';
+  if (reminder.frequency === 'weekdays') return '工作日';
+  if (reminder.frequency === 'once') return reminder.date ? `一次 · ${reminder.date}` : '一次';
+  const days = normalizeReminderWeekdays(reminder.frequency, reminder.weekdays).map(day => `周${WEEKDAY_LABELS[day]}`).join('、');
+  return days ? `每周 ${days}` : '自定义';
+};
+
+const makePlanForModule = (
+  moduleId: HealthModuleId,
+  existing?: Partial<HealthPlan>,
+  setting?: HealthModuleSettings,
+): HealthPlan | null => {
+  const fallback = goalFallbackForModule(moduleId);
+  if (!fallback && !existing) return null;
+  return makeHealthPlan({
+    ...(existing || {}),
+    id: existing?.id || `health_plan_${moduleId}`,
+    moduleId,
+    target: existing?.target ?? setting?.goals?.target ?? fallback?.target ?? 1,
+    unit: existing?.unit || setting?.goals?.unit || fallback?.unit || '次',
+    enabled: existing?.enabled !== false,
+    privacy: existing?.privacy || setting?.privacy || 'private',
+    charIds: existing?.charIds || setting?.charIds || [],
+  });
+};
+
+const IMPORT_SOURCE_LABEL: Record<HealthImportSource, string> = {
+  generic: '通用',
+  xiaomi: '小米',
+  zepp: 'Zepp',
+  huawei: '华为',
+  garmin: '常见手环',
+  apple_health: 'Apple Health',
+  google_fit: 'Google Fit',
+  web_bluetooth: '实时蓝牙',
+  unknown: '未知',
+};
+
+const IMPORT_PRESET_LABEL: Record<HealthImportPreset, string> = {
+  auto: '自动识别',
+  generic: '通用',
+  xiaomi: '小米',
+  zepp: 'Zepp',
+  huawei: '华为',
+  garmin: '常见手环',
+  apple_health: 'Apple Health',
+  google_fit: 'Google Fit',
+  web_bluetooth: '实时蓝牙',
+  unknown: '未知',
+};
+
+const IMPORT_PRESET_OPTIONS: HealthImportPreset[] = ['auto', 'generic', 'xiaomi', 'zepp', 'huawei', 'apple_health', 'google_fit'];
+
+const LIVE_DEVICE_PRESET_LABEL: Record<HealthLiveDevicePreset, { title: string; desc: string }> = {
+  standard: { title: '通用心率', desc: '筛选标准蓝牙心率服务' },
+  garmin: { title: '扩展兼容', desc: '兼容更多设备名' },
+};
+
+const LIVE_CONNECTION_STATE_LABEL: Record<HealthLiveConnectionState, string> = {
+  idle: '未连接',
+  requesting: '等待选择设备',
+  connecting: '连接中',
+  listening: '同步中',
+  disconnected: '已断开',
+  error: '连接失败',
+};
+
+const GARMIN_BLE_NAME_PREFIXES = ['Garmin', 'Forerunner', 'fenix', 'Fenix', 'Venu', 'vivo', 'Instinct', 'epix', 'Enduro', 'Lily'];
+
+const buildLiveBluetoothRequestOptions = (preset: HealthLiveDevicePreset): WebBluetoothRequestOptions => {
+  const optionalServices = ['heart_rate', 'battery_service', 'device_information'];
+  if (preset === 'garmin') {
+    return {
+      filters: [
+        { services: ['heart_rate'] },
+        ...GARMIN_BLE_NAME_PREFIXES.map(namePrefix => ({ namePrefix })),
+      ],
+      optionalServices,
+    };
+  }
+  return {
+    filters: [{ services: ['heart_rate'] }],
+    optionalServices: ['battery_service', 'device_information'],
+  };
+};
+
+const decodeGattString = (value: DataView): string => (
+  new TextDecoder('utf-8').decode(new Uint8Array(value.buffer, value.byteOffset, value.byteLength)).trim()
+);
+
+const readOptionalGattString = async (service: WebBluetoothGATTService, characteristic: string): Promise<string | undefined> => {
+  try {
+    const value = await (await service.getCharacteristic(characteristic)).readValue();
+    return decodeGattString(value) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const readLiveDeviceInformation = async (server: WebBluetoothGATTServer) => {
+  try {
+    const service = await server.getPrimaryService('device_information');
+    const [manufacturer, model] = await Promise.all([
+      readOptionalGattString(service, 'manufacturer_name_string'),
+      readOptionalGattString(service, 'model_number_string'),
+    ]);
+    return { manufacturer, model };
+  } catch {
+    return {};
+  }
+};
+
+const readLiveBatteryLevel = async (server: WebBluetoothGATTServer): Promise<number | null> => {
+  try {
+    const service = await server.getPrimaryService('battery_service');
+    const value = await (await service.getCharacteristic('battery_level')).readValue();
+    const battery = value.getUint8(0);
+    return Number.isFinite(battery) ? battery : null;
+  } catch {
+    return null;
+  }
+};
+
+const buildPlansFromStorage = (storedPlans: HealthPlan[], settings: HealthModuleSettings[]) => (
+  GOAL_MODULE_IDS
+    .map(moduleId => makePlanForModule(
+      moduleId,
+      storedPlans.find(plan => plan.moduleId === moduleId),
+      settings.find(setting => setting.id === moduleId),
+    ))
+    .filter((plan): plan is HealthPlan => !!plan)
+);
+
+const recordNumericValue = (record: HealthRecord) => (
+  record.moduleId === 'vitals' ? 1 :
+  Number.isFinite(Number(record.value)) ? Number(record.value) : 1
+);
+
+const totalForModuleDate = (records: HealthRecord[], moduleId: HealthModuleId, date: string) => (
+  records
+    .filter(record => record.moduleId === moduleId && record.date === date)
+    .reduce((sum, record) => sum + recordNumericValue(record), 0)
+);
+
+const dayRecordCount = (records: HealthRecord[], date: string) => (
+  records.filter(record => record.date === date).length
+);
+
+const recordStreak = (records: HealthRecord[], date = todayKey()) => {
+  let streak = 0;
+  for (let i = 0; i < 365; i += 1) {
+    const key = shiftDateKey(date, -i);
+    if (!records.some(record => record.date === key)) break;
+    streak += 1;
+  }
+  return streak;
 };
 
 const emptyForm = {
@@ -198,7 +489,9 @@ const HealthApp: React.FC = () => {
   const [activeModule, setActiveModule] = useState<HealthModuleId>('hydration');
   const [moduleSettings, setModuleSettings] = useState<HealthModuleSettings[]>(() => mergeHealthModuleSettings([]));
   const [records, setRecords] = useState<HealthRecord[]>([]);
+  const [importBatches, setImportBatches] = useState<HealthImportBatch[]>([]);
   const [reminders, setReminders] = useState<HealthReminder[]>([]);
+  const [plans, setPlans] = useState<HealthPlan[]>([]);
   const [periodSettings, setPeriodSettings] = useState<PeriodReminderSettings>(() => makeDefaultPeriodReminderSettings());
   const [periodNumberDraft, setPeriodNumberDraft] = useState(() => ({
     cycleLength: String(PERIOD_CYCLE_LENGTH_DEFAULT),
@@ -211,13 +504,42 @@ const HealthApp: React.FC = () => {
   const [notifyPerm, setNotifyPerm] = useState<NotifyPermission>(() => getNotifyPermission());
   const [authorizingNotify, setAuthorizingNotify] = useState(false);
   const [calendarDate, setCalendarDate] = useState(todayKey());
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [recordForm, setRecordForm] = useState(emptyForm);
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [importPreset, setImportPreset] = useState<HealthImportPreset>('auto');
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<HealthImportPreview | null>(null);
+  const [importMapping, setImportMapping] = useState<HealthImportFieldMapping>({});
+  const [importingWearable, setImportingWearable] = useState(false);
+  const [livePreset, setLivePreset] = useState<HealthLiveDevicePreset>('standard');
+  const [liveConnectionState, setLiveConnectionState] = useState<HealthLiveConnectionState>('idle');
+  const [liveSyncing, setLiveSyncing] = useState(false);
+  const [liveDeviceName, setLiveDeviceName] = useState('');
+  const [liveDeviceInfo, setLiveDeviceInfo] = useState<{ manufacturer?: string; model?: string }>({});
+  const [liveBatteryLevel, setLiveBatteryLevel] = useState<number | null>(null);
+  const [liveHeartRate, setLiveHeartRate] = useState<number | null>(null);
+  const [liveLastSavedAt, setLiveLastSavedAt] = useState<number | null>(null);
+  const [liveMessage, setLiveMessage] = useState('还未连接实时手环');
+  const recordsRef = useRef<HealthRecord[]>([]);
+  const livePresetRef = useRef<HealthLiveDevicePreset>('standard');
+  const liveDeviceNameRef = useRef('');
+  const liveDeviceInfoRef = useRef<{ manufacturer?: string; model?: string }>({});
+  const liveBatteryLevelRef = useRef<number | null>(null);
+  const liveDeviceRef = useRef<any>(null);
+  const liveHeartRateCharacteristicRef = useRef<any>(null);
+  const liveLastSavedMinuteRef = useRef<number>(0);
+  const liveDisconnectingRef = useRef(false);
+  const liveBatchRef = useRef<HealthImportBatch | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const [reminderForm, setReminderForm] = useState({
     moduleId: 'hydration' as HealthModuleId,
     title: '喝水提醒',
     body: '喝点水，顺手记一笔。',
     timeHHmm: '10:30',
     frequency: 'daily' as HealthReminderFrequency,
+    date: todayKey(),
+    weekdays: DEFAULT_WEEKDAYS,
   });
 
   const periodTracker = useMemo(() => findPeriodTracker(trackers), [trackers]);
@@ -225,9 +547,17 @@ const HealthApp: React.FC = () => {
   const todayRecords = useMemo(() => records.filter(record => record.date === today), [records, today]);
   const selectedDateRecords = useMemo(() => records.filter(record => record.date === calendarDate), [records, calendarDate]);
   const selectedModuleRecords = useMemo(() => records.filter(record => record.moduleId === activeModule), [records, activeModule]);
+  const monthCells = useMemo(() => monthCellsFor(calendarDate), [calendarDate]);
+  const healthStreak = useMemo(() => recordStreak(records, today), [records, today]);
+  const weekDates = useMemo(() => lastNDates(7), [today]);
   const selectedModuleSettings = useMemo(
     () => moduleSettings.find(item => item.id === activeModule) || prepareHealthModuleSettings({ id: activeModule }),
     [activeModule, moduleSettings],
+  );
+  const activeGoalPlan = useMemo(() => plans.find(plan => plan.moduleId === activeModule), [activeModule, plans]);
+  const weekRecordCount = useMemo(
+    () => records.filter(record => weekDates.includes(record.date)).length,
+    [records, weekDates],
   );
   const predictedStart = useMemo(
     () => predictNextPeriodStart(periodSettings.lastStartDate, periodSettings.cycleLength),
@@ -249,6 +579,12 @@ const HealthApp: React.FC = () => {
     return all[0];
   }, [periodSettings, reminders]);
 
+  const selectCalendarDate = useCallback((dateKey: string) => {
+    const normalized = toHealthDateKey(parseDateKey(dateKey));
+    setCalendarDate(normalized);
+    setRecordForm(prev => ({ ...prev, date: normalized }));
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -260,6 +596,7 @@ const HealthApp: React.FC = () => {
         storedEvents,
         storedTrackers,
         storedPlans,
+        storedImportBatches,
       ] = await Promise.all([
         DB.getAllHealthModuleSettings().catch(() => []),
         DB.getAllHealthRecords().catch(() => []),
@@ -268,6 +605,7 @@ const HealthApp: React.FC = () => {
         DB.getAllPeriodCycleEvents().catch(() => []),
         DB.getAllTrackers().catch(() => []),
         DB.getAllHealthPlans().catch(() => []),
+        DB.getAllHealthImportBatches().catch(() => []),
       ]);
       const tracker = findPeriodTracker(storedTrackers);
       const trackerEntries = tracker ? await DB.getTrackerEntriesByTracker(tracker.id).catch(() => []) : [];
@@ -291,23 +629,18 @@ const HealthApp: React.FC = () => {
       if (storedModuleSettings.length === 0) {
         await DB.saveHealthModuleSettingsMany(mergedModules).catch(() => {});
       }
-      if (!storedPlans.length) {
-        const defaultPlans = mergedModules
-          .filter(item => item.goals?.target)
-          .map(item => makeHealthPlan({
-            id: `health_plan_${item.id}`,
-            moduleId: item.id,
-            target: item.goals?.target,
-            unit: item.goals?.unit || '次',
-            privacy: item.privacy,
-            charIds: item.charIds,
-          }));
-        await Promise.all(defaultPlans.map(plan => DB.saveHealthPlan(plan).catch(() => {})));
+      const normalizedPlans = buildPlansFromStorage(storedPlans, mergedModules);
+      const existingPlanIds = new Set(storedPlans.map(plan => plan.id));
+      const missingPlans = normalizedPlans.filter(plan => !existingPlanIds.has(plan.id));
+      if (missingPlans.length) {
+        await Promise.all(missingPlans.map(plan => DB.saveHealthPlan(plan).catch(() => {})));
       }
 
       setModuleSettings(mergedModules);
       setRecords([...storedRecords, ...migratedRecords].sort((a, b) => b.date.localeCompare(a.date)));
       setReminders(storedReminders);
+      setPlans(normalizedPlans);
+      setImportBatches(storedImportBatches);
       setPeriodSettings(preparedPeriod);
       setPeriodEvents(storedEvents);
       setTrackers(storedTrackers);
@@ -321,8 +654,34 @@ const HealthApp: React.FC = () => {
   }, [load]);
 
   useEffect(() => {
+    recordsRef.current = records;
+  }, [records]);
+
+  useEffect(() => {
+    livePresetRef.current = livePreset;
+  }, [livePreset]);
+
+  useEffect(() => {
+    liveDeviceNameRef.current = liveDeviceName;
+  }, [liveDeviceName]);
+
+  useEffect(() => {
+    liveDeviceInfoRef.current = liveDeviceInfo;
+  }, [liveDeviceInfo]);
+
+  useEffect(() => {
+    liveBatteryLevelRef.current = liveBatteryLevel;
+  }, [liveBatteryLevel]);
+
+  useEffect(() => {
     setPeriodNumberDraft(periodNumberDraftFromSettings(periodSettings));
   }, [periodSettings.cycleLength, periodSettings.periodLength]);
+
+  useEffect(() => {
+    if (!importFile) return;
+    void parseSelectedImportFile(importFile, importPreset, importMapping);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importPreset]);
 
   useEffect(() => {
     const refresh = () => setNotifyPerm(getNotifyPermission());
@@ -335,10 +694,276 @@ const HealthApp: React.FC = () => {
   }, []);
 
   useManualDeepLink(AppID.Health, useCallback((target) => {
+    if (target.route === 'devices' || target.anchorId === 'manual-health-device-root') setActiveView('devices');
+    else if (target.route === 'privacy' || target.anchorId === 'manual-health-privacy') setActiveView('privacy');
+    else if (target.route === 'reminders' || target.anchorId === 'manual-health-period-root') setActiveView('reminders');
+    else setActiveView('today');
     window.setTimeout(() => {
       if (!scrollToManualAnchor(target.anchorId)) scrollToManualAnchor('manual-health-root');
     }, 120);
   }, []));
+
+  const refreshImportBatches = useCallback(async () => {
+    const batches = await DB.getAllHealthImportBatches().catch(() => []);
+    setImportBatches(batches);
+  }, []);
+
+  const parseSelectedImportFile = useCallback(async (file: File, preset = importPreset, mapping = importMapping) => {
+    setImportingWearable(true);
+    try {
+      const preview = await parseHealthImportFile(file, { preset, mapping, now: Date.now() });
+      const nextMapping = { ...preview.mappedFields };
+      setImportFile(file);
+      setImportPreview(preview);
+      setImportMapping(nextMapping);
+      if (preview.warnings.length) {
+        addToast(preview.warnings[0], 'info');
+      }
+    } catch (err: any) {
+      addToast(err?.message || '解析失败', 'error');
+    } finally {
+      setImportingWearable(false);
+    }
+  }, [addToast, importMapping, importPreset]);
+
+  const handlePickImportFile = useCallback((file?: File | null) => {
+    if (!file) return;
+    void parseSelectedImportFile(file);
+  }, [parseSelectedImportFile]);
+
+  const resetImportPreview = useCallback(() => {
+    setImportFile(null);
+    setImportPreview(null);
+    setImportMapping({});
+  }, []);
+
+  const reparseImportPreview = useCallback(() => {
+    if (!importFile) return;
+    void parseSelectedImportFile(importFile, importPreset, importMapping);
+  }, [importFile, importMapping, importPreset, parseSelectedImportFile]);
+
+  const persistImportedBatch = useCallback(async (batch: HealthImportBatch, nextRecords: HealthRecord[]) => {
+    await Promise.all(nextRecords.map(record => DB.saveHealthRecord(record).catch(() => {})));
+    await DB.saveHealthImportBatch(batch);
+    await refreshImportBatches();
+    const nextAll = [...nextRecords, ...records.filter(record => !nextRecords.some(next => next.id === record.id))];
+    const sorted = nextAll.sort((a, b) => b.date.localeCompare(a.date) || (a.timeHHmm || '').localeCompare(b.timeHHmm || ''));
+    setRecords(sorted);
+    const affectedDates = Array.from(new Set(nextRecords.map(record => record.date)));
+    await Promise.all(affectedDates.map(date => DB.saveHealthSummary(summarizeHealthDay(sorted.filter(record => record.date === date), date)).catch(() => {})));
+    notifyHealthUpdated();
+  }, [records, refreshImportBatches, today]);
+
+  const confirmImport = useCallback(async () => {
+    if (!importPreview || !importFile) {
+      addToast('先选一个健康导出文件', 'info');
+      return;
+    }
+    setImportingWearable(true);
+    try {
+      const nextRecords = importPreview.records;
+      const existingIds = new Set(records.map(record => record.id));
+      const importedCount = nextRecords.filter(record => !existingIds.has(record.id)).length;
+      const updatedCount = nextRecords.length - importedCount;
+      const batch = makeHealthImportBatch({
+        source: importPreview.source,
+        mode: 'file',
+        fileName: importPreview.fileName || importFile.name,
+        importedCount,
+        updatedCount,
+        skippedCount: importPreview.skippedCount,
+        warnings: importPreview.warnings,
+        recordIds: nextRecords.map(record => record.id),
+      }, Date.now());
+      await persistImportedBatch(batch, nextRecords);
+      addToast(`已导入 ${nextRecords.length} 条健康记录`, 'success');
+      resetImportPreview();
+    } catch (err: any) {
+      addToast(err?.message || '导入失败', 'error');
+    } finally {
+      setImportingWearable(false);
+    }
+  }, [addToast, importPreview, importFile, persistImportedBatch, records, resetImportPreview]);
+
+  const rollbackImportBatch = useCallback(async (batch: HealthImportBatch) => {
+    if (!window.confirm(`撤回这次 ${batch.fileName || '手环导入'}？`)) return;
+    const ids = new Set(batch.recordIds);
+    const nextRecords = records.filter(record => !ids.has(record.id));
+    await Promise.all(batch.recordIds.map(id => DB.deleteHealthRecord(id).catch(() => {})));
+    await DB.deleteHealthImportBatch(batch.id).catch(() => {});
+    setRecords(nextRecords);
+    await refreshImportBatches();
+    if (batch.recordIds.length) {
+      const affectedDates = Array.from(new Set(records.filter(record => ids.has(record.id)).map(record => record.date)));
+      await Promise.all(affectedDates.map(date => DB.saveHealthSummary(summarizeHealthDay(nextRecords.filter(record => record.date === date), date)).catch(() => {})));
+    }
+    notifyHealthUpdated();
+    addToast('已撤回这次导入', 'success');
+  }, [addToast, records, refreshImportBatches]);
+
+  const onHeartRateValueChanged = useCallback(async (event: Event) => {
+    const target = event.target as BluetoothRemoteGATTCharacteristic | null;
+    const value = target?.value;
+    if (!value) return;
+    const heartRate = parseBleHeartRateMeasurement(value);
+    const now = Date.now();
+    const deviceName = liveDeviceNameRef.current || '实时手环';
+    const deviceInfo = liveDeviceInfoRef.current;
+    const batteryLevel = liveBatteryLevelRef.current;
+    setLiveHeartRate(heartRate);
+    setLiveConnectionState('listening');
+    setLiveMessage(`实时心率 ${heartRate} bpm`);
+    const minuteBucket = Math.floor(now / 60_000);
+    if (minuteBucket === liveLastSavedMinuteRef.current) return;
+    liveLastSavedMinuteRef.current = minuteBucket;
+    const record = makeRealtimeHeartRateRecord({
+      heartRate,
+      deviceName,
+      manufacturer: deviceInfo.manufacturer,
+      model: deviceInfo.model,
+      batteryLevel,
+      devicePreset: livePresetRef.current,
+      now,
+    });
+    await DB.saveHealthRecord(record).catch(() => {});
+    const currentRecords = recordsRef.current;
+    const existing = currentRecords.some(item => item.id === record.id);
+    const batch = liveBatchRef.current || makeHealthImportBatch({
+      source: 'web_bluetooth',
+      mode: 'realtime',
+      deviceName,
+      importedCount: 0,
+      skippedCount: 0,
+      warnings: [],
+      recordIds: [],
+    }, now);
+    batch.importedCount += existing ? 0 : 1;
+    batch.recordIds = Array.from(new Set([...batch.recordIds, record.id]));
+    batch.updatedAt = now;
+    liveBatchRef.current = batch;
+    await DB.saveHealthImportBatch(batch).catch(() => {});
+    await refreshImportBatches();
+    const nextRecords = [record, ...currentRecords.filter(item => item.id !== record.id)];
+    recordsRef.current = nextRecords;
+    setRecords(nextRecords);
+    setLiveLastSavedAt(now);
+    await DB.saveHealthSummary(summarizeHealthDay(nextRecords, record.date)).catch(() => {});
+    notifyHealthUpdated();
+  }, [refreshImportBatches]);
+
+  const stopLiveWearable = useCallback(async (message = '实时同步已停止', nextState: HealthLiveConnectionState = 'idle') => {
+    liveDisconnectingRef.current = true;
+    try {
+      const characteristic = liveHeartRateCharacteristicRef.current;
+      if (characteristic) {
+        try { await characteristic.stopNotifications(); } catch { /* ignore */ }
+        characteristic.removeEventListener?.('characteristicvaluechanged', onHeartRateValueChanged);
+      }
+      const device = liveDeviceRef.current;
+      if (device?.gatt?.connected) {
+        try { device.gatt.disconnect(); } catch { /* ignore */ }
+      }
+    } finally {
+      liveDeviceRef.current = null;
+      liveHeartRateCharacteristicRef.current = null;
+      liveBatchRef.current = null;
+      liveLastSavedMinuteRef.current = 0;
+      liveDisconnectingRef.current = false;
+      liveDeviceInfoRef.current = {};
+      liveBatteryLevelRef.current = null;
+      setLiveSyncing(false);
+      setLiveConnectionState(nextState);
+      setLiveBatteryLevel(null);
+      setLiveDeviceInfo({});
+      setLiveHeartRate(null);
+      setLiveLastSavedAt(null);
+      setLiveMessage(message);
+    }
+  }, [onHeartRateValueChanged]);
+
+  const startLiveWearable = useCallback(async () => {
+    const bluetooth = (navigator as WebBluetoothNavigator).bluetooth;
+    if (!bluetooth) {
+      addToast('当前浏览器不支持 Web Bluetooth', 'error');
+      return;
+    }
+    try {
+      if (liveSyncing) {
+        await stopLiveWearable();
+      }
+      const preset = livePresetRef.current;
+      setLiveSyncing(true);
+      setLiveConnectionState('requesting');
+      setLiveBatteryLevel(null);
+      setLiveDeviceInfo({});
+      setLiveHeartRate(null);
+      setLiveLastSavedAt(null);
+      setLiveMessage(preset === 'garmin' ? '请在弹窗里选择设备；若看不到设备，请先开启心率广播或标准心率服务' : '请在弹窗里选择支持心率的蓝牙设备');
+      const device = await bluetooth.requestDevice(buildLiveBluetoothRequestOptions(preset));
+      liveDeviceRef.current = device;
+      const deviceName = device.name || (preset === 'garmin' ? '兼容设备' : '未知手环');
+      setLiveDeviceName(deviceName);
+      liveDeviceNameRef.current = deviceName;
+      setLiveConnectionState('connecting');
+      setLiveMessage(`正在连接 ${deviceName}`);
+      device.addEventListener('gattserverdisconnected', () => {
+        if (liveDeviceRef.current !== device) return;
+        if (liveDisconnectingRef.current) return;
+        void stopLiveWearable('设备已断开', 'disconnected');
+      });
+      const server = await device.gatt?.connect();
+      if (!server) throw new Error('无法连接手环');
+      const [deviceInfo, battery] = await Promise.all([
+        readLiveDeviceInformation(server),
+        readLiveBatteryLevel(server),
+      ]);
+      setLiveDeviceInfo(deviceInfo);
+      liveDeviceInfoRef.current = deviceInfo;
+      setLiveBatteryLevel(battery);
+      liveBatteryLevelRef.current = battery;
+      let heartRateService: WebBluetoothGATTService;
+      try {
+        heartRateService = await server.getPrimaryService('heart_rate');
+      } catch {
+        throw new Error(preset === 'garmin'
+          ? '没有读到标准蓝牙心率服务。请先在设备上开启心率广播或标准心率服务后再连接。'
+          : '没有读到标准蓝牙心率服务，暂时无法实时同步。');
+      }
+      const heartRateCharacteristic = await heartRateService.getCharacteristic('heart_rate_measurement');
+      liveHeartRateCharacteristicRef.current = heartRateCharacteristic;
+      heartRateCharacteristic.addEventListener('characteristicvaluechanged', onHeartRateValueChanged);
+      await heartRateCharacteristic.startNotifications();
+      const warning = preset === 'garmin'
+        ? '实时蓝牙连接仅读取标准心率服务；步数、睡眠、压力、血氧请继续用厂商 App 导出文件导入。'
+        : '';
+      liveBatchRef.current = makeHealthImportBatch({
+        source: 'web_bluetooth',
+        mode: 'realtime',
+        deviceName,
+        importedCount: 0,
+        skippedCount: 0,
+        warnings: warning ? [warning] : [],
+        recordIds: [],
+      });
+      await DB.saveHealthImportBatch(liveBatchRef.current).catch(() => {});
+      await refreshImportBatches();
+      setLiveConnectionState('listening');
+      setLiveMessage(`已连接 ${deviceName}${battery !== null ? ` · 电量 ${battery}%` : ''} · 等待心率数据`);
+      addToast('蓝牙实时连接已开启', 'success');
+    } catch (err: any) {
+      try { await stopLiveWearable(err?.message || '实时同步未连接', 'error'); } catch { /* ignore */ }
+      setLiveSyncing(false);
+      setLiveConnectionState('error');
+      setLiveMessage(err?.message || '实时同步未连接');
+      addToast(err?.message || '连接手环失败', 'error');
+    }
+  }, [addToast, liveSyncing, onHeartRateValueChanged, refreshImportBatches, stopLiveWearable]);
+
+  useEffect(() => {
+    return () => {
+      void stopLiveWearable();
+    };
+  }, [stopLiveWearable]);
 
   const patchPeriodSettings = (patch: Partial<PeriodReminderSettings>) => {
     setPeriodSettings(prev => preparePeriodReminderSettings({ ...prev, ...patch }, Date.now()));
@@ -419,8 +1044,49 @@ const HealthApp: React.FC = () => {
       setPeriodSettings(nextPeriod);
       notifyPeriodReminderUpdated();
     }
+    const relatedPlan = plans.find(plan => plan.moduleId === prepared.id);
+    if (relatedPlan) {
+      const syncedPlan = makeHealthPlan({
+        ...relatedPlan,
+        privacy: prepared.privacy,
+        charIds: prepared.charIds,
+      });
+      await DB.saveHealthPlan(syncedPlan).catch(() => {});
+      setPlans(prev => prev.map(plan => plan.id === syncedPlan.id ? syncedPlan : plan));
+    }
     notifyHealthUpdated();
     if (toast) addToast('健康隐私设置已更新', 'success');
+  };
+
+  const saveGoalPlan = async (moduleId: HealthModuleId, draft: HealthGoalDraft) => {
+    const fallback = goalFallbackForModule(moduleId);
+    const target = Number(draft.target);
+    if (!Number.isFinite(target) || target <= 0) {
+      addToast('目标数值要大于 0', 'error');
+      return;
+    }
+    const setting = moduleSettings.find(item => item.id === moduleId) || prepareHealthModuleSettings({ id: moduleId });
+    const existing = plans.find(plan => plan.moduleId === moduleId);
+    const plan = makeHealthPlan({
+      ...(existing || {}),
+      id: existing?.id || `health_plan_${moduleId}`,
+      moduleId,
+      target,
+      unit: draft.unit.trim() || existing?.unit || fallback?.unit || moduleDefaultUnit(moduleId),
+      enabled: draft.enabled,
+      privacy: setting.privacy,
+      charIds: setting.charIds,
+    });
+    const nextSetting = prepareHealthModuleSettings({
+      ...setting,
+      goals: { target: plan.target, unit: plan.unit, cadence: plan.cadence },
+    });
+    await DB.saveHealthPlan(plan);
+    await DB.saveHealthModuleSettings(nextSetting);
+    setPlans(prev => [plan, ...prev.filter(item => item.id !== plan.id)].sort((a, b) => GOAL_MODULE_IDS.indexOf(a.moduleId) - GOAL_MODULE_IDS.indexOf(b.moduleId)));
+    setModuleSettings(prev => mergeHealthModuleSettings(prev.map(item => item.id === nextSetting.id ? nextSetting : item)));
+    notifyHealthUpdated();
+    addToast('健康目标已保存', 'success');
   };
 
   const handleRequestNotify = async () => {
@@ -452,11 +1118,62 @@ const HealthApp: React.FC = () => {
   const saveRecord = async (input: Partial<HealthRecord>) => {
     const record = makeHealthRecord(input);
     await DB.saveHealthRecord(record);
-    setRecords(prev => [record, ...prev.filter(item => item.id !== record.id)].sort((a, b) => b.date.localeCompare(a.date)));
-    const summary = summarizeHealthDay([record, ...records.filter(item => item.date === record.date)], record.date);
+    const nextRecords = [record, ...records.filter(item => item.id !== record.id)].sort((a, b) => b.date.localeCompare(a.date));
+    setRecords(nextRecords);
+    const summary = summarizeHealthDay(nextRecords, record.date);
     await DB.saveHealthSummary(summary).catch(() => {});
     notifyHealthUpdated();
-    addToast(`${HEALTH_MODULE_LABEL[record.moduleId]}已记录`, 'success');
+    addToast(`${HEALTH_MODULE_LABEL[record.moduleId]}已${input.id ? '更新' : '记录'}`, 'success');
+  };
+
+  const deleteRecord = async (record: HealthRecord) => {
+    const periodEventId = typeof record.metadata?.periodEventId === 'string' ? record.metadata.periodEventId : '';
+    if (periodEventId) {
+      await DB.deletePeriodCycleEvent(periodEventId).catch(() => {});
+      const nextEvents = periodEvents.filter(event => event.id !== periodEventId);
+      const removedEvent = periodEvents.find(event => event.id === periodEventId);
+      setPeriodEvents(nextEvents);
+      if (removedEvent?.kind === 'start' && periodSettings.lastStartDate === removedEvent.date) {
+        const nextPeriod = preparePeriodReminderSettings({
+          ...periodSettings,
+          lastStartDate: inferLastStartDate(nextEvents, []),
+        }, Date.now());
+        await DB.savePeriodReminderSettings(nextPeriod).catch(() => {});
+        setPeriodSettings(nextPeriod);
+      }
+      notifyPeriodReminderUpdated();
+    }
+    await DB.deleteHealthRecord(record.id);
+    const nextRecords = records.filter(item => item.id !== record.id);
+    setRecords(nextRecords);
+    await DB.saveHealthSummary(summarizeHealthDay(nextRecords, record.date)).catch(() => {});
+    notifyHealthUpdated();
+    addToast('记录已删除', 'success');
+  };
+
+  const beginEditRecord = (record: HealthRecord) => {
+    setEditingRecordId(record.id);
+    setCalendarDate(record.date);
+    setRecordForm({
+      moduleId: record.moduleId,
+      date: record.date,
+      timeHHmm: record.timeHHmm || normalizePeriodTime(`${new Date().getHours()}:${new Date().getMinutes()}`),
+      value: record.value !== undefined ? String(record.value) : '',
+      unit: record.unit || moduleDefaultUnit(record.moduleId),
+      label: record.label || '',
+      tags: record.tags.join(' '),
+      note: record.note || '',
+    });
+    setActiveView('calendar');
+  };
+
+  const cancelRecordEdit = () => {
+    setEditingRecordId(null);
+    setRecordForm(prev => ({
+      ...emptyForm,
+      date: prev.date || todayKey(),
+      timeHHmm: normalizePeriodTime(`${new Date().getHours()}:${new Date().getMinutes()}`),
+    }));
   };
 
   const recordPeriodEvent = async (kind: PeriodCycleEvent['kind'], date = todayKey()) => {
@@ -490,7 +1207,9 @@ const HealthApp: React.FC = () => {
       updatedAt: now,
     }, now);
     await DB.saveHealthRecord(healthRecord);
-    setRecords(prev => [healthRecord, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+    const nextRecords = [healthRecord, ...records.filter(item => item.id !== healthRecord.id)].sort((a, b) => b.date.localeCompare(a.date));
+    setRecords(nextRecords);
+    await DB.saveHealthSummary(summarizeHealthDay(nextRecords, normalizedDate)).catch(() => {});
 
     if (periodTracker) {
       const existing = await DB.getTrackerEntry(periodTracker.id, normalizedDate).catch(() => null);
@@ -528,7 +1247,9 @@ const HealthApp: React.FC = () => {
   };
 
   const submitRecordForm = async () => {
+    const existing = editingRecordId ? records.find(item => item.id === editingRecordId) : undefined;
     await saveRecord({
+      id: editingRecordId || undefined,
       moduleId: recordForm.moduleId,
       date: recordForm.date,
       timeHHmm: recordForm.timeHHmm,
@@ -537,27 +1258,72 @@ const HealthApp: React.FC = () => {
       label: recordForm.label,
       tags: recordForm.tags.split(/[，,\s]+/).filter(Boolean),
       note: recordForm.note,
-      source: 'manual',
+      source: existing?.source || 'manual',
+      metadata: existing?.metadata,
+      createdAt: existing?.createdAt,
     });
+    setEditingRecordId(null);
     setRecordForm(prev => ({ ...prev, value: '', label: '', tags: '', note: '' }));
   };
 
   const saveReminder = async () => {
+    if (reminderForm.frequency === 'custom' && reminderForm.weekdays.length === 0) {
+      addToast('自定义提醒至少选择一天', 'error');
+      return;
+    }
     const moduleSetting = moduleSettings.find(item => item.id === reminderForm.moduleId);
+    const existing = editingReminderId ? reminders.find(item => item.id === editingReminderId) : undefined;
     const reminder = normalizeHealthReminder({
+      id: editingReminderId || undefined,
       moduleId: reminderForm.moduleId,
       title: reminderForm.title,
       body: reminderForm.body,
       timeHHmm: reminderForm.timeHHmm,
       frequency: reminderForm.frequency,
+      date: reminderForm.frequency === 'once' ? reminderForm.date : undefined,
+      weekdays: reminderForm.frequency === 'weekdays'
+        ? DEFAULT_WEEKDAYS
+        : reminderForm.frequency === 'custom'
+          ? reminderForm.weekdays
+          : DEFAULT_EVERYDAY,
       privacy: moduleSetting?.privacy || 'private',
       channel: moduleSetting?.reminderChannel || 'system',
       charIds: moduleSetting?.charIds || [],
+      lastFiredKey: existing?.lastFiredKey,
+      createdAt: existing?.createdAt,
     });
     await DB.saveHealthReminder(reminder);
     setReminders(prev => [reminder, ...prev.filter(item => item.id !== reminder.id)].sort((a, b) => a.nextAt - b.nextAt));
+    setEditingReminderId(null);
     notifyHealthRemindersUpdated();
-    addToast('健康提醒已保存', 'success');
+    addToast(editingReminderId ? '健康提醒已更新' : '健康提醒已保存', 'success');
+  };
+
+  const beginEditReminder = (reminder: HealthReminder) => {
+    setEditingReminderId(reminder.id);
+    setReminderForm({
+      moduleId: reminder.moduleId,
+      title: reminder.title,
+      body: reminder.body || '',
+      timeHHmm: normalizePeriodTime(reminder.timeHHmm),
+      frequency: reminder.frequency,
+      date: reminder.date || todayKey(),
+      weekdays: normalizeReminderWeekdays(reminder.frequency, reminder.weekdays),
+    });
+    setActiveView('reminders');
+  };
+
+  const cancelReminderEdit = () => {
+    setEditingReminderId(null);
+    setReminderForm({
+      moduleId: 'hydration',
+      title: '喝水提醒',
+      body: '喝点水，顺手记一笔。',
+      timeHHmm: '10:30',
+      frequency: 'daily',
+      date: todayKey(),
+      weekdays: DEFAULT_WEEKDAYS,
+    });
   };
 
   const requestHealthSummary = () => {
@@ -623,10 +1389,11 @@ const HealthApp: React.FC = () => {
             <ShieldCheck size={20} weight="bold" />
           </button>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-4 grid grid-cols-4 gap-2">
           <StatMini label="今日记录" value={todayRecords.length || 0} />
+          <StatMini label="本周记录" value={weekRecordCount || 0} />
+          <StatMini label="连续打卡" value={healthStreak ? `${healthStreak}天` : 0} />
           <StatMini label="已授权" value={moduleSettings.filter(item => item.privacy !== 'private').length} />
-          <StatMini label="提醒" value={reminders.filter(item => item.enabled).length + (periodSettings.enabled ? 1 : 0)} />
         </div>
         <button onClick={requestHealthSummary} className="mt-3 w-full h-10 rounded-[8px] bg-[#26332e] text-white text-[12px] font-black">
           请授权角色复盘今天
@@ -645,6 +1412,38 @@ const HealthApp: React.FC = () => {
           <QuickButton moduleId="medication" text="已服药" onClick={() => quickRecord('medication', 1, '已服药', '次', ['用药'])} />
           <QuickButton moduleId="mood" text="心情平静" onClick={() => quickRecord('mood', 4, '平静', '分', ['心情'])} />
           <QuickButton moduleId="symptom" text="轻微不适" onClick={() => quickRecord('symptom', 2, '轻微不适', '级', ['症状'])} />
+          <QuickButton moduleId="period" text="经期开始" onClick={() => recordPeriodEvent('start')} />
+          <QuickButton moduleId="period" text="经期结束" onClick={() => recordPeriodEvent('end')} />
+        </div>
+      </section>
+
+      <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[15px] font-black">今日模块</div>
+          <button onClick={() => setActiveView('trends')} className="text-[12px] font-black text-[#4e8062]">展开</button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {HEALTH_MODULES.map(module => {
+            const rows = todayRecords.filter(record => record.moduleId === module.id);
+            const plan = plans.find(item => item.moduleId === module.id && item.enabled);
+            const progress = plan ? computeHealthGoalProgress(plan, records, today) : null;
+            const displayTotal = module.id === 'vitals' ? rows.length : rows.reduce((sum, record) => sum + recordNumericValue(record), 0);
+            const displayUnit = module.id === 'vitals' ? '条' : rows[0]?.unit || plan?.unit || module.unit || '次';
+            return (
+              <ModuleStatusCard
+                key={module.id}
+                module={module}
+                count={rows.length}
+                total={displayTotal}
+                unit={displayUnit}
+                progress={progress?.ratio}
+                onClick={() => {
+                  setActiveModule(module.id);
+                  setActiveView('trends');
+                }}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -661,7 +1460,8 @@ const HealthApp: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => patchPeriodSettings({ enabled: !periodSettings.enabled })}
+            disabled={saving}
+            onClick={() => void savePeriodSettings({ ...periodSettings, enabled: !periodSettings.enabled })}
             className={`px-3 py-2 rounded-[8px] text-[12px] font-black border ${periodSettings.enabled ? 'bg-[#e8f7ee] border-[#b7dec6] text-[#327a4e]' : 'bg-[#f7f3f4] border-[#ead6dc] text-[#9b5065]'}`}
           >
             {periodSettings.enabled ? '提醒开' : '提醒关'}
@@ -696,15 +1496,11 @@ const HealthApp: React.FC = () => {
           <button onClick={() => setActiveView('trends')} className="text-[12px] font-black text-[#4e8062]">看趋势</button>
         </div>
         <div className="space-y-2">
-          {moduleSettings.filter(item => item.goals?.target).map(item => {
-            const plan = makeHealthPlan({
-              moduleId: item.id,
-              target: item.goals?.target,
-              unit: item.goals?.unit || '次',
-            });
+          {plans.filter(item => item.enabled).map(plan => {
             const progress = computeHealthGoalProgress(plan, records, today);
-            return <ProgressRow key={item.id} label={HEALTH_MODULE_LABEL[item.id]} progress={progress.ratio} value={`${Math.round(progress.current * 10) / 10}/${progress.target}${progress.unit}`} accent={HEALTH_MODULES.find(m => m.id === item.id)?.accent || '#4e8062'} />;
+            return <ProgressRow key={plan.id} label={HEALTH_MODULE_LABEL[plan.moduleId]} progress={progress.ratio} value={`${Math.round(progress.current * 10) / 10}/${progress.target}${progress.unit}`} accent={HEALTH_MODULES.find(m => m.id === plan.moduleId)?.accent || '#4e8062'} />;
           })}
+          {!plans.filter(item => item.enabled).length && <div className="text-[12px] font-bold text-[#7b8f86]">还没有开启目标，可在趋势页设置。</div>}
         </div>
       </section>
     </div>
@@ -713,22 +1509,64 @@ const HealthApp: React.FC = () => {
   const renderCalendar = () => (
     <div className="space-y-4">
       <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
-        <div className="flex items-center gap-2">
-          <Notebook size={18} weight="bold" className="text-[#4e8062]" />
-          <div className="text-[15px] font-black">日历手账</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarBlank size={18} weight="bold" className="text-[#4e8062]" />
+            <div className="text-[15px] font-black">{monthLabel(calendarDate)}</div>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => selectCalendarDate(shiftMonthKey(calendarDate, -1))} className="w-8 h-8 rounded-[8px] bg-[#f2f7f4] text-[#4e8062] text-[14px] font-black">‹</button>
+            <button onClick={() => selectCalendarDate(today)} className="px-2 h-8 rounded-[8px] bg-[#f2f7f4] text-[#4e8062] text-[11px] font-black">今天</button>
+            <button onClick={() => selectCalendarDate(shiftMonthKey(calendarDate, 1))} className="w-8 h-8 rounded-[8px] bg-[#f2f7f4] text-[#4e8062] text-[14px] font-black">›</button>
+          </div>
         </div>
-        <input type="date" value={calendarDate} onChange={e => setCalendarDate(e.target.value)} className="w-full h-11 rounded-[8px] border border-[#d8e5de] px-3 text-[14px] font-bold bg-[#fbfdfc] outline-none" />
-        <div className="space-y-2">
-          {selectedDateRecords.length ? selectedDateRecords.map(record => <RecordRow key={record.id} record={record} onDelete={async () => {
-            await DB.deleteHealthRecord(record.id);
-            setRecords(prev => prev.filter(item => item.id !== record.id));
-            notifyHealthUpdated();
-          }} />) : <div className="text-[12px] font-bold text-[#7b8f86]">这一天还没有记录。</div>}
+        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-[#91a29a]">
+          {WEEKDAY_LABELS.map(day => <div key={day}>{day}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {monthCells.map(cell => {
+            const count = dayRecordCount(records, cell.dateKey);
+            const maxCount = Math.max(1, ...monthCells.map(day => dayRecordCount(records, day.dateKey)));
+            const intensity = count ? Math.max(0.24, Math.min(1, count / maxCount)) : 0;
+            const active = cell.dateKey === calendarDate;
+            return (
+              <button
+                key={cell.dateKey}
+                onClick={() => selectCalendarDate(cell.dateKey)}
+                className={`aspect-square rounded-[8px] border text-[11px] font-black flex flex-col items-center justify-center gap-0.5 ${active ? 'border-[#2d734a] text-[#1f5f39]' : 'border-[#e3ece6]'} ${cell.currentMonth ? 'text-[#40564b]' : 'text-[#b4c2ba]'}`}
+                style={{ backgroundColor: count ? `rgba(78, 128, 98, ${intensity})` : '#fbfdfc' }}
+                title={`${cell.dateKey} · ${count} 条记录`}
+              >
+                <span>{cell.day}</span>
+                {count > 0 && <span className="text-[9px] leading-none">{count}</span>}
+              </button>
+            );
+          })}
         </div>
       </section>
 
       <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
-        <div className="text-[15px] font-black">补记一笔</div>
+        <div className="flex items-center gap-2">
+          <Notebook size={18} weight="bold" className="text-[#4e8062]" />
+          <div className="text-[15px] font-black">日历手账</div>
+        </div>
+        <input type="date" value={calendarDate} onChange={e => selectCalendarDate(e.target.value)} className="w-full h-11 rounded-[8px] border border-[#d8e5de] px-3 text-[14px] font-bold bg-[#fbfdfc] outline-none" />
+        <div className="space-y-2">
+          {selectedDateRecords.length ? selectedDateRecords.map(record => <RecordRow key={record.id} record={record} onDelete={async () => {
+            await deleteRecord(record);
+          }} onEdit={() => beginEditRecord(record)} />) : <div className="text-[12px] font-bold text-[#7b8f86]">这一天还没有记录。</div>}
+        </div>
+      </section>
+
+      <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[15px] font-black">{editingRecordId ? '编辑记录' : '补记一笔'}</div>
+          {editingRecordId && (
+            <button onClick={cancelRecordEdit} className="w-8 h-8 rounded-[8px] bg-[#f5ecef] text-[#9b5065] grid place-items-center" title="取消编辑">
+              <X size={15} weight="bold" />
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <SelectField label="模块" value={recordForm.moduleId} onChange={value => {
             const module = HEALTH_MODULES.find(item => item.id === value);
@@ -736,7 +1574,7 @@ const HealthApp: React.FC = () => {
           }}>
             {HEALTH_MODULES.map(module => <option key={module.id} value={module.id}>{module.label}</option>)}
           </SelectField>
-          <InputField label="日期" type="date" value={recordForm.date} onChange={value => setRecordForm(prev => ({ ...prev, date: value }))} />
+          <InputField label="日期" type="date" value={recordForm.date} onChange={selectCalendarDate} />
           <InputField label="时间" type="time" value={recordForm.timeHHmm} onChange={value => setRecordForm(prev => ({ ...prev, timeHHmm: value }))} />
           <InputField label="数值" type="number" value={recordForm.value} onChange={value => setRecordForm(prev => ({ ...prev, value }))} />
           <InputField label="单位" value={recordForm.unit} onChange={value => setRecordForm(prev => ({ ...prev, unit: value }))} />
@@ -748,14 +1586,22 @@ const HealthApp: React.FC = () => {
           <textarea value={recordForm.note} onChange={e => setRecordForm(prev => ({ ...prev, note: e.target.value }))} className="mt-1 w-full min-h-[76px] rounded-[8px] border border-[#d8e5de] px-3 py-2 text-[13px] font-bold bg-[#fbfdfc] outline-none resize-none" />
         </label>
         <button onClick={() => void submitRecordForm()} className="w-full h-11 rounded-[8px] bg-[#26332e] text-white text-[13px] font-black">
-          保存记录
+          {editingRecordId ? '保存修改' : '保存记录'}
         </button>
       </section>
     </div>
   );
 
   const renderTrends = () => {
-    const days = lastNDates(7);
+    const days = weekDates;
+    const totals = days.map(day => totalForModuleDate(records, activeModule, day));
+    const maxTotal = Math.max(1, ...totals);
+    const weekTotal = totals.reduce((sum, value) => sum + value, 0);
+    const weekAverage = weekTotal / days.length;
+    const goalProgress = activeGoalPlan ? computeHealthGoalProgress(activeGoalPlan, records, today) : null;
+    const goalDays = activeGoalPlan && activeGoalPlan.enabled
+      ? totals.filter(total => total >= activeGoalPlan.target).length
+      : 0;
     return (
       <div className="space-y-4">
         <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
@@ -776,20 +1622,34 @@ const HealthApp: React.FC = () => {
           </div>
         </section>
         <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
+          <div className="grid grid-cols-3 gap-2">
+            <StatMini label="本周合计" value={`${Math.round(weekTotal * 10) / 10}${activeGoalPlan?.unit || moduleDefaultUnit(activeModule)}`} />
+            <StatMini label="日均" value={`${Math.round(weekAverage * 10) / 10}${activeGoalPlan?.unit || moduleDefaultUnit(activeModule)}`} />
+            <StatMini label="达标天数" value={activeGoalPlan?.enabled ? `${goalDays}/7` : '未开'} />
+          </div>
+          {goalProgress && (
+            <div className="mt-3">
+              <ProgressRow
+                label={`今日${HEALTH_MODULE_LABEL[activeModule]}目标`}
+                progress={goalProgress.ratio}
+                value={`${Math.round(goalProgress.current * 10) / 10}/${goalProgress.target}${goalProgress.unit}`}
+                accent={HEALTH_MODULES.find(m => m.id === activeModule)?.accent || '#4e8062'}
+              />
+            </div>
+          )}
+        </section>
+        <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[15px] font-black">{HEALTH_MODULE_LABEL[activeModule]} · 7 天</div>
             <div className="text-[11px] font-bold text-[#91a29a]">{selectedModuleRecords.length} 条记录</div>
           </div>
           <div className="h-40 flex items-end gap-2">
-            {days.map(day => {
-              const total = records
-                .filter(record => record.moduleId === activeModule && record.date === day)
-                .reduce((sum, record) => sum + (Number(record.value) || 1), 0);
-              const max = Math.max(1, ...days.map(d => records.filter(record => record.moduleId === activeModule && record.date === d).reduce((sum, record) => sum + (Number(record.value) || 1), 0)));
-              const height = Math.max(10, Math.round((total / max) * 120));
+            {days.map((day, index) => {
+              const total = totals[index] || 0;
+              const height = total > 0 ? Math.max(10, Math.round((total / maxTotal) * 120)) : 4;
               return (
                 <div key={day} className="flex-1 min-w-0 flex flex-col items-center gap-2">
-                  <div className="w-full rounded-t-[8px] bg-[#9fcdb2]" style={{ height }} />
+                  <div className="w-full rounded-t-[8px] bg-[#9fcdb2]" style={{ height, opacity: total > 0 ? 1 : 0.32 }} title={`${day} · ${total}`} />
                   <div className="text-[10px] font-bold text-[#7b8f86]">{formatShortDate(day)}</div>
                 </div>
               );
@@ -797,9 +1657,27 @@ const HealthApp: React.FC = () => {
           </div>
         </section>
         <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[15px] font-black">目标设置</div>
+            <div className="text-[11px] font-bold text-[#91a29a]">保存后同步首页进度</div>
+          </div>
+          <div className="space-y-2">
+            {plans.map(plan => (
+              <GoalEditor
+                key={plan.id}
+                plan={plan}
+                moduleLabel={HEALTH_MODULE_LABEL[plan.moduleId]}
+                accent={HEALTH_MODULES.find(module => module.id === plan.moduleId)?.accent || '#4e8062'}
+                progress={computeHealthGoalProgress(plan, records, today)}
+                onSave={(draft) => void saveGoalPlan(plan.moduleId, draft)}
+              />
+            ))}
+          </div>
+        </section>
+        <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm">
           <div className="text-[15px] font-black mb-3">最近记录</div>
           <div className="space-y-2">
-            {selectedModuleRecords.slice(0, 8).map(record => <RecordRow key={record.id} record={record} />)}
+            {selectedModuleRecords.slice(0, 8).map(record => <RecordRow key={record.id} record={record} onDelete={() => void deleteRecord(record)} onEdit={() => beginEditRecord(record)} />)}
             {!selectedModuleRecords.length && <div className="text-[12px] font-bold text-[#7b8f86]">这个模块还没有记录。</div>}
           </div>
         </section>
@@ -829,22 +1707,66 @@ const HealthApp: React.FC = () => {
       </section>
 
       <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
-        <div className="text-[15px] font-black">新增提醒</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[15px] font-black">{editingReminderId ? '编辑提醒' : '新增提醒'}</div>
+          {editingReminderId && (
+            <button onClick={cancelReminderEdit} className="w-8 h-8 rounded-[8px] bg-[#f5ecef] text-[#9b5065] grid place-items-center" title="取消编辑">
+              <X size={15} weight="bold" />
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <SelectField label="模块" value={reminderForm.moduleId} onChange={value => setReminderForm(prev => ({ ...prev, moduleId: value as HealthModuleId, title: `${HEALTH_MODULE_LABEL[value as HealthModuleId]}提醒` }))}>
             {HEALTH_MODULES.filter(module => module.id !== 'period').map(module => <option key={module.id} value={module.id}>{module.label}</option>)}
           </SelectField>
           <InputField label="时间" type="time" value={reminderForm.timeHHmm} onChange={value => setReminderForm(prev => ({ ...prev, timeHHmm: value }))} />
           <InputField label="标题" value={reminderForm.title} onChange={value => setReminderForm(prev => ({ ...prev, title: value }))} />
-          <SelectField label="频率" value={reminderForm.frequency} onChange={value => setReminderForm(prev => ({ ...prev, frequency: value as HealthReminderFrequency }))}>
+          <SelectField label="频率" value={reminderForm.frequency} onChange={value => {
+            const frequency = value as HealthReminderFrequency;
+            setReminderForm(prev => ({
+              ...prev,
+              frequency,
+              weekdays: frequency === 'weekdays'
+                ? DEFAULT_WEEKDAYS
+                : frequency === 'daily'
+                  ? DEFAULT_EVERYDAY
+                  : prev.weekdays.length ? prev.weekdays : DEFAULT_WEEKDAYS,
+            }));
+          }}>
             <option value="daily">每天</option>
             <option value="weekdays">工作日</option>
             <option value="once">一次</option>
+            <option value="custom">自定义星期</option>
           </SelectField>
         </div>
+        {reminderForm.frequency === 'once' && (
+          <InputField label="提醒日期" type="date" value={reminderForm.date} onChange={value => setReminderForm(prev => ({ ...prev, date: value || todayKey() }))} />
+        )}
+        {reminderForm.frequency === 'custom' && (
+          <div>
+            <div className="text-[12px] font-bold text-[#6d8379] mb-2">重复星期</div>
+            <div className="grid grid-cols-7 gap-1">
+              {WEEKDAY_PICKER_ORDER.map(day => {
+                const active = reminderForm.weekdays.includes(day);
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setReminderForm(prev => ({
+                      ...prev,
+                      weekdays: active ? prev.weekdays.filter(item => item !== day) : [...prev.weekdays, day].sort((a, b) => a - b),
+                    }))}
+                    className={`h-9 rounded-[8px] border text-[11px] font-black ${active ? 'bg-[#fdecef] border-[#efb8c4] text-[#9c3f58]' : 'bg-[#fbfdfc] border-[#d8e5de] text-[#6d8379]'}`}
+                  >
+                    {WEEKDAY_LABELS[day]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <InputField label="说明" value={reminderForm.body} onChange={value => setReminderForm(prev => ({ ...prev, body: value }))} />
         <button onClick={() => void saveReminder()} className="w-full h-11 rounded-[8px] bg-[#26332e] text-white text-[13px] font-black">
-          保存提醒
+          {editingReminderId ? '更新提醒' : '保存提醒'}
         </button>
       </section>
 
@@ -867,11 +1789,19 @@ const HealthApp: React.FC = () => {
               <div className="min-w-0">
                 <div className="text-[13px] font-black truncate">{reminder.title}</div>
                 <div className="text-[11px] font-bold text-[#789085] mt-1">
-                  {HEALTH_MODULE_LABEL[reminder.moduleId]} · {normalizePeriodTime(reminder.timeHHmm)} · {reminder.frequency === 'daily' ? '每天' : reminder.frequency === 'weekdays' ? '工作日' : '一次'}
+                  {HEALTH_MODULE_LABEL[reminder.moduleId]} · {normalizePeriodTime(reminder.timeHHmm)} · {reminderFrequencyText(reminder)}
                 </div>
+                {reminder.nextAt > 0 && (
+                  <div className="text-[10px] font-bold text-[#9caea5] mt-0.5">
+                    下次 {new Date(reminder.nextAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => void toggleReminder(reminder)} className={`px-2 h-8 rounded-[8px] text-[11px] font-black ${reminder.enabled ? 'bg-[#e8f7ee] text-[#327a4e]' : 'bg-[#f5ecef] text-[#9b5065]'}`}>{reminder.enabled ? '开' : '关'}</button>
+                <button onClick={() => beginEditReminder(reminder)} className="w-8 h-8 rounded-[8px] bg-white border border-[#dfe9e2] text-[#4e8062] grid place-items-center" title="编辑提醒">
+                  <PencilSimple size={15} weight="bold" />
+                </button>
                 <button onClick={() => void deleteReminder(reminder.id)} className="w-8 h-8 rounded-[8px] bg-white border border-[#e6dfe2] text-[#9b5065] grid place-items-center">
                   <Trash size={15} weight="bold" />
                 </button>
@@ -883,6 +1813,192 @@ const HealthApp: React.FC = () => {
       </section>
     </div>
   );
+
+  const renderDevices = () => {
+    const preview = importPreview;
+    const headers = preview?.headers || [];
+    const liveConnecting = liveConnectionState === 'requesting' || liveConnectionState === 'connecting';
+    const liveInfoText = [
+      liveDeviceInfo.manufacturer,
+      liveDeviceInfo.model,
+      liveBatteryLevel !== null ? `电量 ${liveBatteryLevel}%` : '',
+      liveLastSavedAt ? `最近写入 ${new Date(liveLastSavedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })}` : '',
+    ].filter(Boolean).join(' · ');
+    return (
+      <div className="space-y-4" data-manual-anchor="manual-health-device-root">
+        <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-[12px] font-black text-[#4e8062]">
+                <Watch size={16} weight="bold" />
+                手环设备
+              </div>
+              <div className="mt-2 text-[22px] font-black leading-tight">导入历史 + 蓝牙实时连接</div>
+              <div className="mt-1 text-[12px] font-bold text-[#789085] leading-relaxed">
+                这里可以导入手环导出的 CSV / JSON / XML / ZIP，也可以通过蓝牙连接支持 Web Bluetooth 心率服务的设备做实时同步。
+              </div>
+            </div>
+            <button
+              onClick={() => void (liveSyncing ? stopLiveWearable() : startLiveWearable())}
+              disabled={liveConnecting}
+              className={`px-3 h-9 rounded-[8px] text-[12px] font-black border flex items-center gap-2 disabled:opacity-60 ${liveSyncing ? 'bg-[#f5ecef] border-[#ead6dc] text-[#9b5065]' : 'bg-[#e8f7ee] border-[#acd6bd] text-[#2d734a]'}`}
+            >
+              {liveSyncing ? <BluetoothSlash size={16} weight="bold" /> : <BluetoothConnected size={16} weight="bold" />}
+              {liveConnecting ? '连接中' : liveSyncing ? '断开蓝牙' : '蓝牙连接'}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(LIVE_DEVICE_PRESET_LABEL) as HealthLiveDevicePreset[]).map(value => (
+              <button
+                key={value}
+                onClick={() => setLivePreset(value)}
+                disabled={liveSyncing}
+                className={`h-12 rounded-[8px] border px-3 text-left disabled:opacity-60 ${livePreset === value ? 'bg-[#edf8f1] border-[#abd9bd] text-[#2d734a]' : 'bg-[#fbfdfc] border-[#dfe9e3] text-[#5f7169]'}`}
+              >
+                <div className="text-[12px] font-black">{LIVE_DEVICE_PRESET_LABEL[value].title}</div>
+                <div className="mt-0.5 text-[10px] font-bold opacity-80">{LIVE_DEVICE_PRESET_LABEL[value].desc}</div>
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11px] font-black text-[#7d9489]">蓝牙状态</div>
+                <span className={`px-2 h-5 rounded-[8px] grid place-items-center text-[10px] font-black ${liveConnectionState === 'listening' ? 'bg-[#e8f7ee] text-[#327a4e]' : liveConnectionState === 'error' ? 'bg-[#f5ecef] text-[#9b5065]' : 'bg-white text-[#6d8379]'}`}>
+                  {LIVE_CONNECTION_STATE_LABEL[liveConnectionState]}
+                </span>
+              </div>
+              <div className="mt-1 text-[13px] font-black">{liveMessage}</div>
+              <div className="mt-1 text-[11px] font-bold text-[#789085]">{liveDeviceName || '未连接设备'}{liveHeartRate ? ` · ${liveHeartRate} bpm` : ''}</div>
+              {liveInfoText && <div className="mt-1 text-[10px] font-bold text-[#91a29a]">{liveInfoText}</div>}
+            </div>
+            <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3">
+              <div className="text-[11px] font-black text-[#7d9489]">同步边界</div>
+              <div className="mt-1 text-[11px] font-bold text-[#789085] leading-relaxed">
+                实时蓝牙只读取标准心率服务、电量和设备信息。步数、睡眠、压力和血氧仍建议从厂商 App 导出文件再导入。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[15px] font-black">文件导入</div>
+            <span className="text-[11px] font-bold text-[#91a29a]">{importingWearable ? '处理中…' : '先预览再确认'}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <SelectField label="来源预设" value={importPreset} onChange={value => setImportPreset(value as HealthImportPreset)}>
+              {IMPORT_PRESET_OPTIONS.map(value => <option key={value} value={value}>{IMPORT_PRESET_LABEL[value]}</option>)}
+            </SelectField>
+            <div className="block">
+              <span className="text-[12px] font-bold text-[#6d8379]">文件</span>
+              <button
+                onClick={() => importFileInputRef.current?.click()}
+                className="mt-1 w-full h-11 rounded-[8px] border border-dashed border-[#cfe0d6] bg-[#fbfdfc] text-[13px] font-black text-[#4e8062] flex items-center justify-center gap-2"
+              >
+                <Plus size={16} weight="bold" />
+                选择 CSV / JSON / XML / ZIP
+              </button>
+              <input
+                ref={importFileInputRef}
+                type="file"
+                accept=".csv,.json,.xml,.zip,.fit,text/csv,application/json,application/xml"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  e.currentTarget.value = '';
+                  if (file) handlePickImportFile(file);
+                }}
+              />
+            </div>
+          </div>
+          {importFile && (
+            <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3 text-[12px] font-bold text-[#6d8379]">
+              当前文件：<span className="text-[#26332e]">{importFile.name}</span>
+            </div>
+          )}
+          {preview && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2">
+                <StatMini label="识别源" value={IMPORT_SOURCE_LABEL[preview.source] || preview.source} />
+                <StatMini label="可导入" value={preview.records.length} />
+                <StatMini label="跳过" value={preview.skippedCount} />
+                <StatMini label="字段" value={headers.length} />
+              </div>
+              {preview.warnings.length > 0 && (
+                <div className="rounded-[8px] bg-[#fff7f8] border border-[#f1d4dc] p-3 space-y-1">
+                  {preview.warnings.slice(0, 3).map((warning, index) => <div key={index} className="text-[11px] font-bold text-[#8e6873]">{warning}</div>)}
+                </div>
+              )}
+              {headers.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[12px] font-black text-[#6d8379]">字段映射</div>
+                  <div className="grid gap-2">
+                    {headers.map(header => (
+                      <label key={header} className="grid grid-cols-[1fr_132px] gap-2 items-center rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] px-3 py-2">
+                        <span className="text-[12px] font-black truncate">{header}</span>
+                        <select
+                          value={importMapping[header] || ''}
+                          onChange={e => setImportMapping(prev => ({ ...prev, [header]: e.target.value as HealthImportFieldKey }))}
+                          className="h-9 rounded-[8px] border border-[#d8e5de] bg-white px-2 text-[12px] font-black outline-none"
+                        >
+                          {HEALTH_IMPORT_FIELD_OPTIONS.map(option => <option key={option.key || 'auto'} value={option.key}>{option.label}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {preview.unmappedHeaders.length > 0 && (
+                <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3 text-[11px] font-bold text-[#789085]">
+                  未映射字段：{preview.unmappedHeaders.slice(0, 8).join('、')}
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-2">
+                <button onClick={reparseImportPreview} disabled={!importFile || importingWearable} className="h-10 rounded-[8px] bg-[#eef6f1] text-[#4e8062] text-[12px] font-black disabled:opacity-50">
+                  重新预览
+                </button>
+                <button onClick={() => void confirmImport()} disabled={!preview.records.length || importingWearable} className="h-10 rounded-[8px] bg-[#26332e] text-white text-[12px] font-black disabled:opacity-50">
+                  确认导入
+                </button>
+                <button onClick={resetImportPreview} className="h-10 rounded-[8px] bg-[#f5ecef] text-[#9b5065] text-[12px] font-black">
+                  清空
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-[8px] bg-white border border-[#dfe9e3] p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-[15px] font-black">导入历史</div>
+            <button onClick={() => void refreshImportBatches()} className="text-[12px] font-black text-[#4e8062]">刷新</button>
+          </div>
+          <div className="space-y-2">
+            {importBatches.length ? importBatches.map(batch => (
+              <div key={batch.id} className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-black truncate">{batch.mode === 'realtime' ? '实时同步' : '文件导入'} · {batch.fileName || batch.deviceName || IMPORT_SOURCE_LABEL[batch.source]}</div>
+                    <div className="text-[11px] font-bold text-[#789085] mt-1">
+                      {IMPORT_SOURCE_LABEL[batch.source]} · {new Date(batch.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })} · 导入 {batch.importedCount} · 跳过 {batch.skippedCount}
+                    </div>
+                    {batch.warnings.length > 0 && <div className="text-[11px] font-bold text-[#9b5065] mt-1 truncate">{batch.warnings[0]}</div>}
+                  </div>
+                  <button
+                    onClick={() => void rollbackImportBatch(batch)}
+                    className="px-2 h-8 rounded-[8px] bg-white border border-[#e6dfe2] text-[#9b5065] text-[11px] font-black"
+                  >
+                    撤回
+                  </button>
+                </div>
+              </div>
+            )) : <div className="text-[12px] font-bold text-[#7b8f86]">还没有导入记录。</div>}
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   const renderPrivacy = () => (
     <div className="space-y-4" data-manual-anchor="manual-health-privacy">
@@ -957,6 +2073,11 @@ const HealthApp: React.FC = () => {
                   </button>
                 );
               })}
+              {!characters.length && (
+                <div className="col-span-2 rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] px-3 py-3 text-[12px] font-bold text-[#7b8f86]">
+                  还没有角色。授权会在创建角色后可选。
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -1045,11 +2166,12 @@ const HealthApp: React.FC = () => {
         </header>
 
         <nav className="shrink-0 bg-white/90 border-b border-[#e2ebe5] px-3 py-2">
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-6 gap-1">
             <TabButton active={activeView === 'today'} label="总览" icon={<FirstAidKit size={16} weight="bold" />} onClick={() => setActiveView('today')} />
             <TabButton active={activeView === 'calendar'} label="手账" icon={<CalendarBlank size={16} weight="bold" />} onClick={() => setActiveView('calendar')} />
             <TabButton active={activeView === 'trends'} label="趋势" icon={<ChartLineUp size={16} weight="bold" />} onClick={() => setActiveView('trends')} />
             <TabButton active={activeView === 'reminders'} label="提醒" icon={<Bell size={16} weight="bold" />} onClick={() => setActiveView('reminders')} />
+            <TabButton active={activeView === 'devices'} label="设备" icon={<Bluetooth size={16} weight="bold" />} onClick={() => setActiveView('devices')} />
             <TabButton active={activeView === 'privacy'} label="授权" icon={<ShieldCheck size={16} weight="bold" />} onClick={() => setActiveView('privacy')} />
           </div>
         </nav>
@@ -1068,6 +2190,7 @@ const HealthApp: React.FC = () => {
                   <div className="mt-4">{renderPeriodSettings()}</div>
                 </>
               )}
+              {activeView === 'devices' && renderDevices()}
               {activeView === 'privacy' && renderPrivacy()}
               <div className="pb-6 flex items-center justify-center gap-1 text-[11px] font-bold text-[#91a29a]">
                 {periodTracker ? <Sparkle size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
@@ -1107,6 +2230,35 @@ const QuickButton: React.FC<{ moduleId: HealthModuleId; text: string; onClick: (
   );
 };
 
+const ModuleStatusCard: React.FC<{
+  module: (typeof HEALTH_MODULES)[number];
+  count: number;
+  total: number;
+  unit: string;
+  progress?: number;
+  onClick: () => void;
+}> = ({ module, count, total, unit, progress, onClick }) => (
+  <button onClick={onClick} className="min-h-[78px] rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] px-3 py-2 text-left active:scale-[0.99]">
+    <div className="flex items-center justify-between gap-2">
+      <span className="w-8 h-8 rounded-[8px] grid place-items-center text-white shrink-0" style={{ backgroundColor: module.accent }}>
+        {moduleIcon[module.id]}
+      </span>
+      <span className={`px-2 h-6 rounded-[8px] grid place-items-center text-[10px] font-black ${count ? 'bg-[#e8f7ee] text-[#327a4e]' : 'bg-[#eef4f0] text-[#789085]'}`}>
+        {count ? `${count}条` : '未记'}
+      </span>
+    </div>
+    <div className="mt-2 text-[12px] font-black truncate">{module.shortLabel}</div>
+    <div className="mt-0.5 text-[11px] font-bold text-[#789085] truncate">
+      {count ? `${Math.round(total * 10) / 10}${unit}` : '今天还没有记录'}
+    </div>
+    {progress !== undefined && (
+      <div className="mt-2 h-1.5 rounded-full bg-[#edf4f0] overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%`, backgroundColor: module.accent }} />
+      </div>
+    )}
+  </button>
+);
+
 const ProgressRow: React.FC<{ label: string; value: string; progress: number; accent: string }> = ({ label, value, progress, accent }) => (
   <div>
     <div className="flex items-center justify-between text-[12px] font-bold mb-1">
@@ -1119,19 +2271,82 @@ const ProgressRow: React.FC<{ label: string; value: string; progress: number; ac
   </div>
 );
 
-const RecordRow: React.FC<{ record: HealthRecord; onDelete?: () => void }> = ({ record, onDelete }) => (
+const GoalEditor: React.FC<{
+  plan: HealthPlan;
+  moduleLabel: string;
+  accent: string;
+  progress: { current: number; target: number; ratio: number; unit: string };
+  onSave: (draft: HealthGoalDraft) => void;
+}> = ({ plan, moduleLabel, accent, progress, onSave }) => {
+  const [draft, setDraft] = useState<HealthGoalDraft>({
+    target: String(plan.target),
+    unit: plan.unit,
+    enabled: plan.enabled,
+  });
+
+  useEffect(() => {
+    setDraft({ target: String(plan.target), unit: plan.unit, enabled: plan.enabled });
+  }, [plan.enabled, plan.target, plan.unit]);
+
+  return (
+    <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[13px] font-black truncate">{moduleLabel}</div>
+          <div className="text-[11px] font-bold text-[#789085] mt-0.5">
+            今日 {Math.round(progress.current * 10) / 10}/{progress.target}{progress.unit}
+          </div>
+        </div>
+        <button
+          onClick={() => setDraft(prev => ({ ...prev, enabled: !prev.enabled }))}
+          className={`px-2 h-8 rounded-[8px] text-[11px] font-black ${draft.enabled ? 'bg-[#e8f7ee] text-[#327a4e]' : 'bg-[#f5ecef] text-[#9b5065]'}`}
+        >
+          {draft.enabled ? '目标开' : '目标关'}
+        </button>
+      </div>
+      <div className="mt-3">
+        <ProgressRow label="今日进度" value={`${Math.round(progress.ratio * 100)}%`} progress={progress.ratio} accent={accent} />
+      </div>
+      <div className="mt-3 grid grid-cols-[1fr_72px_58px] gap-2 items-end">
+        <InputField label="目标值" type="number" value={draft.target} onChange={value => setDraft(prev => ({ ...prev, target: value }))} />
+        <InputField label="单位" value={draft.unit} onChange={value => setDraft(prev => ({ ...prev, unit: value }))} />
+        <button onClick={() => onSave(draft)} className="h-11 rounded-[8px] bg-[#26332e] text-white text-[12px] font-black">
+          保存
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const RecordRow: React.FC<{ record: HealthRecord; onDelete?: () => void; onEdit?: () => void }> = ({ record, onDelete, onEdit }) => (
   <div className="rounded-[8px] bg-[#f8faf9] border border-[#e6eee9] px-3 py-2 flex items-center justify-between gap-2">
     <div className="min-w-0">
-      <div className="text-[13px] font-black truncate">{record.label || record.tags[0] || HEALTH_MODULE_LABEL[record.moduleId]}</div>
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="text-[13px] font-black truncate">{record.label || record.tags[0] || HEALTH_MODULE_LABEL[record.moduleId]}</div>
+        {record.source !== 'manual' && (
+          <span className={`shrink-0 px-2 h-5 rounded-[8px] grid place-items-center text-[10px] font-black ${record.source === 'wearable_import' ? 'bg-[#edf6ff] text-[#2563eb]' : 'bg-[#f5ecef] text-[#9b5065]'}`}>
+            {record.source === 'wearable_import' ? '手环导入' : '实时同步'}
+          </span>
+        )}
+      </div>
       <div className="text-[11px] font-bold text-[#789085] mt-0.5">
         {record.date} {record.timeHHmm || ''} · {HEALTH_MODULE_LABEL[record.moduleId]}{record.value !== undefined ? ` · ${record.value}${record.unit || ''}` : ''}
       </div>
       {record.note && <div className="text-[11px] font-bold text-[#91a29a] mt-1 truncate">{record.note}</div>}
     </div>
-    {onDelete && (
-      <button onClick={onDelete} className="w-8 h-8 rounded-[8px] bg-white border border-[#e6dfe2] text-[#9b5065] grid place-items-center shrink-0">
-        <Trash size={15} weight="bold" />
-      </button>
+    {(onEdit || onDelete) && (
+      <div className="flex items-center gap-2 shrink-0">
+        {onEdit && (
+          <button onClick={onEdit} className="w-8 h-8 rounded-[8px] bg-white border border-[#dfe9e2] text-[#4e8062] grid place-items-center" title="编辑记录">
+            <PencilSimple size={15} weight="bold" />
+          </button>
+        )}
+        {onDelete && (
+          <button onClick={onDelete} className="w-8 h-8 rounded-[8px] bg-white border border-[#e6dfe2] text-[#9b5065] grid place-items-center" title="删除记录">
+            <Trash size={15} weight="bold" />
+          </button>
+        )}
+      </div>
     )}
   </div>
 );

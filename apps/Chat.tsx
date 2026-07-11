@@ -3,8 +3,9 @@ import { useOS } from '../context/OSContext';
 import { useMusic } from '../context/MusicContext';
 import { useUserScreenWatch } from '../context/UserScreenWatchContext';
 import { DB } from '../utils/db';
-import { AppID, Message, MessageType, MemoryFragment, Emoji, EmojiCategory, DailySchedule, ScheduleSlot, CharacterProfile, UserProfile, TakeoutOrder, PrivateChatArchive, PrivateChatArchiveMessage, SocialPost, CollectionItem, PhoneLockState, ScreenPeekCard, ScreenPeekDeviceSnapshot, ChatAlarm, ChatAlarmChannel, ChatAlarmKind } from '../types';
-import { setTakeoutIntent, buildTakeoutCardMeta } from '../utils/takeout';
+import { AppID, Message, MessageType, MemoryFragment, Emoji, EmojiCategory, DailySchedule, ScheduleSlot, CharacterProfile, UserProfile, TakeoutOrder, PrivateChatArchive, PrivateChatArchiveMessage, SocialPost, CollectionItem, PhoneLockState, ScreenPeekCard, ScreenPeekDeviceSnapshot, ChatAlarm, ChatAlarmChannel, ChatAlarmKind, ChatParcelDirection, ChatParcelMeta, ChatParcelMode } from '../types';
+import { setTakeoutIntent, buildTakeoutCardMeta, takeoutChatForTarget } from '../utils/takeout';
+import { DAILY_PARCEL_ITEM_PRESETS, DAILY_PARCEL_METHODS, TRAVEL_FROG_PARCEL_ITEM_PRESETS, TRAVEL_FROG_PARCEL_METHODS, formatDailyParcelForPrompt, generateCharacterParcelDraft, makeDailyParcelMeta } from '../utils/dailyParcel';
 import { resolveUnblockAppealDecision, type UnblockAppealDecision } from '../utils/unblockAppealActions';
 import { unblockCharacterByUser } from '../utils/blockActions';
 import { canCharContactUser, getPrivateBlockState } from '../utils/blockSystem';
@@ -18,7 +19,7 @@ import { getCharacterModelId } from '../utils/characterIdentity';
 import { loadScheduleLifeNotes, type ScheduleLifeNotesBySlot } from '../utils/scheduleLifeSync';
 import { CHAR_LIFE_EVENT_UPDATED_EVENT, DAILY_SCHEDULE_UPDATED_EVENT } from '../utils/scheduleEvents';
 import { runRecenter, RECENTER_DEFAULT_TURNS, type RecenterResult } from '../utils/recenter';
-import { proposalResultHint, innerVoicePromptBody, phoneLockAttemptPromptBody, phoneLockChatPromptBody, parallelReplyPromptBody, livePrivateDraftPromptBody, blockPeekPrompt, privateCallDecisionPromptBody, musicShareAutoReplyHint, charPhoneCheckFollowupPrompt, type PrivateCallMode } from '../utils/laiwangPrompts';
+import { proposalResultHint, innerVoicePromptBody, phoneLockAttemptPromptBody, phoneLockChatPromptBody, parallelReplyPromptBody, livePrivateDraftPromptBody, blockPeekPrompt, privateCallDecisionPromptBody, musicShareAutoReplyHint, charPhoneCheckFollowupPrompt, shopGiftReplyHint, type PrivateCallMode } from '../utils/laiwangPrompts';
 import { isAuxApiOn, resolveAuxApi } from '../utils/auxApi';
 import { cleanScheduleMoodApi, resolveScheduleApi } from '../utils/scheduleMoodApi';
 import { getLocalDateKey, getNextLocalMidnightDelay } from '../utils/dateKey';
@@ -82,6 +83,7 @@ import { synthesizeSpeechDetailed, cleanTextForTts } from '../utils/minimaxTts';
 import { resolveMiniMaxApiKey } from '../utils/minimaxApiKey';
 import { isInstantConfigReady, loadInstantConfig } from '../utils/instantPushClient';
 import { ContextBuilder } from '../utils/context';
+import { buildFullActiveUserSetting } from '../utils/characterPromptProfile';
 import { substituteMacros } from '../utils/macros';
 import { PersonaRuntime } from '../utils/personas';
 import { generateImage, IMAGE_GEN_MODEL_KEY, DEFAULT_IMAGE_GEN_MODEL } from '../utils/imageGen';
@@ -90,12 +92,16 @@ import type { ParsedEmojiImport } from '../utils/emojiImport';
 import { InnerVoiceEntry } from '../types';
 import { createPhoneLockState, evaluatePhoneLockSubmission, sanitizePhoneLockPasscode } from '../utils/phoneLock';
 import { generateXunjiScreenlifeRun } from '../utils/xunji';
+import { mapXunjiToPhoneEvidence, mergePhoneEvidenceRecords } from '../utils/checkPhone';
+import { buildScreenPeekSnapshot } from '../utils/screenPeek';
+import { captureScreenPeekSnapshotImage } from '../components/chat/ScreenPeekPhoneSnapshot';
 import { DEFAULT_USER_SCREEN_WATCH_SETTINGS, formatMoroUsage, sanitizeUserScreenWatchComment } from '../utils/userScreenWatch';
 import { getRealPhoneUsageSnapshot } from '../utils/deviceInsight';
 import { pickObservedUserPhoneApp, summarizeScreenPeekDeviceSnapshot } from '../utils/screenPeekComments';
 import { startRealPhoneScreenCapture } from '../utils/screenCapture';
 import { FORUM_PENDING_CHAT_SHARE_KEY, forumShareAutoReplyHint, normalizeForumSharePendingPayload } from '../utils/forum';
-import { MUSIC_PENDING_CHAT_SHARE_KEY, lyricPreviewFromMusicShareSong, normalizeMusicPendingChatSharePayload, songFromMusicShareSnapshot } from '../utils/musicShare';
+import { MUSIC_PENDING_CHAT_SHARE_KEY, MUSIC_PENDING_RICH_SHARE_KEY, lyricPreviewFromMusicShareSong, normalizeMusicPendingChatSharePayload, normalizeMusicRichSharePayload, songFromMusicShareSnapshot } from '../utils/musicShare';
+import { cleanLyricText } from '../utils/musicLyricContext';
 import { SHOP_REPLY_REQUEST_EVENT, consumeShopReply, type ShopReplyRequest } from '../utils/shop';
 import { makeApiUsageMeta } from '../utils/apiUsageCatalog';
 import { getNotifyPermission, requestNotifyPermission } from '../utils/browserNotify';
@@ -145,8 +151,8 @@ const SCHEDULE_MIDNIGHT_REFRESH_GRACE_MS = 1000;
 const KNOWN_MESSAGE_TYPES = new Set<MessageType>([
     'text', 'image', 'emoji', 'interaction', 'transfer', 'system', 'social_card', 'forum_card', 'chat_forward',
     'screen_peek_card', 'screen_watch_card', 'xhs_card', 'twitter_card', 'score_card', 'music_card', 'mcd_card', 'html_card', 'news_card', 'vr_card',
-    'trpg_card', 'location', 'voice', 'call_log', 'takeout_card', 'proposal_card', 'poll_card',
-    'relay_card', 'checkin_card', 'gift_card',
+    'trpg_card', 'location', 'voice', 'call_log', 'takeout_card', 'proposal_card', 'gomoku_invite_card', 'go_invite_card', 'doudizhu_invite_card', 'turtle_soup_invite_card', 'mahjong_invite_card', 'poll_card',
+    'relay_card', 'checkin_card', 'gift_card', 'parcel_card',
 ]);
 
 const randomBetween = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min);
@@ -909,7 +915,18 @@ const parsePrivateChatArchiveImport = (fileName: string, rawText: string, char: 
 
 const Chat: React.FC = () => {
     const { characters, activeCharacterId, setActiveCharacterId, updateCharacter, apiConfig, auxApiConfig, apiPresets, addApiPreset, closeApp, openApp, activeApp, customThemes, addToast, showError, userProfile, updateUserProfile, adjustUserBalance, lastMsgTimestamp, groups, clearUnread, realtimeConfig, memoryPalaceConfig, syncScheduleMoodApisToAllCharacters, theme: osTheme, proactiveComposingChars, forceReplyRequest, clearForceReplyRequest, suspendedOfflineSession, suspendOfflineSession, clearSuspendedOfflineSession, startScreenPeekCommentSession } = useOS();
-    const { cfg: musicCfg, current: musicCurrent, playing: musicPlaying, playSong: playMusicSong, togglePlay: toggleMusicPlay } = useMusic();
+    const {
+        cfg: musicCfg,
+        current: musicCurrent,
+        playing: musicPlaying,
+        progress: musicProgress,
+        duration: musicDuration,
+        lyric: musicLyric,
+        activeLyricIdx: musicActiveLyricIdx,
+        listeningTogetherWith: musicListeningTogetherWith,
+        playSong: playMusicSong,
+        togglePlay: toggleMusicPlay,
+    } = useMusic();
     const userScreenWatch = useUserScreenWatch();
     const isProactiveComposing = !!(activeCharacterId && proactiveComposingChars[activeCharacterId]);
 
@@ -921,6 +938,7 @@ const Chat: React.FC = () => {
         } catch { return 0; }
     }, []);
     const [messages, setMessages] = useState<Message[]>([]);
+    const messagesRef = useRef<Message[]>([]);
     const [revealedAssistantIds, setRevealedAssistantIds] = useState<Set<number>>(() => new Set());
     const [poppingMessageIds, setPoppingMessageIds] = useState<Set<number>>(() => new Set());
     // 行动选择器：点最后一轮 user 头像后弹出（生成可编辑的「接下来说点啥」选项）。纯手动，无开关。
@@ -947,9 +965,15 @@ const Chat: React.FC = () => {
     const [activeCategory, setActiveCategory] = useState<string>('default');
     const [newCategoryName, setNewCategoryName] = useState('');
 
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
     const scrollRef = useRef<HTMLDivElement>(null);
     const lastMsgIdRef = useRef<number | null>(null);
     const lastRenderedMsgIdRef = useRef<number | null>(null);
+    const pendingHistoryScrollRestoreRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
+    const skipNextQueuedHistoryScrollRef = useRef(false);
     const scrollThrottleRef = useRef(0);
     const visibleCountRef = useRef(30);
     const activeCharIdRef = useRef(activeCharacterId);
@@ -983,6 +1007,14 @@ const Chat: React.FC = () => {
     const [transferMode, setTransferMode] = useState<'transfer' | 'redpacket'>('transfer');
     const [transferNote, setTransferNote] = useState('');
     const [transferPassword, setTransferPassword] = useState(''); // 口令红包：填了即口令红包
+    // 日常寄物：回形针里的轻量互寄小包裹，不走心意铺订单 / 背包 / 钱包。
+    const [showParcelCompose, setShowParcelCompose] = useState(false);
+    const [parcelDirection, setParcelDirection] = useState<ChatParcelDirection>('user_to_char');
+    const [parcelMode, setParcelMode] = useState<ChatParcelMode>('everyday');
+    const [parcelItem, setParcelItem] = useState('');
+    const [parcelNote, setParcelNote] = useState('');
+    const [parcelMethod, setParcelMethod] = useState(DAILY_PARCEL_METHODS[0]);
+    const [parcelBusy, setParcelBusy] = useState(false);
     // 外卖订单小票详情弹窗（点开聊天里的外卖卡片看具体内容）
     const [takeoutCardTarget, setTakeoutCardTarget] = useState<Message | null>(null);
     const [takeoutCardOrder, setTakeoutCardOrder] = useState<TakeoutOrder | null>(null);
@@ -1877,14 +1909,18 @@ ${parallelReplyPromptBody({
         );
         if (!target) return false;
 
-        const totalLine = typeof pending.total === 'number' && pending.total > 0 ? `，金额约 ¥${pending.total}` : '';
-        const countLine = pending.itemCount && pending.itemCount > 1 ? `，共 ${pending.itemCount} 件` : '';
-        const noteLine = pending.note ? `，备注/清单是「${pending.note}」` : '';
-        const ephemeralSystemPrompt = pending.kind === 'clear_cart'
-            ? `用户刚刚在「心意铺」帮你清空了心愿购物车${countLine}${totalLine}${noteLine}。本轮请直接、自然地回应这件事；可以感谢、惊喜、害羞、吐槽被看穿心愿、说会珍惜或顺势聊其中想要的东西，但不要说没收到。`
-            : pending.kind === 'companion_pay'
-                ? `用户刚刚在「心意铺」替你代付了 ${pending.itemEmoji}${pending.itemName}${totalLine}${noteLine}。本轮请直接、自然地回应这次代付；可以感谢、惊喜、害羞、嘴硬、吐槽或表达会记得这份心意，但不要说没收到。`
-                : `用户刚刚从「心意铺」送给你 ${pending.itemEmoji}${pending.itemName}${noteLine}。本轮请直接、自然地回应这份礼物；可以感谢、惊喜、害羞、吐槽、珍惜或追问，但不要说没收到。`;
+        const ephemeralSystemPrompt = shopGiftReplyHint({
+            userName: userProfile.name || '对方',
+            kind: pending.kind,
+            itemEmoji: pending.itemEmoji,
+            itemName: pending.itemName,
+            note: pending.note,
+            itemCount: pending.itemCount,
+            total: pending.total,
+            occasionLabel: pending.occasionLabel,
+            wrapLabel: pending.wrapLabel,
+            fromWishlist: pending.fromWishlist,
+        });
         if (isInstantConfigReady()) setInstantSendingActive(true);
         const ok = await triggerAI(recent, undefined, () => setInstantSendingActive(false), {
             targetUserMessage: target,
@@ -2894,8 +2930,13 @@ ${parallelReplyPromptBody({
     };
 
     useLayoutEffect(() => {
-        if (!scrollRef.current || selectionMode) return;
+        if (!scrollRef.current) return;
         const currentLastId = messages.length > 0 ? messages[messages.length - 1].id : null;
+        if (pendingHistoryScrollRestoreRef.current) {
+            lastMsgIdRef.current = currentLastId;
+            return;
+        }
+        if (selectionMode) return;
         // Only auto-scroll when a new message is appended (ID changes),
         // not when loading older history or updating existing messages in-place.
         // windowed 模式下用户在翻旧消息，不要被新消息打断滚走。
@@ -2908,6 +2949,7 @@ ${parallelReplyPromptBody({
     }, [messages, activeCharacterId, selectionMode, windowedFocusMsgId]);
 
     useEffect(() => {
+        if (pendingHistoryScrollRestoreRef.current || skipNextQueuedHistoryScrollRef.current) return;
         if (isTyping && scrollRef.current && !selectionMode && windowedFocusMsgId === null) {
             const now = Date.now();
             if (now - scrollThrottleRef.current > 150) {
@@ -2967,14 +3009,19 @@ ${parallelReplyPromptBody({
         if (type === 'image') {
             const recentChat = messages.slice(-10).map(m => {
                 const sender = m.role === 'user' ? userProfile.name : char.name;
-                return `${sender}: ${m.content.substring(0, 100)}`;
+                const content = m.type === 'image' ? '[图片]' : String(m.content || '').substring(0, 100);
+                return `${sender}: ${content}`;
             });
             await DB.saveGalleryImage({
                 id: `img-${Date.now()}-${Math.random()}`,
                 charId: char.id,
                 url: text,
                 timestamp: Date.now(),
-                title: rawMetadata.genPrompt ? String(rawMetadata.genPrompt).slice(0, 40) : undefined,
+                title: rawMetadata.genPrompt
+                    ? String(rawMetadata.genPrompt).slice(0, 40)
+                    : rawMetadata.aiGenerated
+                        ? '聊天配图'
+                        : '聊天保存的图片',
                 savedDate: new Date().toISOString().split('T')[0],
                 source: rawMetadata.aiGenerated ? 'generated' : 'chat',
                 chatContext: recentChat
@@ -3221,6 +3268,157 @@ ${parallelReplyPromptBody({
         }
     }, []);
 
+    const resetParcelCompose = useCallback(() => {
+        setParcelDirection('user_to_char');
+        setParcelMode('everyday');
+        setParcelItem('');
+        setParcelNote('');
+        setParcelMethod(DAILY_PARCEL_METHODS[0] || '快递');
+        setParcelBusy(false);
+    }, []);
+
+    const openParcelCompose = useCallback(() => {
+        if (!char) return;
+        const block = getPrivateBlockState(char);
+        if (!block.canUserSend) {
+            addToast(block.userMessage || '拉黑期间无法寄东西', 'error');
+            return;
+        }
+        setShowPanel('none');
+        resetParcelCompose();
+        setShowParcelCompose(true);
+    }, [addToast, char, resetParcelCompose]);
+
+    const buildParcelRecentSummary = useCallback((): string => {
+        if (!char) return '';
+        return messages.slice(-12)
+            .filter(m => m.role !== 'system')
+            .map(m => {
+                const speaker = m.role === 'user' ? (userProfile.name || '用户') : char.name;
+                const parcel = m.type === 'parcel_card' ? (m.metadata?.parcel as ChatParcelMeta | undefined) : undefined;
+                const text = parcel
+                    ? formatDailyParcelForPrompt(parcel, userProfile.name || '用户', char.name)
+                    : String(m.content || '').replace(/\s+/g, ' ').trim();
+                return `${speaker}: ${text.slice(0, 120)}`;
+            })
+            .join('\n');
+    }, [char, messages, userProfile.name]);
+
+    const triggerParcelReply = useCallback(async (meta: ChatParcelMeta, target?: Message): Promise<void> => {
+        if (!char) return;
+        const fresh = await DB.getRecentMessagesByCharId(char.id, char.contextLimit || 500);
+        const parcelLine = formatDailyParcelForPrompt(meta, userProfile.name || '用户', char.name);
+        const isTravelFrog = meta.mode === 'travel_frog';
+        const isProactiveParcel = meta.mode === 'proactive';
+        const ephemeralSystemPrompt = meta.senderRole === 'user'
+            ? `${parcelLine}。\n这是絮语回形针里的「寄东西」日常小包裹，不是心意铺订单，也没有价格、购物车或物流系统。本轮请以「${char.name}」第一人称自然回应这件事：可以感谢、惊喜、嘴硬、调侃、追问、说会怎么用/怎么收好；不要说没收到，不要把它当成心意铺商品。`
+            : isTravelFrog
+                ? `${parcelLine}。\n这是你像《旅行青蛙》一样，从自己的外出、短途游走或日常路上寄给 ${userProfile.name || '用户'} 的东西；它是生活痕迹，不是心意铺订单。本轮请以「${char.name}」第一人称补一句像明信片/收件提醒一样自然的话：可以提一句寄出它的地方、为什么想到对方、让对方收好或轻描淡写地装作顺手；不要复述系统提示，不要编价格、订单号或真实物流。`
+                : isProactiveParcel
+                    ? `${parcelLine}。\n这是你刚刚主动想到 ${userProfile.name || '用户'} 后寄来的日常小包裹，不是用户索要、不是心意铺订单。本轮请以「${char.name}」第一人称补一句自然的话：可以解释为什么突然想到对方、让对方收好、嘴硬说只是顺手、照顾/调侃/撒娇；不要复述系统提示，不要编价格、订单号或真实物流。`
+                : `${parcelLine}。\n这是你刚刚通过絮语回形针里的「寄东西」寄给 ${userProfile.name || '用户'} 的日常小包裹，不是心意铺订单。本轮请以「${char.name}」第一人称补一句自然的话：可以解释为什么寄、提醒对方收、撒娇、打趣或轻描淡写；不要复述系统提示，不要编价格、订单号或真实物流。`;
+        if (isInstantConfigReady()) setInstantSendingActive(true);
+        await triggerAI(fresh, undefined, () => setInstantSendingActive(false), {
+            targetUserMessage: target,
+            ephemeralSystemPrompt,
+            apiUsageContext: { dailyParcelReply: true, apiBinding: meta.senderRole === 'user' ? '日常寄物回应' : isTravelFrog ? '蛙游收件说明' : isProactiveParcel ? '主动寄物说明' : '角色寄物说明' },
+        });
+        setInstantSendingActive(false);
+    }, [char, triggerAI, userProfile.name]);
+
+    const sendDailyParcel = useCallback(async () => {
+        if (!char || parcelBusy) return;
+        const block = getPrivateBlockState(char);
+        if (!block.canUserSend) {
+            addToast(block.userMessage || '拉黑期间无法寄东西', 'error');
+            return;
+        }
+        if (isTyping) {
+            addToast(`${char.name} 还在写，等一下再寄吧`, 'info');
+            return;
+        }
+        const userName = userProfile.name || '我';
+        const item = parcelItem.trim();
+        if (parcelDirection === 'user_to_char' && !item) {
+            addToast('先写一下要寄什么', 'info');
+            return;
+        }
+
+        setParcelBusy(true);
+        try {
+            let meta: ChatParcelMeta;
+            let role: Message['role'];
+            if (parcelDirection === 'user_to_char') {
+                role = 'user';
+                meta = makeDailyParcelMeta({
+                    direction: 'user_to_char',
+                    mode: 'everyday',
+                    senderRole: 'user',
+                    fromName: userName,
+                    toName: char.name,
+                    itemName: item,
+                    note: parcelNote,
+                    method: parcelMethod,
+                    generatedBy: 'user',
+                });
+            } else {
+                role = 'assistant';
+                const requestHint = [item, parcelNote.trim()].filter(Boolean).join('；') || undefined;
+                const draft = await generateCharacterParcelDraft({
+                    char,
+                    userProfile,
+                    api: apiConfig,
+                    requestHint,
+                    recentSummary: buildParcelRecentSummary(),
+                    mode: parcelMode,
+                });
+                meta = makeDailyParcelMeta({
+                    direction: 'char_to_user',
+                    mode: parcelMode,
+                    senderRole: 'char',
+                    fromName: char.name,
+                    toName: userName,
+                    itemName: draft.itemName,
+                    emoji: draft.emoji,
+                    note: draft.note,
+                    method: parcelMethod || draft.method,
+                    originLabel: draft.originLabel,
+                    travelSnippet: draft.travelSnippet,
+                    requestHint,
+                    generatedBy: draft.generatedBy,
+                });
+            }
+
+            const now = Date.now();
+            const parcelContent = meta.mode === 'travel_frog' ? '[蛙游收件]' : meta.mode === 'proactive' ? '[主动寄来]' : '[日常寄物]';
+            const id = await DB.saveMessage({
+                charId: char.id,
+                role,
+                type: 'parcel_card',
+                content: parcelContent,
+                metadata: {
+                    parcel: meta,
+                    ...(role === 'user' ? { msgStatus: 'sent' } : {}),
+                },
+            } as any);
+            await reloadMessages(visibleCountRef.current);
+            setShowParcelCompose(false);
+            setShowPanel('none');
+            setParcelItem('');
+            setParcelNote('');
+            addToast(role === 'user' ? `小包裹寄给 ${char.name} 了` : parcelMode === 'travel_frog' ? `收到了 ${char.name} 从路上寄来的东西` : parcelMode === 'proactive' ? `${char.name} 主动寄来了一份小包裹` : `${char.name} 寄来了一份小包裹`, 'success');
+            const target = role === 'user'
+                ? { id, charId: char.id, role: 'user', type: 'parcel_card' as MessageType, content: parcelContent, timestamp: now, metadata: { parcel: meta } } as Message
+                : undefined;
+            await triggerParcelReply(meta, target);
+            await reloadMessages(visibleCountRef.current);
+        } catch (err: any) {
+            addToast(err?.message || '小包裹没寄出去，再试一次', 'error');
+        } finally {
+            setParcelBusy(false);
+        }
+    }, [addToast, apiConfig, buildParcelRecentSummary, char, isTyping, parcelBusy, parcelDirection, parcelItem, parcelMethod, parcelMode, parcelNote, reloadMessages, triggerParcelReply, userProfile]);
+
     // ── 求婚 / 订婚 ──
     const finalizeEngagement = async (proposalBy: 'user' | 'char', vow: string) => {
         if (!char) return;
@@ -3312,6 +3510,76 @@ ${recent || '（你们相处了很久）'}
     const handleOpenProposal = useCallback((m: Message) => {
         setProposalTarget(m);
     }, []);
+
+    const handleOpenGomokuInvite = useCallback((m: Message) => {
+        const invite = (m.metadata as any)?.gomokuInvite || {};
+        queueManualDeepLink({
+            appId: AppID.Theater,
+            anchorId: 'manual-theater-root',
+            payload: {
+                section: 'gomoku',
+                invitationId: invite.invitationId,
+                charId: invite.charId || char?.id,
+            },
+        });
+        openApp(AppID.Theater);
+    }, [char?.id, openApp]);
+
+    const handleOpenGoInvite = useCallback((m: Message) => {
+        const invite = (m.metadata as any)?.goInvite || {};
+        queueManualDeepLink({
+            appId: AppID.Theater,
+            anchorId: 'manual-theater-root',
+            payload: {
+                section: 'go',
+                invitationId: invite.invitationId,
+                charId: invite.charId || char?.id,
+            },
+        });
+        openApp(AppID.Theater);
+    }, [char?.id, openApp]);
+
+    const handleOpenDoudizhuInvite = useCallback((m: Message) => {
+        const invite = (m.metadata as any)?.doudizhuInvite || {};
+        queueManualDeepLink({
+            appId: AppID.Theater,
+            anchorId: 'manual-theater-root',
+            payload: {
+                section: 'doudizhu',
+                invitationId: invite.invitationId,
+                charId: invite.charId || char?.id,
+            },
+        });
+        openApp(AppID.Theater);
+    }, [char?.id, openApp]);
+
+    const handleOpenTurtleSoupInvite = useCallback((m: Message) => {
+        const invite = (m.metadata as any)?.turtleSoupInvite || {};
+        queueManualDeepLink({
+            appId: AppID.Theater,
+            anchorId: 'manual-theater-root',
+            payload: {
+                section: 'turtleSoup',
+                invitationId: invite.invitationId,
+                charId: invite.charId || char?.id,
+            },
+        });
+        openApp(AppID.Theater);
+    }, [char?.id, openApp]);
+
+    const handleOpenMahjongInvite = useCallback((m: Message) => {
+        const invite = (m.metadata as any)?.mahjongInvite || {};
+        queueManualDeepLink({
+            appId: AppID.Theater,
+            anchorId: 'manual-theater-root',
+            payload: {
+                section: 'mahjong',
+                invitationId: invite.invitationId,
+                charId: invite.charId || char?.id,
+            },
+        });
+        openApp(AppID.Theater);
+    }, [char?.id, openApp]);
 
     // 用户回应「角色的求婚」
     const respondToCharProposal = async (accept: boolean) => {
@@ -4426,34 +4694,87 @@ ${privateCallDecisionPromptBody({
         if (!char) return;
         if (isTyping) { addToast('等 TA 这句说完再窥屏吧', 'info'); return; }
         setShowPanel('none');
-        addToast('正在生成 TA 此刻的手机屏幕…', 'info');
+        addToast('正在截取 TA 此刻的虚拟手机屏幕…', 'info');
         try {
             const now = Date.now();
             const displayName = char.convoSettings?.remarkName?.trim() || char.name;
-            const run = await generateXunjiScreenlifeRun({
-                char,
-                api: resolveAuxApi(auxApiConfig, apiConfig),
-                rangeStart: now - 30 * 60 * 1000,
-                rangeEnd: now,
-                density: 'light',
-                writeBack: false,
-                seed: `${char.id}_${now}_screen_peek`,
+            const promptUserName = userProfile?.name || '用户';
+            const auxApi = resolveAuxApi(auxApiConfig, apiConfig);
+            const [latestSnapshot, latestRuns, latestReports] = await Promise.all([
+                DB.getLatestXunjiSnapshot(char.id).catch(() => null),
+                DB.getXunjiRuns(char.id, 1).catch(() => []),
+                DB.getXunjiReports(char.id, 8).catch(() => []),
+            ]);
+            let run = latestRuns[0] || null;
+            if (auxApi.baseUrl && auxApi.model) {
+                try {
+                    const fullUserSetting = await buildFullActiveUserSetting(userProfile, { fallback: `用户名：${promptUserName}` });
+                    run = await generateXunjiScreenlifeRun({
+                        char,
+                        api: auxApi,
+                        rangeStart: now - 30 * 60 * 1000,
+                        rangeEnd: now,
+                        density: 'light',
+                        writeBack: false,
+                        userSetting: fullUserSetting,
+                        userName: promptUserName,
+                        recentMessages: messages,
+                        seed: `${char.id}_${now}_screen_peek`,
+                    });
+                    await DB.saveXunjiRun(run);
+                } catch (error) {
+                    console.warn('[Chat] screen peek screenlife refresh failed, using existing phone state:', error);
+                }
+            }
+            const xunjiRecords = mapXunjiToPhoneEvidence({
+                run,
+                snapshot: latestSnapshot,
+                reports: latestReports,
+                now,
             });
-            await DB.saveXunjiRun(run);
-            const screen = buildScreenPeekPhoneScreen(run, char, userProfile, now);
+            const phoneRecords = mergePhoneEvidenceRecords(char.phoneState?.records || [], xunjiRecords);
+            let snapshot = buildScreenPeekSnapshot({
+                char,
+                userProfile,
+                records: phoneRecords,
+                xunjiSnapshot: latestSnapshot,
+                generatedAt: now,
+                fallbackWallpaper: osTheme.wallpaper,
+            });
+            let screenshotDataUrl = '';
+            try {
+                screenshotDataUrl = await captureScreenPeekSnapshotImage(snapshot);
+            } catch (captureError) {
+                console.warn('[Chat] screen peek capture failed, retrying home snapshot:', captureError);
+                if (snapshot.appKind === 'home' || snapshot.appKind === 'lock') throw captureError;
+                snapshot = buildScreenPeekSnapshot({
+                    char,
+                    userProfile,
+                    records: phoneRecords,
+                    xunjiSnapshot: latestSnapshot,
+                    generatedAt: now,
+                    fallbackWallpaper: osTheme.wallpaper,
+                    forceHome: true,
+                });
+                screenshotDataUrl = await captureScreenPeekSnapshotImage(snapshot);
+            }
             const card: ScreenPeekCard = {
-                id: `screen-peek-${run.id}`,
+                id: `screen-peek-${char.id}-${now}`,
                 charId: char.id,
                 charName: displayName,
                 generatedAt: now,
-                title: run.title || `${displayName} 的手机屏幕`,
-                narrative: run.narrative,
-                screen,
-                chats: run.chats || [],
-                browsed: run.browsed || [],
-                notes: run.notes || [],
-                moments: run.moments,
-                sourceRunId: run.id,
+                title: `${displayName} 的手机屏幕`,
+                narrative: snapshot.summary,
+                screenshotDataUrl,
+                screenshotSource: snapshot.source,
+                snapshotAppName: snapshot.appName,
+                snapshotTitle: snapshot.title,
+                snapshot,
+                chats: run?.chats || [],
+                browsed: run?.browsed || [],
+                notes: run?.notes || [],
+                moments: run?.moments,
+                sourceRunId: run?.id,
             };
             await DB.saveMessage({
                 charId: char.id,
@@ -4463,9 +4784,9 @@ ${privateCallDecisionPromptBody({
                 metadata: { screenPeek: card, excludeFromContext: true },
             } as any);
             await reloadMessages(visibleCountRef.current);
-            addToast('窥屏截图已生成', 'success');
+            addToast('窥屏截图已截取', 'success');
         } catch (err: any) {
-            showError('窥屏生成失败', err?.message || String(err));
+            showError('窥屏截图失败', err?.message || String(err));
         }
     };
 
@@ -4545,6 +4866,7 @@ ${privateCallDecisionPromptBody({
             case 'select-category': setActiveCategory(payload); break;
             case 'category-options': setSelectedCategory(payload); setModalType('category-options'); break;
             case 'delete-category-req': setSelectedCategory(payload); setModalType('delete-category'); break;
+            case 'daily-parcel': openParcelCompose(); break;
             case 'proactive': setShowProactiveModal(true); break;
             case 'alarm': openAlarmManager(); break;
             case 'life-recap': setShowPanel('none'); setShowLifeRecapModal(true); setLifeRecapBanner(0); break;
@@ -4764,6 +5086,70 @@ ${privateCallDecisionPromptBody({
         })();
         return () => { cancelled = true; };
     }, [activeCharacterId, char, characters, musicCfg, reloadMessages, triggerAI, addToast, userProfile?.name]);
+
+    useEffect(() => {
+        if (!activeCharacterId || !char) return;
+        let raw: string | null = null;
+        try { raw = localStorage.getItem(MUSIC_PENDING_RICH_SHARE_KEY); } catch { /* ignore */ }
+        if (!raw) return;
+
+        let parsed: any = null;
+        try { parsed = JSON.parse(raw); } catch {
+            try { localStorage.removeItem(MUSIC_PENDING_RICH_SHARE_KEY); } catch { /* ignore */ }
+            return;
+        }
+
+        const payload = normalizeMusicRichSharePayload(parsed, { validCharIds: characters.map(c => c.id) });
+        if (!payload) {
+            try { localStorage.removeItem(MUSIC_PENDING_RICH_SHARE_KEY); } catch { /* ignore */ }
+            return;
+        }
+        if (payload.targetId !== activeCharacterId) return;
+
+        let cancelled = false;
+        (async () => {
+            try {
+                try { localStorage.removeItem(MUSIC_PENDING_RICH_SHARE_KEY); } catch { /* ignore */ }
+                const recent = await DB.getRecentMessagesByCharId(activeCharacterId, Math.max(char.contextLimit || 80, 120));
+                if (recent.some(m => m.metadata?.musicShareId === payload.id)) {
+                    if (!cancelled) await reloadMessages(visibleCountRef.current);
+                    return;
+                }
+                const kindName = payload.kind === 'playlist' ? '歌单'
+                    : payload.kind === 'artist' ? '歌手主页'
+                    : payload.kind === 'comment' ? '歌曲评论'
+                    : payload.kind === 'profile' ? '音乐主页'
+                    : '音乐';
+                const content = [
+                    `[音乐分享] 我把${kindName}「${payload.title}」分享给你。`,
+                    payload.subtitle,
+                    payload.text ? `“${payload.text}”` : '',
+                    payload.url ? `链接：${payload.url}` : '',
+                ].filter(Boolean).join('\n');
+                await DB.saveMessage({
+                    charId: activeCharacterId,
+                    role: 'user',
+                    type: 'text',
+                    content,
+                    metadata: {
+                        intent: 'share',
+                        musicShareId: payload.id,
+                        musicShareKind: payload.kind,
+                        musicShare: payload,
+                    },
+                } as any);
+                const fresh = await DB.getRecentMessagesByCharId(activeCharacterId, char.contextLimit || 80);
+                if (!cancelled) {
+                    await reloadMessages(visibleCountRef.current);
+                    triggerAI(fresh);
+                    addToast(`已把「${payload.title}」分享给 ${char.name}`, 'success');
+                }
+            } catch (err: any) {
+                if (!cancelled) addToast(`音乐分享失败：${err?.message || err}`, 'error');
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [activeCharacterId, char, characters, reloadMessages, triggerAI, addToast]);
 
     const handlePlayMusicCard = useCallback(async (message: Message) => {
         const song = songFromMusicShareSnapshot(message.metadata?.song);
@@ -6207,6 +6593,50 @@ ${privateCallDecisionPromptBody({
         setModalType('message-options');
     }, []);
 
+    const handleSaveMessageImageToGallery = useCallback(async (msg: Message) => {
+        if (!char || msg.type !== 'image' || !msg.content) return;
+        try {
+            const existingImages = await DB.getGalleryImages(char.id);
+            if (existingImages.some(img => img.url === msg.content)) {
+                addToast('这张图片已经在相册里了', 'info');
+                return;
+            }
+
+            const ordered = [...messagesRef.current].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0) || a.id - b.id);
+            const idx = ordered.findIndex(item => item.id === msg.id);
+            const nearby = idx >= 0 ? ordered.slice(Math.max(0, idx - 5), Math.min(ordered.length, idx + 6)) : ordered.slice(-10);
+            const recentChat = nearby.map(item => {
+                const sender = item.role === 'user' ? (userProfile?.name || '你') : char.name;
+                const content = item.id === msg.id
+                    ? '[这张图片]'
+                    : item.type === 'image'
+                        ? '[图片]'
+                        : String(item.content || '').substring(0, 100);
+                return `${sender}: ${content}`;
+            });
+
+            await DB.saveGalleryImage({
+                id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                charId: char.id,
+                url: msg.content,
+                timestamp: Date.now(),
+                title: msg.metadata?.genPrompt
+                    ? String(msg.metadata.genPrompt).slice(0, 40)
+                    : msg.metadata?.aiGenerated
+                        ? '聊天配图'
+                        : msg.role === 'assistant'
+                            ? `${char.name}发来的图片`
+                            : '聊天保存的图片',
+                savedDate: new Date().toISOString().split('T')[0],
+                source: msg.metadata?.aiGenerated ? 'generated' : 'chat',
+                chatContext: recentChat,
+            });
+            addToast('已保存至相册', 'success');
+        } catch (err: any) {
+            addToast(err?.message || '保存相册失败', 'error');
+        }
+    }, [addToast, char, userProfile?.name]);
+
     const handleBatchDelete = async () => {
         const msgIdsToDelete = new Set<number>(selectedMsgIds);
         // 思维链单独勾选、但宿主消息没选 -> 只清 metadata.thinkingChain，保留消息
@@ -6393,14 +6823,27 @@ ${privateCallDecisionPromptBody({
     }, [displayMessages, revealedAssistantIds, windowedFocusMsgId, selectionMode]);
 
     useLayoutEffect(() => {
-        if (!scrollRef.current || selectionMode || windowedFocusMsgId !== null) return;
+        if (!scrollRef.current) return;
         const currentLastId = renderMessages.length > 0 ? renderMessages[renderMessages.length - 1].id : null;
+        const restore = pendingHistoryScrollRestoreRef.current;
+        if (restore) {
+            pendingHistoryScrollRestoreRef.current = null;
+            scrollRef.current.scrollTop = Math.max(0, scrollRef.current.scrollHeight - restore.scrollHeight + restore.scrollTop);
+            lastRenderedMsgIdRef.current = currentLastId;
+            skipNextQueuedHistoryScrollRef.current = true;
+            return;
+        }
+        if (selectionMode || windowedFocusMsgId !== null) return;
         if (currentLastId === lastRenderedMsgIdRef.current) return;
         scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         lastRenderedMsgIdRef.current = currentLastId;
     }, [renderMessages, selectionMode, windowedFocusMsgId]);
 
     useEffect(() => {
+        if (skipNextQueuedHistoryScrollRef.current) {
+            skipNextQueuedHistoryScrollRef.current = false;
+            return;
+        }
         if (!hasQueuedAssistantMessages || !scrollRef.current || selectionMode || windowedFocusMsgId !== null) return;
         const now = Date.now();
         if (now - scrollThrottleRef.current <= 150) return;
@@ -6409,6 +6852,25 @@ ${privateCallDecisionPromptBody({
     }, [hasQueuedAssistantMessages, renderMessages, selectionMode, windowedFocusMsgId]);
 
     const collapsedCount = Math.max(0, totalMsgCount - displayMessages.length);
+
+    const handleLoadMoreHistory = useCallback(async () => {
+        if (!activeCharacterId) return;
+        const before = scrollRef.current
+            ? { scrollHeight: scrollRef.current.scrollHeight, scrollTop: scrollRef.current.scrollTop }
+            : null;
+        if (before) pendingHistoryScrollRestoreRef.current = before;
+
+        const nextVisibleCount = visibleCountRef.current + LOAD_BATCH_SIZE;
+        visibleCountRef.current = nextVisibleCount;
+        setVisibleCount(nextVisibleCount);
+        await reloadMessages(nextVisibleCount);
+
+        window.setTimeout(() => {
+            if (pendingHistoryScrollRestoreRef.current === before) {
+                pendingHistoryScrollRestoreRef.current = null;
+            }
+        }, 1000);
+    }, [activeCharacterId, reloadMessages]);
 
     // 行动选择器入口：最后一条 user 消息的 id（点它的头像可生成「接下来说点啥」选项）。
     const lastUserMsgId = useMemo(() => {
@@ -6448,6 +6910,40 @@ ${privateCallDecisionPromptBody({
 
     // 全量可见表情（只排除隐藏分类，不按当前分类切）——表情面板搜索时跨分类匹配
     const allVisibleEmojis = useMemo(() => emojis.filter(e => !(e.categoryId && hiddenCategoryIds.has(e.categoryId))), [emojis, hiddenCategoryIds]);
+
+    const chatMusicHumming = useMemo(() => {
+        if (!char?.id || !musicCurrent || !musicPlaying || !musicListeningTogetherWith.includes(char.id)) return undefined;
+        const activeLine = musicActiveLyricIdx >= 0 ? musicLyric[musicActiveLyricIdx] : null;
+        const lyricLine = cleanLyricText(activeLine?.text || '', { maxLineChars: 100 });
+        const fmt = (value: number) => {
+            const safe = Number.isFinite(value) && value > 0 ? value : 0;
+            const m = Math.floor(safe / 60);
+            const s = Math.floor(safe % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        };
+        const total = musicDuration || musicCurrent.duration || 0;
+        return {
+            songName: musicCurrent.name,
+            lyricLine,
+            progressLabel: total > 0 ? `${fmt(musicProgress)} / ${fmt(total)}` : fmt(musicProgress),
+        };
+    }, [char?.id, musicCurrent, musicPlaying, musicListeningTogetherWith, musicActiveLyricIdx, musicLyric, musicDuration, musicProgress]);
+
+    const handleMusicHummingSend = useCallback((draft: string) => {
+        const raw = draft.trim();
+        if (!raw) return;
+        const text = raw.startsWith('♪') ? raw : `♪ ${raw}`;
+        void handleSendText(text, 'text', {
+            musicHumming: true,
+            musicSongId: musicCurrent?.id,
+            musicSongName: musicCurrent?.name,
+            musicProgress,
+        }).then(() => {
+            setInput('');
+            localStorage.removeItem(draftKey);
+            clearLiveDraftTimer();
+        });
+    }, [draftKey, clearLiveDraftTimer, musicCurrent?.id, musicCurrent?.name, musicProgress, handleSendText]);
 
     // Memoize ChatInputArea callbacks
     const handleSendCallback = useCallback(
@@ -7361,6 +7857,145 @@ ${privateCallDecisionPromptBody({
                 </div>
              </JournalSheet>
 
+             {/* 日常寄物 Modal：轻量互寄，不接心意铺订单 / 背包 / 钱包 */}
+             <JournalSheet
+                open={showParcelCompose}
+                title="寄点东西"
+                en="Daily Parcel"
+                sub={parcelMode === 'travel_frog' ? `像旅行青蛙一样，收到 ${displayCharName} 从路上寄来的东西` : parcelMode === 'proactive' ? `让 ${displayCharName} 主动想到你，寄来一件日常小物` : parcelDirection === 'user_to_char' ? `给 ${displayCharName} 捎一件日常小物` : `让 ${displayCharName} 给你寄一件日常小物`}
+                tape="rose"
+                pattern="dot"
+                paper="lined"
+                onClose={() => { if (!parcelBusy) setShowParcelCompose(false); }}
+                footer={<>
+                    <SealBtn kind="ghost" onClick={() => setShowParcelCompose(false)} disabled={parcelBusy}>先不寄</SealBtn>
+                    <SealBtn
+                        kind="rose"
+                        onClick={() => void sendDailyParcel()}
+                        disabled={parcelBusy || (parcelDirection === 'user_to_char' && !parcelItem.trim())}
+                    >
+                        {parcelBusy ? '包裹打包中…' : parcelDirection === 'user_to_char' ? '寄给 TA' : parcelMode === 'travel_frog' ? '收下寄来的东西' : parcelMode === 'proactive' ? '等 TA 主动寄来' : '让 TA 寄来'}
+                    </SealBtn>
+                </>}
+             >
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setParcelDirection('user_to_char');
+                                setParcelMode('everyday');
+                                setParcelMethod(DAILY_PARCEL_METHODS[0] || '快递');
+                            }}
+                            className="rounded-[18px] px-3 py-3 text-left active:scale-[0.98] transition-transform"
+                            style={parcelDirection === 'user_to_char' && parcelMode === 'everyday'
+                                ? { background: '#d8a5b7', color: '#fff', boxShadow: '0 12px 24px -18px rgba(122,90,114,0.55)' }
+                                : { background: '#fff', color: INK, border: '1px solid #eed6df' }}
+                        >
+                            <div className="text-[13px] font-black">我寄给 TA</div>
+                            <div className="mt-0.5 text-[10px] opacity-75">TA 会围绕包裹回复</div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setParcelDirection('char_to_user');
+                                setParcelMode('everyday');
+                                setParcelMethod(DAILY_PARCEL_METHODS[0] || '快递');
+                            }}
+                            className="rounded-[18px] px-3 py-3 text-left active:scale-[0.98] transition-transform"
+                            style={parcelDirection === 'char_to_user' && parcelMode === 'everyday'
+                                ? { background: '#5a3140', color: '#fffdfa', boxShadow: '0 12px 24px -18px rgba(90,49,64,0.55)' }
+                                : { background: '#fff', color: INK, border: '1px solid #eed6df' }}
+                        >
+                            <div className="text-[13px] font-black">TA 寄给我</div>
+                            <div className="mt-0.5 text-[10px] opacity-75">TA 自己挑小东西</div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setParcelDirection('char_to_user');
+                                setParcelMode('proactive');
+                                setParcelMethod(DAILY_PARCEL_METHODS[0] || '快递');
+                            }}
+                            className="rounded-[18px] px-3 py-3 text-left active:scale-[0.98] transition-transform"
+                            style={parcelMode === 'proactive'
+                                ? { background: '#6f6a4d', color: '#fffdfa', boxShadow: '0 12px 24px -18px rgba(111,106,77,0.55)' }
+                                : { background: '#fff', color: INK, border: '1px solid #e7dec8' }}
+                        >
+                            <div className="text-[13px] font-black">主动寄来</div>
+                            <div className="mt-0.5 text-[10px] opacity-75">TA 想起你才寄</div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setParcelDirection('char_to_user');
+                                setParcelMode('travel_frog');
+                                setParcelMethod(TRAVEL_FROG_PARCEL_METHODS[0] || '旅行邮筒');
+                            }}
+                            className="rounded-[18px] px-3 py-3 text-left active:scale-[0.98] transition-transform"
+                            style={parcelMode === 'travel_frog'
+                                ? { background: '#608271', color: '#fffdfa', boxShadow: '0 12px 24px -18px rgba(64,105,86,0.55)' }
+                                : { background: '#fff', color: INK, border: '1px solid #d7e7df' }}
+                        >
+                            <div className="text-[13px] font-black">蛙游收件</div>
+                            <div className="mt-0.5 text-[10px] opacity-75">从 TA 路上寄来</div>
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        <LinedInput
+                            value={parcelItem}
+                            onChange={e => setParcelItem(e.target.value)}
+                            tag={parcelDirection === 'user_to_char' ? '寄什么' : parcelMode === 'travel_frog' ? '出门/收件提示（可空）' : parcelMode === 'proactive' ? '氛围提示（可空）' : '给 TA 一个提示（可空）'}
+                            placeholder={parcelDirection === 'user_to_char' ? '比如：热饮、手写便签、小点心' : parcelMode === 'travel_frog' ? '比如：想收到明信片、从海边寄点什么；空着让 TA 自己出门' : parcelMode === 'proactive' ? '比如：最近有点冷、想被惦记；空着让 TA 自己想到你' : '比如：想要安慰、想收到热饮；空着让 TA 自己挑'}
+                            maxLength={40}
+                            autoFocus
+                        />
+                        <div className="flex flex-wrap gap-2">
+                            {(parcelMode === 'travel_frog' ? TRAVEL_FROG_PARCEL_ITEM_PRESETS : DAILY_PARCEL_ITEM_PRESETS).slice(0, 6).map(preset => (
+                                <ScrapChip
+                                    key={preset.name}
+                                    selected={parcelItem === preset.name}
+                                    onClick={() => setParcelItem(preset.name)}
+                                >
+                                    {preset.emoji} {preset.name}
+                                </ScrapChip>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                            {(parcelMode === 'travel_frog' ? TRAVEL_FROG_PARCEL_METHODS : DAILY_PARCEL_METHODS).map(method => (
+                                <ScrapChip
+                                    key={method}
+                                    selected={parcelMethod === method}
+                                    onClick={() => setParcelMethod(method)}
+                                >
+                                    {method}
+                                </ScrapChip>
+                            ))}
+                        </div>
+                    </div>
+
+                    <LinedArea
+                        value={parcelNote}
+                        onChange={e => setParcelNote(e.target.value)}
+                        placeholder={parcelDirection === 'user_to_char' ? '附一句话，空着也可以' : parcelMode === 'travel_frog' ? '给 TA 一个出门方向，或留空等 TA 自己寄回生活痕迹' : parcelMode === 'proactive' ? '给一点最近状态，或留空让 TA 自己决定为什么主动寄来' : '你想补给 TA 的提示，或留空让 TA 自己写附言'}
+                        rows={3}
+                        maxLength={160}
+                    />
+
+                    <NoteStrip>
+                        {parcelMode === 'travel_frog'
+                            ? '蛙游收件会让 TA 按自己的角色设定和日常路径，像旅行青蛙一样寄回明信片、伴手礼或路上捡到的小东西；不会进入心意铺、钱包或真实物流。'
+                            : parcelMode === 'proactive'
+                                ? '主动寄来会把这次收件视为 TA 自己想到你后寄出的日常小物，不是你点名索要；不会进入心意铺、钱包或真实物流。'
+                            : '这是聊天里的日常寄物卡，不会进入心意铺订单、礼物柜、钱包或真实物流；双方的回应会按当前角色和用户设定生成。'}
+                    </NoteStrip>
+                </div>
+             </JournalSheet>
+
              {/* 位置分享 Modal */}
              <JournalSheet
                 open={showLocationModal} title="落脚点" en="You Are Here" sub="给 TA 画张能找到你的小地图"
@@ -7530,14 +8165,22 @@ ${privateCallDecisionPromptBody({
              {takeoutCardTarget && (() => {
                  const t: any = takeoutCardTarget.metadata?.takeout || (takeoutCardOrder ? buildTakeoutCardMeta(takeoutCardOrder, (id) => characters.find(c => c.id === id)?.name || '') : {});
                  const items: { name: string; qty: number; emoji?: string }[] = (takeoutCardOrder?.items as any) || t.items || [];
+                 const customerName = takeoutCardOrder?.initiatedBy === 'char' && takeoutCardOrder.payer !== 'me'
+                     ? (characters.find(c => c.id === takeoutCardOrder.payer)?.name || displayCharName || 'TA')
+                     : '你';
+                 const chatBlocks = takeoutCardOrder ? ([
+                     { id: 'store' as const, label: '铺子' },
+                     { id: 'rider' as const, label: '跑腿' },
+                     { id: 'support' as const, label: '平台' },
+                 ]).map(ch => ({ ...ch, messages: takeoutChatForTarget(takeoutCardOrder.chat || [], ch.id) })).filter(ch => ch.messages.length > 0) : [];
                  return (
                      <div className="absolute inset-0 z-[400] flex items-center justify-center bg-black/40 animate-fade-in p-6" onClick={() => { setTakeoutCardTarget(null); setTakeoutCardOrder(null); }}>
-                         <div className="w-[min(84vw,330px)] bg-white rounded-3xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+                         <div className="w-[min(84vw,330px)] max-h-[84vh] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                              <div className="px-5 py-3 flex items-center justify-between" style={{ background: '#fff4f7', borderBottom: '1px solid #eed6df' }}>
                                   <span className="text-[13px] font-black" style={{ color: '#5a3140' }}>🛵 外卖订单详情</span>
                                   <span className="text-[11px]" style={{ color: '#a892a3' }}>{t.payLabel || ''}</span>
                              </div>
-                             <div className="px-5 pt-4 pb-2">
+                             <div className="px-5 pt-4 pb-2 overflow-y-auto no-scrollbar">
                                   <div className="text-[14px] font-black mb-2" style={{ color: '#5a3140' }}>{t.storeEmoji} {t.storeName}</div>
                                  <div className="space-y-1 mb-3">
                                      {items.map((it, i) => (
@@ -7552,8 +8195,33 @@ ${privateCallDecisionPromptBody({
                                      <div className="flex justify-between"><span>收货</span><span>{takeoutCardOrder?.address || t.recipientLabel}</span></div>
                                      {(takeoutCardOrder?.note || t.note) && <div className="flex justify-between"><span>备注</span><span className="text-right max-w-[60%] truncate">{takeoutCardOrder?.note || t.note}</span></div>}
                                  </div>
+                                 <div className="mt-3 rounded-2xl px-3 py-3" style={{ background: '#fff8fb', border: '1px solid #eed6df' }}>
+                                     <div className="text-[11px] font-black mb-2" style={{ color: '#5a3140' }}>沟通记录</div>
+                                     {chatBlocks.length === 0 ? (
+                                         <div className="text-[11.5px]" style={{ color: '#a892a3' }}>还没有和铺子或跑腿捎话；进饭票详情可以在线沟通。</div>
+                                     ) : (
+                                         <div className="space-y-2.5">
+                                             {chatBlocks.map(block => (
+                                                 <div key={block.id}>
+                                                     <div className="text-[10px] font-black mb-1" style={{ color: '#a892a3' }}>{block.label}</div>
+                                                     <div className="space-y-1.5">
+                                                         {block.messages.slice(0, 5).map((msg, i) => (
+                                                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                                 <div className="max-w-[86%] rounded-2xl px-3 py-1.5 text-[11.5px] leading-snug" style={msg.role === 'user' ? { background: '#5a3140', color: '#fffdfa' } : { background: '#fffdfa', color: '#5f4b54', border: '1px solid #eed6df' }}>
+                                                                     <span className="block text-[9px] opacity-70 mb-0.5">{msg.role === 'user' ? (msg.actorName || customerName) : block.label}</span>
+                                                                     {msg.text}
+                                                                 </div>
+                                                             </div>
+                                                         ))}
+                                                         {block.messages.length > 5 && <div className="text-[10px] text-right" style={{ color: '#a892a3' }}>还有 {block.messages.length - 5} 条，进饭票查看</div>}
+                                                     </div>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     )}
+                                 </div>
                              </div>
-                             <div className="flex border-t border-slate-100">
+                             <div className="flex border-t border-slate-100 shrink-0">
                                  <button onClick={() => { setTakeoutCardTarget(null); setTakeoutCardOrder(null); }} className="flex-1 py-3.5 text-[14px] text-slate-500 font-medium active:bg-slate-50">合上</button>
                                   <button onClick={() => { setTakeoutCardTarget(null); setTakeoutCardOrder(null); openApp(AppID.Takeout); }} className="flex-1 py-3.5 text-[14px] font-bold border-l border-slate-100 active:bg-slate-50" style={{ color: '#5a3140' }}>查看进度</button>
                              </div>
@@ -8167,12 +8835,7 @@ ${privateCallDecisionPromptBody({
                 )}
                 {collapsedCount > 0 && windowedFocusMsgId === null && (
                     <div className="flex justify-center mb-6">
-                        <button onClick={async () => {
-                            const nextVisibleCount = visibleCount + LOAD_BATCH_SIZE;
-                            visibleCountRef.current = nextVisibleCount;
-                            setVisibleCount(nextVisibleCount);
-                            await reloadMessages(nextVisibleCount);
-                        }} className="px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs text-slate-500 shadow-sm border border-white hover:bg-white transition-colors">加载历史消息</button>
+                        <button onClick={handleLoadMoreHistory} className="px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs text-slate-500 shadow-sm border border-white hover:bg-white transition-colors">加载历史消息</button>
                     </div>
                 )}
 
@@ -8328,7 +8991,13 @@ ${privateCallDecisionPromptBody({
                             onClaimTransfer={handleClaimRequest}
                             onOpenTakeoutCard={handleOpenTakeoutCard}
                             onOpenProposal={handleOpenProposal}
+                            onOpenGomokuInvite={handleOpenGomokuInvite}
+                            onOpenGoInvite={handleOpenGoInvite}
+                            onOpenDoudizhuInvite={handleOpenDoudizhuInvite}
+                            onOpenTurtleSoupInvite={handleOpenTurtleSoupInvite}
+                            onOpenMahjongInvite={handleOpenMahjongInvite}
                             onPlayMusicCard={handlePlayMusicCard}
+                            onSaveImageToGallery={handleSaveMessageImageToGallery}
                             activeMusicSongId={musicCurrent?.id ?? null}
                             activeMusicSource={musicCurrent?.source || 'netease'}
                             musicPlaying={musicPlaying}
@@ -8562,6 +9231,8 @@ ${privateCallDecisionPromptBody({
                     chromeStyle={osTheme.chatChromeStyle}
                     inputPlaceholder={convo?.inputPlaceholderText}
                     inputAnimation={osTheme.chatInputAnimation}
+                    musicHumming={chatMusicHumming}
+                    onMusicHummingSend={handleMusicHummingSend}
                 />
             </div>
 

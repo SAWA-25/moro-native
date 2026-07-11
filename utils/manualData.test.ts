@@ -213,6 +213,72 @@ describe('manual guide data', () => {
     expect(MANUAL_DESTINATIONS['絮语·总览']?.deepLink?.route).toBe('dashboard');
   });
 
+  it('documents theater sleep together mode', () => {
+    const theater = MANUAL_ENTRIES.find(entry => entry.app === '幕间集');
+    const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-11-theater-sleep-together');
+    const setting = flattenManualSettings().find(({ setting }) => setting.id === 'theater-sleep-together')?.setting;
+    const destination = MANUAL_DESTINATIONS['幕间集'];
+    const text = [
+      notice?.summary,
+      ...(notice?.items || []),
+      theater?.summary,
+      ...(theater?.features || []),
+      ...(theater?.beginnerSteps || []),
+      setting?.title,
+      setting?.description,
+      setting?.defaultBehavior,
+      ...(setting?.options || []).map(option => `${option.label}${option.description}`),
+      ...(destination?.details || []),
+    ].join('\n');
+
+    expect(notice).toBeTruthy();
+    expect(setting).toBeTruthy();
+    expect(text).toContain('一起入眠');
+    expect(text).toContain('语音');
+    expect(text).toContain('文字');
+    expect(text).toContain('不保存原始录音');
+  });
+
+  it('documents theater mahjong mode', () => {
+    const theater = MANUAL_ENTRIES.find(entry => entry.app === '幕间集');
+    const mahjong = MANUAL_ENTRIES.find(entry => entry.app === '幕间集·麻将');
+    const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-11-theater-mahjong');
+    const chatSetting = flattenManualSettings().find(({ setting }) => setting.id === 'chat-mahjong-invite')?.setting;
+    const rulesSetting = flattenManualSettings().find(({ setting }) => setting.id === 'theater-mahjong-rules')?.setting;
+    const destination = MANUAL_DESTINATIONS['幕间集·麻将'];
+    const text = [
+      notice?.summary,
+      ...(notice?.items || []),
+      theater?.summary,
+      ...(theater?.features || []),
+      ...(theater?.beginnerSteps || []),
+      mahjong?.summary,
+      ...(mahjong?.features || []),
+      ...(mahjong?.beginnerSteps || []),
+      ...(mahjong?.commonQuestions || []).map(item => `${item.title}${item.answer}`),
+      chatSetting?.title,
+      chatSetting?.description,
+      chatSetting?.defaultBehavior,
+      rulesSetting?.title,
+      rulesSetting?.description,
+      ...(destination?.details || []),
+    ].join('\n');
+
+    expect(notice).toBeTruthy();
+    expect(mahjong).toBeTruthy();
+    expect(chatSetting).toBeTruthy();
+    expect(rulesSetting).toBeTruthy();
+    expect(destination).toBeTruthy();
+    expect(text).toContain('麻将');
+    expect(text).toContain('大众简化');
+    expect(text).toContain('主动约你打麻将');
+    expect(text).toContain('136 张');
+    expect(text).toContain('吃');
+    expect(text).toContain('碰');
+    expect(text).toContain('杠');
+    expect(text).toContain('自摸');
+  });
+
   it('documents private chat user screen watch boundaries', () => {
     const tools = MANUAL_ENTRIES.find(entry => entry.app === '絮语·单聊工具');
     const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-03-chat-user-screen-watch');
@@ -271,6 +337,33 @@ describe('manual guide data', () => {
     expect(text).toContain('未发送');
     expect(text).toContain('私密笔记');
     expect(text).toContain('心愿');
+    expect(text).toContain('不会读取现实手机');
+  });
+
+  it('documents richer check-phone density and chat snippets', () => {
+    const notice = MANUAL_UPDATE_NOTICES.find(item => item.id === '2026-07-10-check-phone-density');
+    const setting = flattenManualSettings().find(({ setting }) => setting.id === 'chat-check-phone-tool')?.setting;
+    const tools = MANUAL_ENTRIES.find(entry => entry.app === '絮语·单聊工具');
+    const destination = MANUAL_DESTINATIONS['絮语·单聊工具'];
+    const text = [
+      notice?.summary,
+      ...(notice?.items || []),
+      tools?.summary,
+      ...(tools?.features || []),
+      ...(tools?.keywords || []),
+      setting?.description,
+      setting?.defaultBehavior,
+      ...(setting?.options || []).map(option => `${option.label}${option.description}`),
+      ...(destination?.details || []),
+    ].join('\n');
+
+    expect(notice).toBeTruthy();
+    expect(setting).toBeTruthy();
+    expect(text).toContain('查岗');
+    expect(text).toContain('多联系人');
+    expect(text).toContain('群聊');
+    expect(text).toContain('多行对话');
+    expect(text).toContain('生活碎片');
     expect(text).toContain('不会读取现实手机');
   });
 

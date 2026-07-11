@@ -648,10 +648,10 @@ export interface CharacterBuff {
 export interface RealtimeConfig {
   // 天气配置
   weatherEnabled: boolean;
-  /** 取数方式：'geo'（默认，已授权定位/缓存/IP + Open-Meteo 免密钥）/ 'manual'（旧版手填 OpenWeatherMap Key + 城市） */
+  /** 取数方式：'geo'（默认，已授权定位/缓存/IP + Open-Meteo 免密钥）/ 'manual'（手填城市 + Open-Meteo 免密钥，旧版 Key 仅兜底） */
   weatherMode?: 'geo' | 'manual';
-  weatherApiKey: string;  // OpenWeatherMap API Key（仅 manual 模式需要）
-  weatherCity: string;    // 城市名（仅 manual 模式用）
+  weatherApiKey: string;  // OpenWeatherMap API Key（旧版兜底，可不填）
+  weatherCity: string;    // 城市名（manual 模式用，可写中文城市或省份 + 城市）
 
   // 新闻配置
   newsEnabled: boolean;
@@ -1748,6 +1748,10 @@ export interface SavingsGoal {
     currentAmount: number; 
     icon: string;
     isCompleted: boolean;
+    note?: string;
+    createdAt?: number;
+    updatedAt?: number;
+    completedAt?: number;
 }
 
 export interface ShopStaff {
@@ -1826,6 +1830,8 @@ export interface DollhouseSticker {
     rotation: number;
     zIndex: number;
     surface: 'floor' | 'leftWall' | 'rightWall';
+    kind?: 'shop-product';
+    productId?: string;
 }
 
 export interface DollhouseRoom {
@@ -1932,7 +1938,7 @@ export interface BankBusinessTemplate {
     customerGroups: string[];
     margin: number;
     risk: 1 | 2 | 3 | 4 | 5;
-    products: { id: string; name: string; price: number; cost: number; appeal: number }[];
+    products: { id: string; name: string; price: number; cost: number; appeal: number; icon?: string }[];
     events: string[];
 }
 
@@ -1943,6 +1949,10 @@ export interface BankLifeShopProduct {
     cost: number;
     stock: number;
     appeal: number;
+    icon?: string;
+    shelfPlaced?: boolean;
+    needsRestock?: boolean;
+    lastRestockedDateStr?: string;
 }
 
 // --- CO-VIEW / SHARED WATCHING & READING TYPES ---
@@ -2403,6 +2413,83 @@ export interface BankLifeAiEvent extends BankLifeEvent {
     choices?: { id: string; label: string; effectHint: string }[];
 }
 
+export type BankLifeProfileMode = 'balanced' | 'finance' | 'tycoon';
+export type BankLifeQuestScope = 'daily' | 'weekly' | 'milestone';
+export type BankLifeQuestTrack = 'life' | 'finance' | 'business';
+export type BankRecurringBillCycle = 'weekly' | 'monthly';
+
+export interface BankLifeProfile {
+    mode: BankLifeProfileMode;
+    title: string;
+    startedAt: string;
+    onboardedAt?: string;
+}
+
+export interface BankLifeQuest {
+    id: string;
+    scope: BankLifeQuestScope;
+    track: BankLifeQuestTrack;
+    title: string;
+    detail: string;
+    target: number;
+    progress: number;
+    done: boolean;
+    tone?: BankLifeActionTone;
+    linkedTab?: 'life' | 'jobs' | 'shop' | 'invest' | 'company' | 'loans' | 'report';
+    rewardLabel?: string;
+    updatedAt: string;
+}
+
+export interface BankRecurringBill {
+    id: string;
+    name: string;
+    amount: number;
+    category: string;
+    cycle: BankRecurringBillCycle;
+    dueDay: number;
+    nextDueDate: string;
+    autoPay?: boolean;
+    paidDates?: string[];
+    lastPaidAt?: string;
+    note?: string;
+}
+
+export interface BankBudgetEnvelope {
+    id: string;
+    category: string;
+    label: string;
+    monthlyLimit: number;
+    spent: number;
+    period: string;
+    tone?: BankLifeActionTone;
+}
+
+export interface BankLifeAchievement {
+    id: string;
+    title: string;
+    detail: string;
+    category: BankLifeQuestTrack;
+    target: number;
+    progress: number;
+    unlockedAt?: string;
+    icon?: string;
+}
+
+export interface BankLifeWeeklyReview {
+    id: string;
+    weekStartDate: string;
+    weekEndDate: string;
+    generatedAt: string;
+    title: string;
+    summary: string;
+    tone: BankLifeActionTone;
+    highlights: string[];
+    risks: string[];
+    nextActions: string[];
+    metrics?: BankLifeActionMetric[];
+    source: 'local' | 'ai';
+}
+
 export interface BankResumeProfile {
     name: string;
     headline: string;
@@ -2456,10 +2543,16 @@ export interface BankLifeState {
     dayIndex: number;
     weekDay: number;
     season: BankLifeSeason;
+    profile?: BankLifeProfile;
     mood: number;
     energy: number;
     health: number;
     dailyPlan: BankLifeDailyPlanItem[];
+    quests?: BankLifeQuest[];
+    recurringBills?: BankRecurringBill[];
+    budgetEnvelopes?: BankBudgetEnvelope[];
+    achievements?: BankLifeAchievement[];
+    weeklyReviews?: BankLifeWeeklyReview[];
     shopUnlocked: boolean;
     shopBusinessType?: string;
     shopBusinessName?: string;
@@ -3092,6 +3185,16 @@ export interface ScreenPeekCard {
   title: string;
   narrative: string;
   viewTarget?: ScreenPeekViewTarget;
+  /** 新版窥屏：真实渲染出的虚拟手机截图 data URL。存在时 UI 直接展示图片，不再套模板重造页面。 */
+  screenshotDataUrl?: string;
+  /** 本次截图停留的真实虚拟手机来源，用于说明和回溯。 */
+  screenshotSource?: 'phone_home' | 'phone_lock' | 'phone_record';
+  /** 本次截图对应的 App 名，不参与二次模板推断。 */
+  snapshotAppName?: string;
+  /** 本次截图对应的页面/记录标题。 */
+  snapshotTitle?: string;
+  /** 本次截图对应的只读快照结构，便于未来重新导出或调试。 */
+  snapshot?: unknown;
   screen?: {
     appKind: 'chat' | 'takeout' | 'browser' | 'notes' | 'gallery' | 'music' | 'map' | 'social' | 'calendar' | 'app' | 'home';
     appName: string;
@@ -4095,6 +4198,16 @@ export interface ConvoSettings {
     /** 主动为用户点外卖：开启后角色可在合适场景（饭点/降温/用户喊饿…）主动替用户下单外卖并代付，
      *  在聊天里生成可点开的外卖订单小票。关闭则永不触发该行为。默认关。 */
     proactiveTakeoutOrder?: boolean;
+    /** 主动约五子棋：开启后角色可在合适场景主动发起幕间集·五子棋邀请卡。默认关。 */
+    proactiveGomokuInvite?: boolean;
+    /** 主动约围棋：开启后角色可在合适场景主动发起幕间集·围棋邀请卡。默认关。 */
+    proactiveGoInvite?: boolean;
+    /** 主动约斗地主：开启后角色可在合适场景主动发起幕间集·斗地主邀请卡。默认关。 */
+    proactiveDoudizhuInvite?: boolean;
+    /** 主动约海龟汤：开启后角色可在合适场景主动发起幕间集·海龟汤邀请卡。默认关。 */
+    proactiveTurtleSoupInvite?: boolean;
+    /** 主动约麻将：开启后角色可在合适场景主动发起幕间集·麻将邀请卡。默认关。 */
+    proactiveMahjongInvite?: boolean;
     /** 主动发朋友圈：'off' 关 / 'random' 随缘 / 数字 = 自定义间隔小时（提示词倾向 + 配置位） */
     momentsAutoPost?: 'off' | 'random' | number;
     /** 允许 char 看手机：角色可自然提及用户手机里的日程 / 朋友圈 / 音乐动态（提示词注入） */
@@ -4573,6 +4686,12 @@ export interface GalleryImage {
     title?: string;
     /** 用户自己的整理备注，不等同于角色点评。 */
     note?: string;
+    /** 用户自己给照片写的较长随笔。 */
+    userEssay?: string;
+    /** 角色给照片写的较长随笔。 */
+    charEssay?: string;
+    /** 角色随笔生成或最后更新的时间。 */
+    charEssayTimestamp?: number;
     /** 相册内标签，用于筛选和搜索。 */
     tags?: string[];
     /** 是否在相册里标为喜欢。 */
@@ -5453,7 +5572,29 @@ export interface GameSession {
     lastPlayedAt: number;
 }
 
-export type MessageType = 'text' | 'image' | 'emoji' | 'interaction' | 'transfer' | 'system' | 'social_card' | 'forum_card' | 'chat_forward' | 'screen_peek_card' | 'screen_watch_card' | 'xhs_card' | 'twitter_card' | 'score_card' | 'music_card' | 'mcd_card' | 'html_card' | 'news_card' | 'vr_card' | 'trpg_card' | 'location' | 'voice' | 'call_log' | 'takeout_card' | 'proposal_card' | 'poll_card' | 'relay_card' | 'checkin_card' | 'gift_card';
+export type MessageType = 'text' | 'image' | 'emoji' | 'interaction' | 'transfer' | 'system' | 'social_card' | 'forum_card' | 'chat_forward' | 'screen_peek_card' | 'screen_watch_card' | 'xhs_card' | 'twitter_card' | 'score_card' | 'music_card' | 'mcd_card' | 'html_card' | 'news_card' | 'vr_card' | 'trpg_card' | 'location' | 'voice' | 'call_log' | 'takeout_card' | 'proposal_card' | 'gomoku_invite_card' | 'go_invite_card' | 'doudizhu_invite_card' | 'turtle_soup_invite_card' | 'mahjong_invite_card' | 'poll_card' | 'relay_card' | 'checkin_card' | 'gift_card' | 'parcel_card';
+
+export type ChatParcelDirection = 'user_to_char' | 'char_to_user';
+export type ChatParcelMode = 'everyday' | 'proactive' | 'travel_frog';
+
+/** 絮语·日常寄物：回形针里的轻量小包裹，不走心意铺订单/余额/背包。 */
+export interface ChatParcelMeta {
+    id: string;
+    direction: ChatParcelDirection;
+    mode?: ChatParcelMode;
+    senderRole: 'user' | 'char';
+    fromName: string;
+    toName: string;
+    itemName: string;
+    emoji?: string;
+    note?: string;
+    method?: string;
+    originLabel?: string;
+    travelSnippet?: string;
+    requestHint?: string;
+    generatedBy?: 'user' | 'char_ai' | 'fallback';
+    at: number;
+}
 
 export type ChatAlarmKind = 'sleep' | 'wake' | 'custom';
 export type ChatAlarmChannel = 'auto' | 'reminder' | 'call';
@@ -5510,14 +5651,15 @@ export interface PeriodCycleEvent {
     updatedAt: number;
 }
 
-export type HealthModuleId = 'period' | 'sleep' | 'hydration' | 'medication' | 'symptom' | 'mood' | 'movement';
+export type HealthModuleId = 'period' | 'sleep' | 'hydration' | 'medication' | 'symptom' | 'mood' | 'movement' | 'vitals';
 export type HealthPrivacyMode = 'private' | 'summary' | 'reminder' | 'summary_reminder';
 export type HealthReminderChannel = 'system' | 'character' | 'both';
 export type HealthReminderFrequency = 'once' | 'daily' | 'weekdays' | 'custom';
-export type HealthRecordSource = 'manual' | 'period_migration' | 'tracker_sync' | 'reminder';
-export type HealthReminderKind = 'period' | 'hydration' | 'medication' | 'sleep' | 'symptom' | 'mood' | 'movement' | 'summary';
+export type HealthRecordSource = 'manual' | 'period_migration' | 'tracker_sync' | 'reminder' | 'wearable_import' | 'wearable_realtime';
+export type HealthReminderKind = 'period' | 'hydration' | 'medication' | 'sleep' | 'symptom' | 'mood' | 'movement' | 'vitals' | 'summary';
 export type HealthPlanCadence = 'daily' | 'weekly';
 export type HealthSummaryRange = 'day' | 'week';
+export type HealthImportSource = 'generic' | 'xiaomi' | 'zepp' | 'huawei' | 'garmin' | 'apple_health' | 'google_fit' | 'web_bluetooth' | 'unknown';
 
 export interface HealthGoalSettings {
     target?: number;
@@ -5600,6 +5742,21 @@ export interface HealthSummary {
     updatedAt: number;
 }
 
+export interface HealthImportBatch {
+    id: string;
+    source: HealthImportSource;
+    mode: 'file' | 'realtime';
+    fileName?: string;
+    deviceName?: string;
+    importedCount: number;
+    updatedCount?: number;
+    skippedCount: number;
+    warnings: string[];
+    recordIds: string[];
+    createdAt: number;
+    updatedAt: number;
+}
+
 /** 购物商城：一件礼物（内置目录条目）。 */
 export interface ShopItem {
     id: string;
@@ -5633,10 +5790,22 @@ export interface ShopOwnedItem {
     boughtAt: number;
 }
 
-/** 购物商城：购物车里的一行（某商品 + 数量）。user 与 char 各有一个购物车。 */
+export type ShopGiftOccasionKey = 'daily' | 'birthday' | 'date' | 'apology' | 'comfort' | 'celebrate' | 'practical' | 'tease';
+export type ShopWishSource = 'manual' | 'advisor' | 'companion' | 'char_shop';
+export type ShopReceiptSource = 'manual_gift' | 'advisor' | 'companion_pay' | 'clear_cart' | 'char_shop' | 'order_receive' | 'char_gift';
+
+/** 购物商城：购物车里的一行（某商品 + 数量）。user 与 char 各有一个购物车；角色购物车可作为心愿板。 */
 export interface ShopCartLine {
     itemId: string;
     qty: number;
+    /** 角色心愿板来源：手动夹入 / 心意参谋 / 陪逛 / 角色自己逛铺。普通用户购物车可为空。 */
+    wishSource?: ShopWishSource;
+    /** 角色为什么想要 / 用户夹心愿时的备注。 */
+    wishNote?: string;
+    /** 心愿关联的送礼场景。 */
+    wishOccasion?: ShopGiftOccasionKey;
+    /** 夹进心愿板的时间。 */
+    addedAt?: number;
 }
 
 /** 购物商城：订单里的一件商品（带数量快照）。 */
@@ -5694,6 +5863,10 @@ export interface ShopReceipt {
     counterpartId: string;
     counterpartName: string;
     note?: string;          // 赠言 / 角色买它的理由
+    occasion?: ShopGiftOccasionKey; // 送礼场景
+    wrapLabel?: string;     // 包装/仪式展示名
+    source?: ShopReceiptSource; // 来源：礼物柜送出 / 陪逛代付 / 清空心愿等
+    wishItemId?: string;    // 若来自角色心愿板，记录对应商品 id
     at: number;
 }
 
@@ -5937,6 +6110,7 @@ export interface FullBackupData {
     healthReminders?: HealthReminder[];
     healthPlans?: HealthPlan[];
     healthSummaries?: HealthSummary[];
+    healthImportBatches?: HealthImportBatch[];
     customThemes?: ChatTheme[];
     savedEmojis?: Emoji[]; 
     emojiCategories?: EmojiCategory[]; 
@@ -6047,6 +6221,29 @@ export interface FullBackupData {
 
     // Theater reflections (折子戏·对影册)
     theaterReflectionSessions?: TheaterReflectionSession[];
+
+    // Theater sleep together sessions (幕间集·一起入眠)
+    theaterSleepSessions?: TheaterSleepSession[];
+
+    // Theater Gomoku games and invitations (幕间集·五子棋)
+    theaterGomokuGames?: TheaterGomokuGame[];
+    theaterGomokuInvitations?: TheaterGomokuInvitation[];
+
+    // Theater Go games and invitations (幕间集·围棋)
+    theaterGoGames?: TheaterGoGame[];
+    theaterGoInvitations?: TheaterGoInvitation[];
+
+    // Theater Doudizhu games and invitations (幕间集·斗地主)
+    theaterDoudizhuGames?: TheaterDoudizhuGame[];
+    theaterDoudizhuInvitations?: TheaterDoudizhuInvitation[];
+
+    // Theater Turtle Soup games and invitations (幕间集·海龟汤)
+    theaterTurtleSoupGames?: TheaterTurtleSoupGame[];
+    theaterTurtleSoupInvitations?: TheaterTurtleSoupInvitation[];
+
+    // Theater Mahjong games and invitations (幕间集·麻将)
+    theaterMahjongGames?: TheaterMahjongGame[];
+    theaterMahjongInvitations?: TheaterMahjongInvitation[];
 
     // Almanac collection hall references (岁时记·典藏馆收录引用)
     collectionItems?: CollectionItem[];
@@ -6529,12 +6726,13 @@ export interface DateScene {
 
 export type DateRole = 'user' | 'char' | 'world';
 
-/** 约会里的一条消息：user(话+动作) / char(回应) / world(世界引擎旁白·场景调度) */
+/** 约会里的一条消息：user(话+动作) / char(回应+内心OS) / world(世界引擎旁白·场景调度) */
 export interface DateMessage {
   id: string;
   role: DateRole;
   speech?: string;     // 说的话
   action?: string;     // 做的动作 / 旁白
+  thinking?: string;   // 角色内心OS（第一人称脑内碎念）
   ts: number;
 }
 
@@ -6551,6 +6749,7 @@ export interface DateWorldline {
   updatedAt: number;
   turnCount: number;       // 已进行回合数（用于 20 轮总结）
   messages: DateMessage[]; // 当前可见消息（总结隐藏后只保留 mark 之后的）
+  sideNarrationEnabled?: boolean; // 侧幕描写：角色不在场，只推进用户单独/NPC支线
   recap?: string;          // 截至 recapTurnMark 的剧情总结（隐藏上文后注入世界引擎）
   recapTurnMark?: number;
   parentId?: string;       // 从哪条世界线分叉来
@@ -6589,9 +6788,640 @@ export interface TalkSession {
 }
 
 // ──────────────────────────────────────────────────────────────────
+// 幕间集·一起入眠（sleep together）：睡前文字 / 电话式语音陪伴。
+// 每段会话只保存文字转写与状态，不保存原始录音或 TTS 音频，避免备份膨胀。
+// ──────────────────────────────────────────────────────────────────
+export type TheaterSleepChannel = 'text' | 'voice';
+export type TheaterSleepStatus = 'active' | 'ended';
+export interface TheaterSleepTurn {
+  role: 'user' | 'char';
+  text: string;
+  at: number;
+  inputMode?: 'text' | 'voice';
+}
+export interface TheaterSleepSession {
+  id: string;
+  charId: string;
+  title: string;
+  status: TheaterSleepStatus;
+  channel: TheaterSleepChannel;
+  intention?: string;
+  turns: TheaterSleepTurn[];
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 幕间集·五子棋（gomoku）：15x15 休闲规则，无禁手；五连或长连即胜。
+// 棋力由正式角色设定 + 完整用户设定交给模型判断，落子引擎负责合法性兜底。
+// ──────────────────────────────────────────────────────────────────
+export type GomokuDifficultyMode = 'opening' | 'per_move';
+export type GomokuDifficultyLevel = 'novice' | 'casual' | 'steady' | 'sharp' | 'master';
+export type GomokuStone = 'black' | 'white';
+export type GomokuPlayerRole = 'user' | 'char';
+export type GomokuGameStatus = 'active' | 'ended';
+export type GomokuInvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type GomokuMoveEvent =
+  | 'normal'
+  | 'thinking'
+  | 'attack'
+  | 'block'
+  | 'blocked'
+  | 'danger'
+  | 'win'
+  | 'lose'
+  | 'draw'
+  | 'illegal';
+export type GomokuDialogueKind = GomokuMoveEvent | 'invite';
+
+export interface GomokuMove {
+  no: number;
+  row: number;
+  col: number;
+  stone: GomokuStone;
+  by: GomokuPlayerRole;
+  at: number;
+  eventTags?: GomokuMoveEvent[];
+}
+
+export interface GomokuDialogueLine {
+  id: string;
+  by: 'char' | 'system';
+  kind: GomokuDialogueKind;
+  text: string;
+  at: number;
+  moveNo?: number;
+}
+
+export interface TheaterGomokuGame {
+  id: string;
+  title: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: GomokuGameStatus;
+  boardSize: number;
+  difficultyMode: GomokuDifficultyMode;
+  difficultyLevel: GomokuDifficultyLevel;
+  charStone: GomokuStone;
+  currentTurn: GomokuPlayerRole;
+  moves: GomokuMove[];
+  dialogue: GomokuDialogueLine[];
+  winner?: GomokuPlayerRole | 'draw';
+  winLine?: Array<{ row: number; col: number }>;
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+  invitationId?: string;
+}
+
+export interface TheaterGomokuInvitation {
+  id: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: GomokuInvitationStatus;
+  message?: string;
+  difficultyMode?: GomokuDifficultyMode;
+  createdAt: number;
+  updatedAt: number;
+  acceptedGameId?: string;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 幕间集·围棋（go）：19 路休闲规则；吃子、禁自杀、简单 ko，可停着，连续停着后面积法估算胜负。
+// 棋力由正式角色设定 + 完整用户设定交给模型判断，落子引擎负责合法性兜底。
+// ──────────────────────────────────────────────────────────────────
+export type GoDifficultyMode = 'opening' | 'per_move';
+export type GoDifficultyLevel = 'novice' | 'casual' | 'steady' | 'sharp' | 'master';
+export type GoStone = 'black' | 'white';
+export type GoPlayerRole = 'user' | 'char';
+export type GoGameStatus = 'active' | 'ended';
+export type GoInvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type GoMoveEvent =
+  | 'normal'
+  | 'thinking'
+  | 'attack'
+  | 'block'
+  | 'blocked'
+  | 'capture'
+  | 'captured'
+  | 'danger'
+  | 'pass'
+  | 'win'
+  | 'lose'
+  | 'draw'
+  | 'illegal';
+export type GoDialogueKind = GoMoveEvent | 'invite';
+
+export interface GoPoint {
+  row: number;
+  col: number;
+}
+
+export interface GoMove {
+  no: number;
+  row?: number;
+  col?: number;
+  stone: GoStone;
+  by: GoPlayerRole;
+  at: number;
+  pass?: boolean;
+  captured?: GoPoint[];
+  eventTags?: GoMoveEvent[];
+}
+
+export interface GoDialogueLine {
+  id: string;
+  by: 'char' | 'system';
+  kind: GoDialogueKind;
+  text: string;
+  at: number;
+  moveNo?: number;
+}
+
+export interface GoScore {
+  black: number;
+  white: number;
+  blackTerritory: number;
+  whiteTerritory: number;
+  blackStones: number;
+  whiteStones: number;
+  komi: number;
+}
+
+export interface TheaterGoGame {
+  id: string;
+  title: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: GoGameStatus;
+  boardSize: number;
+  difficultyMode: GoDifficultyMode;
+  difficultyLevel: GoDifficultyLevel;
+  charStone: GoStone;
+  currentTurn: GoPlayerRole;
+  moves: GoMove[];
+  dialogue: GoDialogueLine[];
+  captures: Record<GoStone, number>;
+  consecutivePasses: number;
+  previousBoardHash?: string;
+  winner?: GoPlayerRole | 'draw';
+  score?: GoScore;
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+  invitationId?: string;
+}
+
+export interface TheaterGoInvitation {
+  id: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: GoInvitationStatus;
+  message?: string;
+  difficultyMode?: GoDifficultyMode;
+  createdAt: number;
+  updatedAt: number;
+  acceptedGameId?: string;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 幕间集·斗地主（doudizhu）：用户 + 两位正式角色三人桌；经典叫分、底牌、炸弹倍数、
+// 春天/反春天结算。模型判断角色牌力与对白，本地引擎负责合法牌型和出牌兜底。
+// ──────────────────────────────────────────────────────────────────
+export type DoudizhuDifficultyMode = 'opening' | 'per_move';
+export type DoudizhuDifficultyLevel = 'novice' | 'casual' | 'steady' | 'sharp' | 'master';
+export type DoudizhuPlayerRole = 'user' | 'charA' | 'charB';
+export type DoudizhuCamp = 'landlord' | 'farmers';
+export type DoudizhuGameStatus = 'bidding' | 'playing' | 'ended';
+export type DoudizhuInvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type DoudizhuSuit = 'spade' | 'heart' | 'club' | 'diamond' | 'joker';
+export type DoudizhuHandType =
+  | 'single'
+  | 'pair'
+  | 'trio'
+  | 'trio_single'
+  | 'trio_pair'
+  | 'straight'
+  | 'pair_straight'
+  | 'plane'
+  | 'plane_singles'
+  | 'plane_pairs'
+  | 'four_two_singles'
+  | 'four_two_pairs'
+  | 'bomb'
+  | 'rocket';
+export type DoudizhuMoveEvent =
+  | 'deal'
+  | 'bid'
+  | 'landlord'
+  | 'thinking'
+  | 'normal'
+  | 'lead'
+  | 'follow'
+  | 'press'
+  | 'pressed'
+  | 'block'
+  | 'pass'
+  | 'cannot'
+  | 'bomb'
+  | 'rocket'
+  | 'danger'
+  | 'win'
+  | 'lose'
+  | 'spring'
+  | 'anti_spring'
+  | 'illegal';
+export type DoudizhuDialogueKind = DoudizhuMoveEvent | 'invite';
+
+export interface DoudizhuCard {
+  id: string;
+  suit: DoudizhuSuit;
+  rank: number;
+  label: string;
+}
+
+export interface DoudizhuHandAnalysis {
+  type: DoudizhuHandType;
+  rank: number;
+  length: number;
+  count: number;
+}
+
+export interface DoudizhuMove {
+  no: number;
+  by: DoudizhuPlayerRole;
+  at: number;
+  cards: DoudizhuCard[];
+  pass?: boolean;
+  analysis?: DoudizhuHandAnalysis;
+  eventTags?: DoudizhuMoveEvent[];
+}
+
+export interface DoudizhuBid {
+  by: DoudizhuPlayerRole;
+  score: 0 | 1 | 2 | 3;
+  at: number;
+}
+
+export interface DoudizhuDialogueLine {
+  id: string;
+  by: DoudizhuPlayerRole | 'system';
+  kind: DoudizhuDialogueKind;
+  text: string;
+  at: number;
+  moveNo?: number;
+}
+
+export interface DoudizhuScoreSummary {
+  baseScore: number;
+  multiplier: number;
+  spring: boolean;
+  antiSpring: boolean;
+  winner: DoudizhuCamp;
+  winningRole: DoudizhuPlayerRole;
+  deltas: Record<DoudizhuPlayerRole, number>;
+}
+
+export interface TheaterDoudizhuGame {
+  id: string;
+  title: string;
+  userName: string;
+  charIds: string[];
+  players: Array<{
+    role: DoudizhuPlayerRole;
+    name: string;
+    charId?: string;
+  }>;
+  status: DoudizhuGameStatus;
+  difficultyMode: DoudizhuDifficultyMode;
+  difficultyLevels: Partial<Record<DoudizhuPlayerRole, DoudizhuDifficultyLevel>>;
+  currentTurn: DoudizhuPlayerRole;
+  bidStarter: DoudizhuPlayerRole;
+  bidHistory: DoudizhuBid[];
+  baseScore: number;
+  multiplier: number;
+  landlord?: DoudizhuPlayerRole;
+  bottomCards: DoudizhuCard[];
+  hands: Record<DoudizhuPlayerRole, DoudizhuCard[]>;
+  moves: DoudizhuMove[];
+  dialogue: DoudizhuDialogueLine[];
+  lastPlay?: DoudizhuMove;
+  passCount: number;
+  winner?: DoudizhuCamp;
+  winningRole?: DoudizhuPlayerRole;
+  score?: DoudizhuScoreSummary;
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+  invitationId?: string;
+  redealCount?: number;
+}
+
+export interface TheaterDoudizhuInvitation {
+  id: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: DoudizhuInvitationStatus;
+  message?: string;
+  difficultyMode?: DoudizhuDifficultyMode;
+  createdAt: number;
+  updatedAt: number;
+  acceptedGameId?: string;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 幕间集·海龟汤（turtle soup）：暗黑汤；系统或正式角色当主持人，用户与 1–5 位
+// 正式角色一起提问/猜谜。主持判定、角色猜题能力与对白可走模型，本地状态机兜底。
+// ──────────────────────────────────────────────────────────────────
+export type TurtleSoupDifficultyMode = 'opening' | 'per_move';
+export type TurtleSoupDifficultyLevel = 'novice' | 'casual' | 'steady' | 'sharp' | 'master';
+export type TurtleSoupGameStatus = 'playing' | 'solved' | 'revealed' | 'ended';
+export type TurtleSoupInvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type TurtleSoupHostKind = 'system' | 'character';
+export type TurtleSoupVerdict = 'yes' | 'no' | 'irrelevant';
+export type TurtleSoupGuessResult = 'correct' | 'close' | 'wrong';
+export type TurtleSoupTurnKind = 'question' | 'final_guess' | 'reveal';
+export type TurtleSoupDialogueKind =
+  | 'invite'
+  | 'case'
+  | 'thinking'
+  | 'question'
+  | 'answer_yes'
+  | 'answer_no'
+  | 'irrelevant'
+  | 'wrong_guess'
+  | 'close_guess'
+  | 'correct_guess'
+  | 'stuck'
+  | 'character_question'
+  | 'character_guess'
+  | 'solved'
+  | 'reveal'
+  | 'illegal'
+  | 'host'
+  | 'normal';
+
+export interface TurtleSoupHost {
+  kind: TurtleSoupHostKind;
+  name: string;
+  charId?: string;
+  avatar?: string;
+}
+
+export interface TurtleSoupPlayer {
+  id: string; // 'user' or charId
+  name: string;
+  isUser: boolean;
+  charId?: string;
+  avatar?: string;
+}
+
+export interface TurtleSoupCase {
+  title: string;
+  surface: string;
+  answer: string;
+  keyPoints: string[];
+  redHerrings?: string[];
+  contentWarnings?: string[];
+}
+
+export interface TurtleSoupTurn {
+  no: number;
+  by: string; // player id, 'host' or 'system'
+  byName: string;
+  kind: TurtleSoupTurnKind;
+  text: string;
+  verdict?: TurtleSoupVerdict;
+  result?: TurtleSoupGuessResult;
+  hostText?: string;
+  at: number;
+}
+
+export interface TurtleSoupDialogueLine {
+  id: string;
+  by: string; // player id, 'host' or 'system'
+  byName: string;
+  charId?: string;
+  kind: TurtleSoupDialogueKind;
+  text: string;
+  at: number;
+  turnNo?: number;
+}
+
+export interface TheaterTurtleSoupGame {
+  id: string;
+  title: string;
+  userName: string;
+  status: TurtleSoupGameStatus;
+  tone: 'dark';
+  host: TurtleSoupHost;
+  players: TurtleSoupPlayer[];
+  charIds: string[];
+  difficultyMode: TurtleSoupDifficultyMode;
+  difficultyLevels: Partial<Record<string, TurtleSoupDifficultyLevel>>;
+  case: TurtleSoupCase;
+  turns: TurtleSoupTurn[];
+  dialogue: TurtleSoupDialogueLine[];
+  currentSpeakerId: string;
+  solvedById?: string;
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+  invitationId?: string;
+}
+
+export interface TheaterTurtleSoupInvitation {
+  id: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: TurtleSoupInvitationStatus;
+  message?: string;
+  difficultyMode?: TurtleSoupDifficultyMode;
+  createdAt: number;
+  updatedAt: number;
+  acceptedGameId?: string;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // 折子戏·对影（柒）：同一个人在不同时间里的两个自己相逢。
 // 生成结果默认只留在折子戏；用户主动发到聊天 / 收进典藏馆后才进入其它出口。
 // ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// 幕间集·麻将（mahjong）：用户 + 三位正式角色四人桌；大众简化规则，136 张无花。
+// 模型只判断正式角色牌力与对白，本地引擎负责吃碰杠胡、结算和合法性兜底。
+// ─────────────────────────────────────────────────────────────────────────────
+export type MahjongDifficultyMode = 'opening' | 'per_move';
+export type MahjongDifficultyLevel = 'novice' | 'casual' | 'steady' | 'sharp' | 'master';
+export type MahjongPlayerRole = 'user' | 'charA' | 'charB' | 'charC';
+export type MahjongSeatWind = 'east' | 'south' | 'west' | 'north';
+export type MahjongGameStatus = 'playing' | 'ended';
+export type MahjongPhase = 'draw' | 'discard' | 'claim' | 'ended';
+export type MahjongInvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type MahjongTileSuit = 'wan' | 'tong' | 'tiao' | 'honor';
+export type MahjongHonor = 'east' | 'south' | 'west' | 'north' | 'zhong' | 'fa' | 'bai';
+export type MahjongMeldType = 'chi' | 'peng' | 'ming_gang' | 'an_gang' | 'bu_gang';
+export type MahjongClaimAction = 'chi' | 'peng' | 'gang' | 'hu' | 'pass';
+export type MahjongWinType = 'zimo' | 'dianpao';
+export type MahjongHuPattern = 'standard' | 'seven_pairs';
+export type MahjongMoveType =
+  | 'deal'
+  | 'draw'
+  | 'discard'
+  | 'chi'
+  | 'peng'
+  | 'ming_gang'
+  | 'an_gang'
+  | 'bu_gang'
+  | 'hu'
+  | 'zimo'
+  | 'pass'
+  | 'liuju'
+  | 'resign';
+export type MahjongMoveEvent =
+  | 'deal'
+  | 'thinking'
+  | 'draw'
+  | 'discard'
+  | 'normal'
+  | 'chi'
+  | 'peng'
+  | 'gang'
+  | 'an_gang'
+  | 'bu_gang'
+  | 'block'
+  | 'blocked'
+  | 'ganged'
+  | 'danger'
+  | 'zimo'
+  | 'dianpao'
+  | 'win'
+  | 'lose'
+  | 'draw_game'
+  | 'illegal';
+export type MahjongDialogueKind = MahjongMoveEvent | 'invite';
+
+export interface MahjongTile {
+  id: string;
+  suit: MahjongTileSuit;
+  rank?: number;
+  honor?: MahjongHonor;
+  code: string;
+  label: string;
+  copy: number;
+}
+
+export interface MahjongMeld {
+  id: string;
+  type: MahjongMeldType;
+  by: MahjongPlayerRole;
+  from?: MahjongPlayerRole;
+  tiles: MahjongTile[];
+  claimedTile?: MahjongTile;
+  at: number;
+}
+
+export interface MahjongHuAnalysis {
+  ok: boolean;
+  pattern?: MahjongHuPattern;
+  fan: number;
+  fanNames: string[];
+}
+
+export interface MahjongMove {
+  no: number;
+  type: MahjongMoveType;
+  by: MahjongPlayerRole | 'system';
+  at: number;
+  tile?: MahjongTile;
+  tiles?: MahjongTile[];
+  from?: MahjongPlayerRole;
+  eventTags?: MahjongMoveEvent[];
+  note?: string;
+}
+
+export interface MahjongPendingClaim {
+  discard: MahjongTile;
+  from: MahjongPlayerRole;
+  moveNo: number;
+  actions: Partial<Record<MahjongPlayerRole, MahjongClaimAction[]>>;
+  passed: MahjongPlayerRole[];
+}
+
+export interface MahjongDialogueLine {
+  id: string;
+  by: MahjongPlayerRole | 'system';
+  kind: MahjongDialogueKind;
+  text: string;
+  at: number;
+  moveNo?: number;
+}
+
+export interface MahjongScoreSummary {
+  winner?: MahjongPlayerRole;
+  from?: MahjongPlayerRole;
+  winType?: MahjongWinType;
+  pattern?: MahjongHuPattern;
+  fan: number;
+  fanNames: string[];
+  deltas: Record<MahjongPlayerRole, number>;
+  draw?: boolean;
+}
+
+export interface TheaterMahjongGame {
+  id: string;
+  title: string;
+  userName: string;
+  charIds: string[];
+  players: Array<{
+    role: MahjongPlayerRole;
+    seat: MahjongSeatWind;
+    name: string;
+    charId?: string;
+  }>;
+  status: MahjongGameStatus;
+  phase: MahjongPhase;
+  difficultyMode: MahjongDifficultyMode;
+  difficultyLevels: Partial<Record<MahjongPlayerRole, MahjongDifficultyLevel>>;
+  dealer: MahjongPlayerRole;
+  currentTurn: MahjongPlayerRole;
+  wall: MahjongTile[];
+  deadWall: MahjongTile[];
+  hands: Record<MahjongPlayerRole, MahjongTile[]>;
+  melds: Record<MahjongPlayerRole, MahjongMeld[]>;
+  discards: Record<MahjongPlayerRole, MahjongTile[]>;
+  drawnTile?: MahjongTile;
+  pendingClaim?: MahjongPendingClaim;
+  moves: MahjongMove[];
+  dialogue: MahjongDialogueLine[];
+  winner?: MahjongPlayerRole;
+  loser?: MahjongPlayerRole;
+  score?: MahjongScoreSummary;
+  createdAt: number;
+  lastActiveAt: number;
+  endedAt?: number;
+  invitationId?: string;
+}
+
+export interface TheaterMahjongInvitation {
+  id: string;
+  charId: string;
+  charName: string;
+  userName: string;
+  status: MahjongInvitationStatus;
+  message?: string;
+  difficultyMode?: MahjongDifficultyMode;
+  createdAt: number;
+  updatedAt: number;
+  acceptedGameId?: string;
+}
+
 export type TheaterReflectionMode = 'moonlight' | 'letter' | 'crossroad' | 'reconcile';
 export type TheaterReflectionTone = 'restrained' | 'tender' | 'aching' | 'relieved';
 export type TheaterReflectionLength = 'short' | 'standard' | 'long';
@@ -6994,8 +7824,14 @@ export interface TakeoutReviewReply { name: string; emoji: string; text: string;
 /** 用户对某单的评价 */
 export interface TakeoutReview {
   rating: number;       // 1~5 星
+  /** 可选：骑手/配送服务评分；旧评价没有也正常显示。 */
+  riderRating?: number;
+  /** 可选：包装完整度评分；旧评价没有也正常显示。 */
+  packingRating?: number;
   text?: string;
   tags?: string[];      // 快捷标签（如「分量足」「送得快」）
+  /** 配送、包装、售后等服务标签。 */
+  serviceTags?: string[];
   at: number;
   likes?: number;       // 其它食客点的「有用」数
   replies?: TakeoutReviewReply[];  // 商家 / 其它食客的评论
@@ -7008,7 +7844,26 @@ export interface TakeoutReview {
  * - cancelled 已取消
  */
 export type TakeoutStatus = 'preparing' | 'delivering' | 'arrived' | 'delivered' | 'cancelled';
-export interface TakeoutChatMsg { role: 'user' | 'rider' | 'store' | 'support'; text: string; at: number; }
+export type TakeoutChatTarget = 'rider' | 'store' | 'support';
+export interface TakeoutChatMsg {
+  role: 'user' | TakeoutChatTarget;
+  text: string;
+  at: number;
+  /** 这条顾客侧消息发给哪个对象；旧消息没有 target 时按所有频道可见。 */
+  target?: TakeoutChatTarget;
+  /** 顾客侧显示名。角色主动点单时可显示为角色名，而不是用户本人。 */
+  actorName?: string;
+}
+
+/** 角色主动给用户点外卖后，送达拆封时可选择留存的手写小票。 */
+export interface TakeoutCharacterReceipt {
+  recipientNickname: string;
+  note: string;
+  fromName?: string;
+  createdAt: number;
+  keptAt?: number;
+  dismissedAt?: number;
+}
 
 /** 黑心商家 / 坏骑手会触发的现实化配送事故种类。 */
 export type TakeoutIncidentKind =
@@ -7093,6 +7948,8 @@ export interface TakeoutOrder {
   cardPosted?: boolean;
   /** 给角色点的单：到时角色已在聊天里对收到外卖做出反应，避免重复触发。 */
   reactionPosted?: boolean;
+  /** 角色主动给用户点的单：拆封后可保留到饭票·我的页的小票。 */
+  characterReceipt?: TakeoutCharacterReceipt;
   /** 用户对本单的评价（送达后可评价；含商家/其它食客的评论）。 */
   review?: TakeoutReview;
 }

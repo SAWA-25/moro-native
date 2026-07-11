@@ -506,7 +506,10 @@ export const useChatAI = ({
                 source: 'generated',
                 chatContext: contextMsgs
                     .slice(-10)
-                    .map(m => `${m.role === 'user' ? (userProfile.name || '用户') : charSnapshot.name}: ${String(m.content || '').slice(0, 120)}`),
+                    .map(m => {
+                        const content = m.type === 'image' ? '[图片]' : String(m.content || '').slice(0, 120);
+                        return `${m.role === 'user' ? (userProfile.name || '用户') : charSnapshot.name}: ${content}`;
+                    }),
             });
             delete perTurnImageErrorNotifiedRef.current[charSnapshot.id];
             if (charRef.current?.id === charSnapshot.id) {
@@ -631,6 +634,8 @@ export const useChatAI = ({
                     musicSnapshot: {
                         current: deps.music.current,
                         playing: deps.music.playing,
+                        progress: deps.music.progress,
+                        duration: deps.music.duration || deps.music.current?.duration || 0,
                         lyric: deps.music.lyric,
                         activeLyricIdx: deps.music.activeLyricIdx,
                         listeningTogetherWith: deps.music.listeningTogetherWith,
@@ -832,6 +837,9 @@ export const useChatAI = ({
                                 artists: music.current.artists,
                                 lyricWindow: window,
                                 activeIdx: idx - from,
+                                progress: music.progress,
+                                duration: music.duration || music.current.duration,
+                                playing: music.playing,
                             };
                         }
                     }
@@ -841,6 +849,9 @@ export const useChatAI = ({
                             artists: music.current.artists,
                             lyricWindow: [],
                             activeIdx: -1,
+                            progress: music.progress,
+                            duration: music.duration || music.current.duration,
+                            playing: music.playing,
                         };
                     }
                     return null;
@@ -1406,7 +1417,7 @@ export const useChatAI = ({
                         // pipeline 跑的过程中用户可能又关掉了回忆标本馆，跑完后所有"额外动作"
                         // （autoArchive 写 char.memories / 50 轮认知消化的 LLM 调用）都要再 check 一次。
                         const liveAfter = charRef.current?.id === char.id ? charRef.current : null;
-                        if (!isMemoryFeatureEnabled(liveAfter)) return;
+                        if (!liveAfter || !isMemoryFeatureEnabled(liveAfter)) return;
 
                         // 显示结果让用户看到
                         if (pipelineResult && pipelineResult.stored > 0) {
@@ -1421,7 +1432,7 @@ export const useChatAI = ({
                                 const patch: any = {};
                                 if (pipelineResult?.autoArchive) {
                                     patch.memories = mergePalaceFragmentsIntoMemories(
-                                        char.memories || [],
+                                        liveAfter.memories || [],
                                         pipelineResult.autoArchive.fragments,
                                     );
                                 }
@@ -1458,10 +1469,10 @@ export const useChatAI = ({
                             if (result) {
                                 // 持久化自我领悟词条到角色档案
                                 if (result.selfInsights.length > 0) {
-                                    const baseChar = liveAfter || char;
+                                    const baseChar = charRef.current?.id === char.id ? charRef.current : (liveAfter || char);
                                     const existing = baseChar.selfInsights || [];
                                     const updatedInsights = [...existing, ...result.selfInsights];
-                                    await DB.saveCharacter({ ...baseChar, selfInsights: updatedInsights });
+                                    await updateCharacter?.(char.id, { selfInsights: updatedInsights } as any);
                                 }
                                 const total = result.resolved.length + result.deepened.length + result.faded.length +
                                     result.fulfilled.length + result.disappointed.length + result.internalized.length +
