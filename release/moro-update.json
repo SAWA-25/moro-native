@@ -1,11 +1,11 @@
 {
-  "versionCode": 22,
-  "versionName": "2.0.1",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v2.0.1/moro.apk",
-  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv2.0.1%2Fmoro.apk",
-  "releaseNotes": "Moro Android 2.0.1 正式安装包：\n- 合入上游最新体验，带上幕间集麻将、海龟汤、斗地主、围棋、五子棋、同床共枕等新玩法。\n- 健康、音乐、外观、像素小屋、絮语、人生拟、心意铺、饭票和循迹等多个应用同步更新。\n- 正式 build 默认隐藏右下角开发角标，继续使用原包名和正式签名，可直接覆盖安装。\n- 安装不会主动清空角色、聊天、记忆、相册、店铺、世界书或 API 设置。\n- 修复部分 2.0.1 安装包识别不到云端功能更新的问题，Moro 会通过原生备用通道确认云端更新能力。\n- 装好 2.0.1 后，普通功能更新继续优先云端下发；Moro 识别到云端功能包时会自动弹出更新窗口，允许通知后也会推送到系统通知栏。\n- 只有原生底层、插件或权限变化时才需要再次安装 APK。",
+  "versionCode": 23,
+  "versionName": "2.0.2",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v2.0.2/moro.apk",
+  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv2.0.2%2Fmoro.apk",
+  "releaseNotes": "Moro Android 2.0.2 正式安装包：\n- 修复部分 2.0.1 安装包识别不到云端功能更新的问题，文具盒现在会通过原生云端桥接确认 Production 功能包能力。\n- Moro 识别到云端有新功能包时，会在桌面内自动弹出更新窗口；允许通知后也会推送到系统通知栏。\n- 保留 2.0.0 / 2.0.1 的正式更新内容，继续包含幕间集、海龟汤、斗地主、围棋、五子棋、同床共枕等新玩法，以及健康、音乐、外观、像素小屋、纸语、人生拟、心意铺、饭票和循迹等应用更新。\n- 正式 build 默认隐藏右下角开发角标，继续使用原包名和正式签名，可直接覆盖安装。\n- 安装不会主动清空角色、聊天、记忆、相册、店铺、世界书或 API 设置。\n- 以后只有原生底层、插件或权限变化时才需要重新安装 APK，普通功能优先通过云端下发。",
   "mandatory": false,
-  "publishedAt": "2026-07-11T09:49:05+08:00",
+  "publishedAt": "2026-07-11T10:21:46+08:00",
   "ios": {
     "versionCode": 15,
     "versionName": "1.0.8.4",
@@ -15,6 +15,6 @@
     "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro-ios-install.plist?run=28904898077",
     "releaseNotes": "iPhone 安装包 1.0.8.4 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。本地资料不会被主动清空。"
   },
-  "sha256": "b7c723d2e3d068b222c000a66f3028d9bd319cb152c6c6aee879f8428df75586",
-  "sizeBytes": 270668947
+  "sha256": "e73791b7c44e4921310dbf527cdcd970fb3152bb61b7fdb7cff311d7cbcb8878",
+  "sizeBytes": 274343164
 }

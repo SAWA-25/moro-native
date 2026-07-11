@@ -77,12 +77,24 @@ export interface ManualUpdateNoticeDateGroup {
 export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 'social', 'creation', 'roleplay', 'system'];
 
 export const MANUAL_UPDATE_NOTICE_DATE_PINNED_HEADLINES: Record<string, string> = {
-  '2026-07-11': 'Android 2.0.1 正式安装包已发布',
+  '2026-07-11': 'Android 2.0.2 云端更新修复版已发布',
   '2026-07-08': 'App 自己拉取更新',
   '2026-07-06': '预设不要开文风，不要开字数',
 };
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
+  {
+    id: '2026-07-11-android-202-cloud-update-fix',
+    date: '2026-07-11',
+    title: 'Android 2.0.2 修复云端更新接入',
+    kind: 'fix',
+    summary: 'Android 正式安装包更新到 2.0.2，重点修复部分设备在文具盒里显示“当前安装包还没有接入云端功能更新”的问题。',
+    items: [
+      '文具盒会通过 Moro 自己的原生云端更新通道读取 Appflow 配置和拉取功能包，不再只依赖官方桥接是否被系统识别。',
+      '安装 2.0.2 后，云端功能包应显示为已接入 Production 通道；没有新功能包时会显示已是最新，而不是误报没有接入。',
+      '这次仍使用正式包名和正式签名，可直接覆盖安装；角色、聊天、记忆、相册、店铺、世界书和 API 设置不会被主动清空。',
+    ],
+  },
   {
     id: '2026-07-11-android-201-official-package',
     date: '2026-07-11',
