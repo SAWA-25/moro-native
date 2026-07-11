@@ -2,6 +2,7 @@
 
 const liveUpdatesAppId = process.env.VITE_MORO_APPFLOW_APP_ID?.trim() || '';
 const liveUpdatesChannel = process.env.VITE_MORO_APPFLOW_CHANNEL?.trim() || 'Production';
+const liveUpdatesAutoUpdateMethod = process.env.VITE_MORO_APPFLOW_AUTO_UPDATE_METHOD?.trim() || 'none';
 const liveUpdatesMaxVersions = Number(process.env.VITE_MORO_APPFLOW_MAX_VERSIONS || 2);
 const webDir = process.env.MORO_CAP_WEB_DIR?.trim() || 'dist-native';
 
@@ -32,7 +33,7 @@ const config: CapacitorConfig = {
     LiveUpdates: {
       appId: liveUpdatesAppId || 'unset',
       channel: liveUpdatesChannel,
-      autoUpdateMethod: process.env.VITE_MORO_APPFLOW_AUTO_UPDATE_METHOD === 'none' ? 'none' : 'background',
+      autoUpdateMethod: liveUpdatesAutoUpdateMethod === 'background' ? 'background' : 'none',
       strategy: 'differential',
       enabled: !!liveUpdatesAppId && process.env.VITE_MORO_APPFLOW_ENABLED !== '0',
       maxVersions: Number.isFinite(liveUpdatesMaxVersions) && liveUpdatesMaxVersions > 0 ? Math.floor(liveUpdatesMaxVersions) : 2,

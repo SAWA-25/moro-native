@@ -20,14 +20,17 @@ const liveState = vi.hoisted(() => ({
     activeApplicationPathChanged: true,
   },
   syncError: null as any,
+  syncErrors: [] as any[],
   moroSyncError: null as any,
+  moroSyncErrors: [] as any[],
   getConfigError: null as any,
   reloadError: null as any,
   moroGetConfig: vi.fn(async () => liveState.config),
   moroSync: vi.fn(async (_options: Record<string, never>, callback: (result: any) => void) => {
     liveState.progress.forEach(value => callback({ progress: value }));
-    if (liveState.moroSyncError) {
-      callback({ failStep: 'CHECK', message: liveState.moroSyncError.message || 'sync failed' });
+    const syncError = liveState.moroSyncErrors.length > 0 ? liveState.moroSyncErrors.shift() : liveState.moroSyncError;
+    if (syncError) {
+      callback({ failStep: 'CHECK', message: syncError.message || 'sync failed' });
       return '';
     }
     callback(liveState.syncResult);
@@ -55,7 +58,8 @@ vi.mock('@capacitor/live-updates', () => ({
   }),
   sync: vi.fn(async (progress?: (percentage: number) => void) => {
     liveState.progress.forEach(value => progress?.(value));
-    if (liveState.syncError) throw liveState.syncError;
+    const syncError = liveState.syncErrors.length > 0 ? liveState.syncErrors.shift() : liveState.syncError;
+    if (syncError) throw syncError;
     return liveState.syncResult;
   }),
   reload: vi.fn(async () => {
@@ -82,7 +86,9 @@ describe('cloud updates', () => {
       activeApplicationPathChanged: true,
     };
     liveState.syncError = null;
+    liveState.syncErrors = [];
     liveState.moroSyncError = null;
+    liveState.moroSyncErrors = [];
     liveState.getConfigError = null;
     liveState.reloadError = null;
     liveState.moroGetConfig.mockClear();
@@ -91,6 +97,7 @@ describe('cloud updates', () => {
     localStorage.clear();
     vi.clearAllMocks();
     vi.resetModules();
+    vi.useRealTimers();
   });
 
   it('does not check live updates outside the native app', async () => {
@@ -164,6 +171,23 @@ describe('cloud updates', () => {
     expect(result.updateAvailable).toBe(true);
     expect(result.snapshotId).toBe('snap-1');
     expect(progress).toEqual([0.25, 0.5, 1]);
+  });
+
+  it('retries transient sync-already-in-progress results', async () => {
+    vi.useFakeTimers();
+    capState.native = true;
+    capState.pluginAvailable = true;
+    const busyError = { failStep: 'CHECK', message: 'Live Update failed on CHECK step. Reason: Sync already in progress.' };
+    liveState.syncErrors = [busyError];
+    const liveUpdates = await import('@capacitor/live-updates');
+    const { syncCloudUpdate } = await import('./cloudUpdates');
+
+    const pending = syncCloudUpdate();
+    await vi.runOnlyPendingTimersAsync();
+    const result = await pending;
+
+    expect(result.status).toBe('ready');
+    expect(liveUpdates.sync).toHaveBeenCalledTimes(2);
   });
 
   it('marks a dismissed snapshot so it does not prompt again', async () => {

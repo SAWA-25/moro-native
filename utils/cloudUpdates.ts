@@ -7,7 +7,7 @@ import {
   type SyncResult,
 } from '@capacitor/live-updates';
 
-export type CloudUpdateStatus = 'unsupported' | 'disabled' | 'up-to-date' | 'ready' | 'error';
+export type CloudUpdateStatus = 'unsupported' | 'disabled' | 'up-to-date' | 'ready' | 'busy' | 'error';
 
 export interface CloudUpdateConfigStatus {
   supported: boolean;
@@ -36,6 +36,8 @@ const CLOUD_UPDATE_NOTIFIED_KEY = 'moro_cloud_update_notified_snapshot';
 
 let activeSync: Promise<CloudUpdateCheckResult> | null = null;
 
+const SYNC_BUSY_RETRY_DELAYS_MS = [1200, 2400, 4000];
+
 interface MoroLiveUpdatesPlugin {
   getConfig(): Promise<LiveUpdateConfig>;
   reload(): Promise<void>;
@@ -61,6 +63,21 @@ const isUsableAppflowAppId = (value: unknown): value is string => {
   const appId = cleanString(value);
   return !!appId && appId.toLowerCase() !== 'unset';
 };
+
+const wait = (ms: number): Promise<void> => new Promise(resolve => globalThis.setTimeout(resolve, ms));
+
+const errorText = (error: unknown): string => {
+  const raw = error as { message?: unknown; failMsg?: unknown } | null;
+  return [
+    cleanString(raw?.message),
+    cleanString(raw?.failMsg),
+    error instanceof Error ? error.message : '',
+    typeof error === 'string' ? error : '',
+  ].filter(Boolean).join(' ');
+};
+
+const isSyncAlreadyInProgressError = (error: unknown): boolean =>
+  /sync already in progress/i.test(errorText(error));
 
 const messageFromError = (error: unknown): string => {
   const raw = error as { message?: unknown; failStep?: unknown } | null;
@@ -101,10 +118,11 @@ const syncMoroLiveUpdate = async (onProgress?: (progress: number) => void): Prom
     }).catch(reject);
   });
 
-const syncCloudLiveUpdate = async (onProgress?: (progress: number) => void): Promise<SyncResult> => {
+const syncCloudLiveUpdateOnce = async (onProgress?: (progress: number) => void): Promise<SyncResult> => {
   try {
     return await syncLiveUpdate(onProgress);
   } catch (error) {
+    if (isSyncAlreadyInProgressError(error)) throw error;
     if (!Capacitor.isNativePlatform()) throw error;
     try {
       return await syncMoroLiveUpdate(onProgress);
@@ -112,6 +130,22 @@ const syncCloudLiveUpdate = async (onProgress?: (progress: number) => void): Pro
       throw error;
     }
   }
+};
+
+const syncCloudLiveUpdate = async (onProgress?: (progress: number) => void): Promise<SyncResult> => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= SYNC_BUSY_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      return await syncCloudLiveUpdateOnce(onProgress);
+    } catch (error) {
+      lastError = error;
+      if (!isSyncAlreadyInProgressError(error) || attempt >= SYNC_BUSY_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+      await wait(SYNC_BUSY_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  throw lastError;
 };
 
 const reloadCloudLiveUpdate = async (): Promise<void> => {
@@ -206,11 +240,12 @@ export async function syncCloudUpdate(
           : '云端功能包已是最新。',
       };
     } catch (error) {
+      const busy = isSyncAlreadyInProgressError(error);
       return {
         ...config,
-        status: 'error',
+        status: busy ? 'busy' : 'error',
         updateAvailable: false,
-        message: messageFromError(error),
+        message: busy ? '云端功能包正在后台检查中，稍后会自动完成；也可以稍后再点一次检查更新。' : messageFromError(error),
       };
     }
   })();

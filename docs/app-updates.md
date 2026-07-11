@@ -141,7 +141,7 @@ VITE_MORO_IOS_INSTALL_URL=itms-services://?action=download-manifest&url=https%3A
 ```dotenv
 VITE_MORO_APPFLOW_APP_ID=your-appflow-app-id
 VITE_MORO_APPFLOW_CHANNEL=Production
-VITE_MORO_APPFLOW_AUTO_UPDATE_METHOD=background
+VITE_MORO_APPFLOW_AUTO_UPDATE_METHOD=none
 VITE_MORO_APPFLOW_MAX_VERSIONS=2
 ```
 
@@ -152,7 +152,7 @@ pnpm build
 pnpm cap:sync
 ```
 
-Live Updates 只适合更新 WebView 里的网页资源，也就是 Vite 打出来的 JS/CSS/图片。发布云端包后，安装版会在启动后自动检查，也能在「文具盒 -> 基础与安全 -> 应用更新 -> 检查更新」里主动拉取。以下变化仍然必须重新发 APK：
+Live Updates 只适合更新 WebView 里的网页资源，也就是 Vite 打出来的 JS/CSS/图片。Moro 默认由自己的桌面启动检查、前台检查和「文具盒 -> 基础与安全 -> 应用更新 -> 检查更新」来触发同步，不再额外开启官方后台自动 sync，避免同一时间重复检查。以下变化仍然必须重新发 APK：
 
 - 新增或修改 Android 权限
 - 新增、升级或删除 Capacitor 原生插件

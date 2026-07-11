@@ -803,8 +803,10 @@ const Settings: React.FC = () => {
               ? '云端功能包已是最新，继续检查是否需要安装包...'
               : cloudResult.status === 'disabled'
                   ? '当前安装包未接入云端功能更新，继续检查安装包...'
-                  : cloudResult.status === 'unsupported'
+              : cloudResult.status === 'unsupported'
                       ? '当前环境不支持云端功能更新，继续检查安装包...'
+                      : cloudResult.status === 'busy'
+                          ? '云端功能包正在后台检查中，稍后会自动完成；继续检查安装包...'
                       : cloudResult.status === 'error'
                           ? '云端功能通道暂时不可用，继续检查安装包...'
                           : '继续检查是否需要安装包...';
@@ -1600,6 +1602,7 @@ const Settings: React.FC = () => {
                                             : cloudUpdateCheck.status === 'up-to-date' ? '已是最新'
                                                 : cloudUpdateCheck.status === 'disabled' ? '未接入'
                                                     : cloudUpdateCheck.status === 'unsupported' ? cloudUpdateCheck.message
+                                                        : cloudUpdateCheck.status === 'busy' ? cloudUpdateCheck.message
                                                         : cloudUpdateCheck.status === 'error' ? cloudUpdateCheck.message
                                                             : cloudUpdateCheck.message}
                                     </p>

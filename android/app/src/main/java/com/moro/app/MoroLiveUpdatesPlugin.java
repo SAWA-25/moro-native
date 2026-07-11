@@ -35,6 +35,7 @@ import io.ionic.liveupdates.network.ProgressCallback;
 public class MoroLiveUpdatesPlugin extends Plugin {
     private static final String LAST_BINARY_VERSION_CODE = "lastBinaryVersionCode";
     private static final String LAST_BINARY_VERSION_NAME = "lastBinaryVersionName";
+    private static final String LAST_BINARY_UPDATED_AT = "lastBinaryUpdatedAt";
     private static final String PREFS_NAME = "liveUpdatesPreferences";
     private static final String CONFIG_KEY_NAME = "liveUpdatesConfig";
 
@@ -43,6 +44,7 @@ public class MoroLiveUpdatesPlugin extends Plugin {
     private SharedPreferences prefs;
     private JSObject configJson = new JSObject();
     private String initError = "";
+    private boolean syncInProgress = false;
 
     @Override
     public void load() {
@@ -79,6 +81,7 @@ public class MoroLiveUpdatesPlugin extends Plugin {
 
         LiveUpdateManager.initialize(getContext());
         registerLiveUpdateInstance();
+        markBinarySeen();
     }
 
     private void registerLiveUpdateInstance() {
@@ -124,7 +127,7 @@ public class MoroLiveUpdatesPlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("appId", config != null ? config.getAppId() : configJson.getString("appId", ""));
         ret.put("channel", config != null ? config.getChannel() : configJson.getString("channel", "Production"));
-        ret.put("autoUpdateMethod", config != null ? config.getAutoUpdateMethod() : configJson.getString("autoUpdateMethod", "background"));
+        ret.put("autoUpdateMethod", config != null ? config.getAutoUpdateMethod() : configJson.getString("autoUpdateMethod", "none"));
         ret.put("maxVersions", config != null ? config.getMaxVersions() : configJson.getInteger("maxVersions", 2));
         ret.put("strategy", config != null && config.getUpdateStrategy() != null ? config.getUpdateStrategy().name().toLowerCase() : configJson.getString("strategy", "differential"));
         ret.put("enabled", config != null ? config.isEnabled() : configJson.getBoolean("enabled", false));
@@ -146,61 +149,76 @@ public class MoroLiveUpdatesPlugin extends Plugin {
             resolveFailure(call, FailStep.CHECK.name(), "Live Update failed because appId was not provided in the plugin config.");
             return;
         }
+        synchronized (this) {
+            if (syncInProgress) {
+                resolveFailure(call, FailStep.CHECK.name(), "Live Update sync already in progress.");
+                return;
+            }
+            syncInProgress = true;
+        }
 
         registerLiveUpdateInstance();
         call.setKeepAlive(true);
-        LiveUpdateManager.sync(
-            getContext(),
-            config.getAppId(),
-            new ProgressCallback() {
-                @Override
-                public void onProgress(@NonNull String appId, double progressValue) {
-                    JSObject ret = new JSObject();
-                    ret.put("progress", progressValue);
-                    call.resolve(ret);
-                }
-
-                @Override
-                public void onAppComplete(@NonNull FailResult failResult) {
-                    JSObject ret = new JSObject();
-                    ret.put("appId", failResult.getLiveUpdate().getAppId());
-                    ret.put("failStep", failResult.getFailStep().name());
-                    ret.put("message", "Live Update failed on " + failResult.getFailStep().name() + " step. Reason: " + failResult.getFailMsg());
-                    call.resolve(ret);
-                    call.release(getBridge());
-                }
-
-                @Override
-                public void onAppComplete(@NonNull SyncResult syncResult) {
-                    JSObject ret = new JSObject();
-
-                    JSObject liveUpdate = new JSObject();
-                    liveUpdate.put("appId", syncResult.getLiveUpdate().getAppId());
-                    liveUpdate.put("channel", syncResult.getLiveUpdate().getChannelName());
-                    ret.put("liveUpdate", liveUpdate);
-
-                    if (syncResult.getSnapshot() == null) {
-                        ret.put("snapshot", null);
-                    } else {
-                        JSObject snapshot = new JSObject();
-                        snapshot.put("id", syncResult.getSnapshot().getId());
-                        snapshot.put("buildId", syncResult.getSnapshot().getBuildId());
-                        ret.put("snapshot", snapshot);
+        try {
+            LiveUpdateManager.sync(
+                getContext(),
+                config.getAppId(),
+                new ProgressCallback() {
+                    @Override
+                    public void onProgress(@NonNull String appId, double progressValue) {
+                        JSObject ret = new JSObject();
+                        ret.put("progress", progressValue);
+                        call.resolve(ret);
                     }
 
-                    ret.put("source", syncResult.getSource().name().toLowerCase());
-                    ret.put("activeApplicationPathChanged", syncResult.getLatestAppDirectoryChanged());
-                    persistLatestAppPath();
-                    call.resolve(ret);
-                    call.release(getBridge());
-                }
+                    @Override
+                    public void onAppComplete(@NonNull FailResult failResult) {
+                        JSObject ret = new JSObject();
+                        ret.put("appId", failResult.getLiveUpdate().getAppId());
+                        ret.put("failStep", failResult.getFailStep().name());
+                        ret.put("message", "Live Update failed on " + failResult.getFailStep().name() + " step. Reason: " + failResult.getFailMsg());
+                        clearSyncInProgress();
+                        call.resolve(ret);
+                        call.release(getBridge());
+                    }
 
-                @Override
-                public void onSyncComplete() {
-                    // No-op; per-app callbacks above resolve the kept-alive Capacitor call.
+                    @Override
+                    public void onAppComplete(@NonNull SyncResult syncResult) {
+                        JSObject ret = new JSObject();
+
+                        JSObject liveUpdate = new JSObject();
+                        liveUpdate.put("appId", syncResult.getLiveUpdate().getAppId());
+                        liveUpdate.put("channel", syncResult.getLiveUpdate().getChannelName());
+                        ret.put("liveUpdate", liveUpdate);
+
+                        if (syncResult.getSnapshot() == null) {
+                            ret.put("snapshot", null);
+                        } else {
+                            JSObject snapshot = new JSObject();
+                            snapshot.put("id", syncResult.getSnapshot().getId());
+                            snapshot.put("buildId", syncResult.getSnapshot().getBuildId());
+                            ret.put("snapshot", snapshot);
+                        }
+
+                        ret.put("source", syncResult.getSource().name().toLowerCase());
+                        ret.put("activeApplicationPathChanged", syncResult.getLatestAppDirectoryChanged());
+                        persistLatestAppPath();
+                        clearSyncInProgress();
+                        call.resolve(ret);
+                        call.release(getBridge());
+                    }
+
+                    @Override
+                    public void onSyncComplete() {
+                        clearSyncInProgress();
+                    }
                 }
-            }
-        );
+            );
+        } catch (Exception error) {
+            clearSyncInProgress();
+            resolveFailure(call, FailStep.CHECK.name(), error.getMessage() == null ? error.toString() : error.getMessage());
+            call.release(getBridge());
+        }
     }
 
     @PluginMethod
@@ -214,6 +232,10 @@ public class MoroLiveUpdatesPlugin extends Plugin {
         ret.put("failStep", failStep);
         ret.put("message", message);
         call.resolve(ret);
+    }
+
+    private synchronized void clearSyncInProgress() {
+        syncInProgress = false;
     }
 
     private void persistLatestAppPath() {
@@ -236,19 +258,37 @@ public class MoroLiveUpdatesPlugin extends Plugin {
     private boolean isNewBinary() {
         String versionCode = "";
         String versionName = "";
+        String updatedAt = "";
         SharedPreferences webPrefs = getContext().getSharedPreferences(com.getcapacitor.plugin.WebView.WEBVIEW_PREFS_NAME, Activity.MODE_PRIVATE);
         String lastVersionCode = webPrefs.getString(LAST_BINARY_VERSION_CODE, null);
         String lastVersionName = webPrefs.getString(LAST_BINARY_VERSION_NAME, null);
+        String lastUpdatedAt = webPrefs.getString(LAST_BINARY_UPDATED_AT, null);
 
         try {
             PackageManager pm = getContext().getPackageManager();
             PackageInfo info = InternalUtils.getPackageInfo(pm, getContext().getPackageName());
             versionCode = Long.toString(PackageInfoCompat.getLongVersionCode(info));
             versionName = info.versionName;
+            updatedAt = Long.toString(info.lastUpdateTime);
         } catch (Exception error) {
             Logger.error("Unable to get package info", error);
         }
 
-        return !versionCode.equals(lastVersionCode) || !versionName.equals(lastVersionName);
+        return !versionCode.equals(lastVersionCode) || !versionName.equals(lastVersionName) || !updatedAt.equals(lastUpdatedAt);
+    }
+
+    private void markBinarySeen() {
+        try {
+            PackageManager pm = getContext().getPackageManager();
+            PackageInfo info = InternalUtils.getPackageInfo(pm, getContext().getPackageName());
+            SharedPreferences webPrefs = getContext().getSharedPreferences(com.getcapacitor.plugin.WebView.WEBVIEW_PREFS_NAME, Activity.MODE_PRIVATE);
+            webPrefs.edit()
+                .putString(LAST_BINARY_VERSION_CODE, Long.toString(PackageInfoCompat.getLongVersionCode(info)))
+                .putString(LAST_BINARY_VERSION_NAME, info.versionName)
+                .putString(LAST_BINARY_UPDATED_AT, Long.toString(info.lastUpdateTime))
+                .apply();
+        } catch (Exception error) {
+            Logger.error("Unable to save package info", error);
+        }
     }
 }
