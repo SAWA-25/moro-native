@@ -1,7 +1,7 @@
 
 
 
-import React, { useState, useEffect, useMemo, lazy, Suspense, useRef } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense, useRef, useCallback } from 'react';
 import { BookOpenText, Megaphone, X } from '@phosphor-icons/react';
 import { IMPORT_IN_PROGRESS_KEY, useOS } from '../context/OSContext';
 import { shouldShowForceReplyDialog, type ForceReplyRequest } from '../utils/forceReply';
@@ -185,10 +185,13 @@ import {
   type ManualUpdateNotice,
 } from '../apps/manual/manualData';
 import {
+  markCloudUpdateNotified,
+  shouldNotifyCloudUpdate,
   shouldPromptCloudUpdate,
   syncCloudUpdate,
   type CloudUpdateCheckResult,
 } from '../utils/cloudUpdates';
+import { showLocalNotification } from '../utils/browserNotify';
 
 /*
 // Internal Error Boundary Component
@@ -701,6 +704,8 @@ const PhoneShell: React.FC = () => {
   const manualNoticeSeenThisSessionRef = useRef<Set<string>>(new Set());
   const nativeReadyEventSentRef = useRef(false);
   const cloudUpdateAutoCheckedRef = useRef(false);
+  const cloudUpdateCheckInFlightRef = useRef(false);
+  const cloudUpdateLastForegroundCheckRef = useRef(0);
   const phoneFrameRef = useRef<HTMLDivElement | null>(null);
   const offlineFloatButtonRef = useRef<HTMLButtonElement | null>(null);
   const offlineFloatDragRef = useRef<OfflineFloatDragState | null>(null);
@@ -876,37 +881,92 @@ const PhoneShell: React.FC = () => {
     if (shouldShowWorkerUpdateReminder()) setShowWorkerUpdateReminder(true);
   }, [showDisclaimer, showImportRecoveryPrompt, showLike520Popup, isDataLoaded]);
 
+  const canCheckCloudUpdate =
+    nativeRuntime &&
+    isDataLoaded &&
+    !isLocked &&
+    !cloudUpdatePrompt &&
+    !showDisclaimer &&
+    !showImportRecoveryPrompt &&
+    !showLike520Popup &&
+    !showWorkerUpdateReminder;
+
+  const checkCloudUpdateAndNotify = useCallback((source: 'startup' | 'foreground' = 'startup') => {
+    if (!canCheckCloudUpdate || cloudUpdateCheckInFlightRef.current) return;
+    cloudUpdateCheckInFlightRef.current = true;
+    void (async () => {
+      try {
+        const result = await syncCloudUpdate();
+        if (shouldPromptCloudUpdate(result)) {
+          setCloudUpdatePrompt(result);
+        }
+        if (shouldNotifyCloudUpdate(result)) {
+          await showLocalNotification('Moro 云端更新已送达', {
+            body: '点开 Moro 后一键更新即可生效，不用下载新 APK。',
+            tag: 'moro-cloud-update',
+            data: {
+              source,
+              type: 'cloud-update',
+              snapshotId: result.snapshotId,
+              buildId: result.buildId,
+            },
+          });
+          markCloudUpdateNotified(result);
+        }
+      } catch (error) {
+        console.warn('[PhoneShell] cloud update auto check failed', error);
+      } finally {
+        cloudUpdateCheckInFlightRef.current = false;
+      }
+    })();
+  }, [canCheckCloudUpdate]);
+
   useEffect(() => {
-    if (cloudUpdateAutoCheckedRef.current || cloudUpdatePrompt) return;
-    if (!nativeRuntime || !isDataLoaded || isLocked) return;
-    if (showDisclaimer || showImportRecoveryPrompt || showLike520Popup || showWorkerUpdateReminder) return;
+    if (cloudUpdateAutoCheckedRef.current || !canCheckCloudUpdate) return;
 
     cloudUpdateAutoCheckedRef.current = true;
-    let cancelled = false;
     const timer = window.setTimeout(() => {
-      void syncCloudUpdate()
-        .then((result) => {
-          if (!cancelled && shouldPromptCloudUpdate(result)) {
-            setCloudUpdatePrompt(result);
-          }
-        })
-        .catch((error) => console.warn('[PhoneShell] cloud update auto check failed', error));
+      checkCloudUpdateAndNotify('startup');
     }, 1800);
 
     return () => {
-      cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [
-    cloudUpdatePrompt,
-    isDataLoaded,
-    isLocked,
-    nativeRuntime,
-    showDisclaimer,
-    showImportRecoveryPrompt,
-    showLike520Popup,
-    showWorkerUpdateReminder,
-  ]);
+  }, [canCheckCloudUpdate, checkCloudUpdateAndNotify]);
+
+  useEffect(() => {
+    if (!nativeRuntime) return;
+
+    let cancelled = false;
+    let appStateHandle: PluginListenerHandle | null = null;
+    const setupAppStateListener = async () => {
+      try {
+        const handle = await CapApp.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive) return;
+          const now = Date.now();
+          if (now - cloudUpdateLastForegroundCheckRef.current < 60_000) return;
+          cloudUpdateLastForegroundCheckRef.current = now;
+          window.setTimeout(() => {
+            if (!cancelled) checkCloudUpdateAndNotify('foreground');
+          }, 800);
+        });
+        if (cancelled) {
+          handle.remove().catch(() => {});
+        } else {
+          appStateHandle = handle;
+        }
+      } catch {
+        console.warn('[PhoneShell] cloud update foreground listener setup failed');
+      }
+    };
+
+    void setupAppStateListener();
+
+    return () => {
+      cancelled = true;
+      appStateHandle?.remove().catch(() => {});
+    };
+  }, [checkCloudUpdateAndNotify, nativeRuntime]);
 
   useEffect(() => {
     const wasLocked = previousLockedRef.current;

@@ -32,6 +32,7 @@ export type CloudUpdateReadyResult = CloudUpdateCheckResult & {
 };
 
 const CLOUD_UPDATE_DISMISSED_KEY = 'moro_cloud_update_dismissed_snapshot';
+const CLOUD_UPDATE_NOTIFIED_KEY = 'moro_cloud_update_notified_snapshot';
 
 let activeSync: Promise<CloudUpdateCheckResult> | null = null;
 
@@ -73,14 +74,7 @@ export async function getCloudUpdateConfigStatus(): Promise<CloudUpdateConfigSta
     };
   }
 
-  if (!hasLiveUpdatePlugin()) {
-    return {
-      supported: false,
-      configured: false,
-      enabled: false,
-      message: '当前安装包还没有接入云端功能更新。',
-    };
-  }
+  const pluginAdvertised = hasLiveUpdatePlugin();
 
   try {
     const config: LiveUpdateConfig = await getLiveUpdateConfig();
@@ -101,6 +95,14 @@ export async function getCloudUpdateConfigStatus(): Promise<CloudUpdateConfigSta
           : '云端功能更新通道暂未配置。',
     };
   } catch (error) {
+    if (!pluginAdvertised) {
+      return {
+        supported: false,
+        configured: false,
+        enabled: false,
+        message: '当前安装包还没有接入云端功能更新。',
+      };
+    }
     return {
       supported: true,
       configured: false,
@@ -158,7 +160,7 @@ export async function syncCloudUpdate(
 }
 
 export async function applyCloudUpdate(): Promise<void> {
-  if (hasLiveUpdatePlugin()) {
+  if (Capacitor.isNativePlatform()) {
     await reloadLiveUpdate();
     return;
   }
@@ -168,12 +170,12 @@ export async function applyCloudUpdate(): Promise<void> {
 export const isCloudUpdateReady = (result: CloudUpdateCheckResult | null | undefined): result is CloudUpdateReadyResult =>
   !!result?.updateAvailable && result.status === 'ready';
 
-const promptKeyForCloudUpdate = (result: CloudUpdateCheckResult): string =>
+export const keyForCloudUpdate = (result: CloudUpdateCheckResult): string =>
   result.snapshotId || result.buildId || [result.appId, result.channel, result.source].filter(Boolean).join(':');
 
 export function shouldPromptCloudUpdate(result: CloudUpdateCheckResult | null | undefined): boolean {
   if (!isCloudUpdateReady(result)) return false;
-  const key = promptKeyForCloudUpdate(result);
+  const key = keyForCloudUpdate(result);
   if (!key) return true;
   try {
     return localStorage.getItem(CLOUD_UPDATE_DISMISSED_KEY) !== key;
@@ -184,10 +186,32 @@ export function shouldPromptCloudUpdate(result: CloudUpdateCheckResult | null | 
 
 export function markCloudUpdatePromptDismissed(result: CloudUpdateCheckResult | null | undefined): void {
   if (!isCloudUpdateReady(result)) return;
-  const key = promptKeyForCloudUpdate(result);
+  const key = keyForCloudUpdate(result);
   if (!key) return;
   try {
     localStorage.setItem(CLOUD_UPDATE_DISMISSED_KEY, key);
+  } catch {
+    // ignore
+  }
+}
+
+export function shouldNotifyCloudUpdate(result: CloudUpdateCheckResult | null | undefined): boolean {
+  if (!isCloudUpdateReady(result)) return false;
+  const key = keyForCloudUpdate(result);
+  if (!key) return true;
+  try {
+    return localStorage.getItem(CLOUD_UPDATE_NOTIFIED_KEY) !== key;
+  } catch {
+    return true;
+  }
+}
+
+export function markCloudUpdateNotified(result: CloudUpdateCheckResult | null | undefined): void {
+  if (!isCloudUpdateReady(result)) return;
+  const key = keyForCloudUpdate(result);
+  if (!key) return;
+  try {
+    localStorage.setItem(CLOUD_UPDATE_NOTIFIED_KEY, key);
   } catch {
     // ignore
   }

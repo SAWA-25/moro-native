@@ -85,6 +85,20 @@ describe('cloud updates', () => {
     expect(liveUpdates.sync).not.toHaveBeenCalled();
   });
 
+  it('uses the native live update config even when the plugin registry is stale', async () => {
+    capState.native = true;
+    capState.pluginAvailable = false;
+    const liveUpdates = await import('@capacitor/live-updates');
+    const { syncCloudUpdate } = await import('./cloudUpdates');
+
+    const result = await syncCloudUpdate();
+
+    expect(result.status).toBe('ready');
+    expect(result.supported).toBe(true);
+    expect(liveUpdates.getConfig).toHaveBeenCalledTimes(1);
+    expect(liveUpdates.sync).toHaveBeenCalledTimes(1);
+  });
+
   it('reports a ready cloud update and normalizes progress', async () => {
     capState.native = true;
     capState.pluginAvailable = true;
@@ -112,9 +126,21 @@ describe('cloud updates', () => {
     expect(shouldPromptCloudUpdate(result)).toBe(false);
   });
 
-  it('reloads through the live updates plugin when applying', async () => {
+  it('marks a notified snapshot so the desktop notice is not sent repeatedly', async () => {
     capState.native = true;
     capState.pluginAvailable = true;
+    const { markCloudUpdateNotified, shouldNotifyCloudUpdate, syncCloudUpdate } = await import('./cloudUpdates');
+
+    const result = await syncCloudUpdate();
+
+    expect(shouldNotifyCloudUpdate(result)).toBe(true);
+    markCloudUpdateNotified(result);
+    expect(shouldNotifyCloudUpdate(result)).toBe(false);
+  });
+
+  it('reloads through the live updates plugin when applying in native runtime', async () => {
+    capState.native = true;
+    capState.pluginAvailable = false;
     const liveUpdates = await import('@capacitor/live-updates');
     const { applyCloudUpdate } = await import('./cloudUpdates');
 

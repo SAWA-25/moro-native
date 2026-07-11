@@ -16,6 +16,7 @@ import android.webkit.WebView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.capacitorjs.liveupdates.LiveUpdatesPlugin;
 import com.getcapacitor.BridgeActivity;
 
 import java.security.MessageDigest;
@@ -32,6 +33,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(MoroUpdaterPlugin.class);
         registerPlugin(MoroDeviceInsightPlugin.class);
         registerPlugin(MoroScreenCapturePlugin.class);
+        registerPlugin(LiveUpdatesPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();

@@ -77,23 +77,23 @@ export interface ManualUpdateNoticeDateGroup {
 export const CATEGORY_ORDER: Array<'all' | ManualCategory> = ['all', 'daily', 'social', 'creation', 'roleplay', 'system'];
 
 export const MANUAL_UPDATE_NOTICE_DATE_PINNED_HEADLINES: Record<string, string> = {
-  '2026-07-11': 'Android 2.0.0 正式安装包已发布',
+  '2026-07-11': 'Android 2.0.1 正式安装包已发布',
   '2026-07-08': 'App 自己拉取更新',
   '2026-07-06': '预设不要开文风，不要开字数',
 };
 
 export const MANUAL_UPDATE_NOTICES: ManualUpdateNotice[] = [
   {
-    id: '2026-07-11-android-200-official-package',
+    id: '2026-07-11-android-201-official-package',
     date: '2026-07-11',
-    title: 'Android 2.0.0 正式安装包来了',
+    title: 'Android 2.0.1 正式安装包来了',
     kind: 'improvement',
-    summary: 'Android 正式安装包更新到 2.0.0，合入上游最新体验，并继续保留正式签名、云端功能更新和默认隐藏开发角标的规则。',
+    summary: 'Android 正式安装包更新到 2.0.1，合入上游最新体验，并继续保留正式签名、云端功能更新和默认隐藏开发角标的规则。',
     items: [
       '这次完整带上幕间集麻将、海龟汤、斗地主、围棋、五子棋、同床共枕，以及健康、音乐、外观、像素小屋和多个应用的新体验。',
       '正式 build 默认隐藏右下角开发角标，桌面、聊天和设置页不会露出开发调试标记。',
       '安装包继续使用原来的包名和正式签名，可直接覆盖安装到现有 App 上；角色、聊天、记忆、相册、店铺、世界书和 API 设置不会被主动清空。',
-      '装好 2.0.0 后，普通功能更新仍会优先走云端下发；只有原生底层、插件或权限再变化时才需要重新安装 APK。',
+      '装好 2.0.1 后，普通功能更新仍会优先走云端下发；Moro 识别到云端功能包时会自动弹出更新窗口，允许通知后也会推送到系统通知栏。只有原生底层、插件或权限再变化时才需要重新安装 APK。',
     ],
   },
   {

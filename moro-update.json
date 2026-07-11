@@ -1,11 +1,11 @@
 {
-  "versionCode": 20,
-  "versionName": "2.0.0",
-  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v2.0.0/moro.apk",
-  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv2.0.0%2Fmoro.apk",
-  "releaseNotes": "Moro Android 2.0.0 正式安装包：\n- 合入上游最新体验，带上幕间集麻将、海龟汤、斗地主、围棋、五子棋、同床共枕等新玩法。\n- 健康、音乐、外观、像素小屋、絮语、人生拟、心意铺、饭票和循迹等多个应用同步更新。\n- 正式 build 默认隐藏右下角开发角标，继续使用原包名和正式签名，可直接覆盖安装。\n- 安装不会主动清空角色、聊天、记忆、相册、店铺、世界书或 API 设置。\n- 装好 2.0.0 后，普通功能更新继续优先云端下发；只有原生底层变化才需要再次安装 APK。",
+  "versionCode": 21,
+  "versionName": "2.0.1",
+  "apkUrl": "https://github.com/SAWA-25/moro-native/releases/download/v2.0.1/moro.apk",
+  "cnApkUrl": "https://sullymeow.ccwu.cc/github?url=https%3A%2F%2Fgithub.com%2FSAWA-25%2Fmoro-native%2Freleases%2Fdownload%2Fv2.0.1%2Fmoro.apk",
+  "releaseNotes": "Moro Android 2.0.1 正式安装包：\n- 合入上游最新体验，带上幕间集麻将、海龟汤、斗地主、围棋、五子棋、同床共枕等新玩法。\n- 健康、音乐、外观、像素小屋、絮语、人生拟、心意铺、饭票和循迹等多个应用同步更新。\n- 正式 build 默认隐藏右下角开发角标，继续使用原包名和正式签名，可直接覆盖安装。\n- 安装不会主动清空角色、聊天、记忆、相册、店铺、世界书或 API 设置。\n- 装好 2.0.1 后，普通功能更新继续优先云端下发；Moro 识别到云端功能包时会自动弹出更新窗口，允许通知后也会推送到系统通知栏。\n- 只有原生底层、插件或权限变化时才需要再次安装 APK。",
   "mandatory": false,
-  "publishedAt": "2026-07-11T08:05:53+08:00",
+  "publishedAt": "2026-07-11T09:08:15+08:00",
   "ios": {
     "versionCode": 15,
     "versionName": "1.0.8.4",
@@ -15,6 +15,6 @@
     "plistUrl": "https://github.com/SAWA-25/moro-native/releases/download/v1.0.8.4/moro-ios-install.plist?run=28904898077",
     "releaseNotes": "iPhone 安装包 1.0.8.4 已补进最新内容，继续使用固定 Bundle ID 和正式签名路线。本地资料不会被主动清空。"
   },
-  "sha256": "1abab32e1cdce97743013c33447dd507bc5519e49dd6ccd13ef30bcee45e5bb0",
-  "sizeBytes": 270668587
+  "sha256": "f08a0b313849b9be8bbc3982e96337f4d0f9fcc05a7fb0cbe2876398fb541b21",
+  "sizeBytes": 270668783
 }
