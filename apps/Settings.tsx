@@ -1599,7 +1599,7 @@ const Settings: React.FC = () => {
                                         云端功能包：{cloudUpdateCheck.status === 'ready' ? '已准备好'
                                             : cloudUpdateCheck.status === 'up-to-date' ? '已是最新'
                                                 : cloudUpdateCheck.status === 'disabled' ? '未接入'
-                                                    : cloudUpdateCheck.status === 'unsupported' ? '当前安装包不支持'
+                                                    : cloudUpdateCheck.status === 'unsupported' ? cloudUpdateCheck.message
                                                         : cloudUpdateCheck.status === 'error' ? cloudUpdateCheck.message
                                                             : cloudUpdateCheck.message}
                                     </p>

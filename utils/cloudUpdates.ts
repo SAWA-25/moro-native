@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   getConfig as getLiveUpdateConfig,
   reload as reloadLiveUpdate,
@@ -36,6 +36,17 @@ const CLOUD_UPDATE_NOTIFIED_KEY = 'moro_cloud_update_notified_snapshot';
 
 let activeSync: Promise<CloudUpdateCheckResult> | null = null;
 
+interface MoroLiveUpdatesPlugin {
+  getConfig(): Promise<LiveUpdateConfig>;
+  reload(): Promise<void>;
+  sync(
+    options: Record<string, never>,
+    callback: (result: SyncResult | { progress: number } | { failStep: string; message: string; appId?: string }) => void,
+  ): Promise<string>;
+}
+
+const MoroLiveUpdates = registerPlugin<MoroLiveUpdatesPlugin>('MoroLiveUpdates');
+
 const cleanString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const hasLiveUpdatePlugin = (): boolean => {
@@ -64,6 +75,58 @@ const normalizeProgress = (value: number): number => {
   return Math.min(1, value);
 };
 
+const getCloudLiveUpdateConfig = async (): Promise<LiveUpdateConfig> => {
+  try {
+    return await getLiveUpdateConfig();
+  } catch (error) {
+    if (!Capacitor.isNativePlatform()) throw error;
+    try {
+      return await MoroLiveUpdates.getConfig();
+    } catch {
+      throw error;
+    }
+  }
+};
+
+const syncMoroLiveUpdate = async (onProgress?: (progress: number) => void): Promise<SyncResult> =>
+  new Promise((resolve, reject) => {
+    MoroLiveUpdates.sync({}, (result) => {
+      if ('progress' in result) {
+        onProgress?.(result.progress);
+      } else if ('failStep' in result) {
+        reject(result);
+      } else {
+        resolve(result);
+      }
+    }).catch(reject);
+  });
+
+const syncCloudLiveUpdate = async (onProgress?: (progress: number) => void): Promise<SyncResult> => {
+  try {
+    return await syncLiveUpdate(onProgress);
+  } catch (error) {
+    if (!Capacitor.isNativePlatform()) throw error;
+    try {
+      return await syncMoroLiveUpdate(onProgress);
+    } catch {
+      throw error;
+    }
+  }
+};
+
+const reloadCloudLiveUpdate = async (): Promise<void> => {
+  try {
+    await reloadLiveUpdate();
+  } catch (error) {
+    if (!Capacitor.isNativePlatform()) throw error;
+    try {
+      await MoroLiveUpdates.reload();
+    } catch {
+      throw error;
+    }
+  }
+};
+
 export async function getCloudUpdateConfigStatus(): Promise<CloudUpdateConfigStatus> {
   if (!Capacitor.isNativePlatform()) {
     return {
@@ -77,7 +140,7 @@ export async function getCloudUpdateConfigStatus(): Promise<CloudUpdateConfigSta
   const pluginAdvertised = hasLiveUpdatePlugin();
 
   try {
-    const config: LiveUpdateConfig = await getLiveUpdateConfig();
+    const config: LiveUpdateConfig = await getCloudLiveUpdateConfig();
     const appId = cleanString(config.appId);
     const channel = cleanString(config.channel) || 'Production';
     const configured = isUsableAppflowAppId(appId);
@@ -127,7 +190,7 @@ export async function syncCloudUpdate(
     }
 
     try {
-      const result = await syncLiveUpdate((progress) => {
+      const result = await syncCloudLiveUpdate((progress) => {
         onProgress?.(normalizeProgress(progress));
       });
       const updateAvailable = !!result.activeApplicationPathChanged;
@@ -161,7 +224,7 @@ export async function syncCloudUpdate(
 
 export async function applyCloudUpdate(): Promise<void> {
   if (Capacitor.isNativePlatform()) {
-    await reloadLiveUpdate();
+    await reloadCloudLiveUpdate();
     return;
   }
   if (typeof window !== 'undefined') window.location.reload();
