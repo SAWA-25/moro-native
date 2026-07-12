@@ -2054,25 +2054,29 @@ ${parallelReplyPromptBody({
         } catch { /* ignore */ }
     };
 
-    const resetCharacterContextViewState = () => {
+    const resetCharacterContextViewState = (opts?: { keepPrivateChatArchives?: boolean }) => {
         setScheduleData(null);
         setScheduleLifeNotes({});
         setInnerVoiceHistory([]);
         setInnerVoiceCurrent(null);
         setTakeoutCardTarget(null);
         setTakeoutCardOrder(null);
-        setPrivateChatArchives([]);
+        if (!opts?.keepPrivateChatArchives) setPrivateChatArchives([]);
         setChatAlarms([]);
         setLifeRecapBanner(0);
     };
 
-    const clearCharacterSoftwareContext = async (targetChar: CharacterProfile, deletedMessageIds: number[]) => {
+    const clearCharacterSoftwareContext = async (
+        targetChar: CharacterProfile,
+        deletedMessageIds: number[],
+        opts?: { keepPrivateChatArchives?: boolean; activePrivateChatId?: string },
+    ) => {
         const [{ clearMemoryPalaceForChar }, { notifyTakeoutUpdated }] = await Promise.all([
             import('../utils/memoryPalace/db'),
             import('../utils/takeout'),
         ]);
         await Promise.all([
-            DB.deletePrivateChatArchivesByCharId(targetChar.id),
+            ...(opts?.keepPrivateChatArchives ? [] : [DB.deletePrivateChatArchivesByCharId(targetChar.id)]),
             DB.deleteChatAlarmsByCharId(targetChar.id),
             DB.deleteChatFollowupsByCharId(targetChar.id, deletedMessageIds),
             DB.clearChatHubDigests(),
@@ -2115,7 +2119,7 @@ ${parallelReplyPromptBody({
         clearCharacterContextLocalState(targetChar.id);
         notifyTakeoutUpdated();
         await updateCharacter(targetChar.id, {
-            activePrivateChatId: undefined,
+            activePrivateChatId: opts?.activePrivateChatId,
             memories: [],
             refinedMemories: {},
             activeMemoryMonths: [],
@@ -2148,7 +2152,7 @@ ${parallelReplyPromptBody({
             charBlock: undefined,
             unblockAppeal: undefined,
         });
-        resetCharacterContextViewState();
+        resetCharacterContextViewState(opts);
     };
 
     const handlePlayVoice = (msgId: number) => {
@@ -5765,10 +5769,9 @@ ${privateCallDecisionPromptBody({
             };
             await DB.savePrivateChatArchive(archive);
             try { localStorage.removeItem(`mp_lastMsgId_${char.id}`); } catch { /* ignore */ }
-            await updateCharacter(char.id, {
+            await clearCharacterSoftwareContext(char, currentIds, {
+                keepPrivateChatArchives: true,
                 activePrivateChatId: archive.id,
-                hideBeforeMessageId: undefined,
-                memoryPalaceInjection: undefined,
             });
             resetPrivateChatUi([]);
             await refreshPrivateChatArchives(char.id);
